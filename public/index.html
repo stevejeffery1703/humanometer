@@ -291,29 +291,10 @@
     <div class="reveal-arch" id="rev-arch"></div>
     <div class="reveal-tag" id="rev-tag"></div>
 
-    <!-- Share at peak emotion -->
-    <div class="reveal-share" id="reveal-share" style="display:none;">
-      <div class="reveal-share-label">Share your score while it's fresh</div>
-      <div class="reveal-share-btns">
-        <button class="rev-li-btn" onclick="shareLinkedIn()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
-          Post on LinkedIn
-        </button>
-        <button class="rev-cp-btn" onclick="copyShare()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
-        </button>
-      </div>
-      <!-- Email save — positioned here at peak engagement -->
-      <div class="reveal-email-wrap">
-        <div class="reveal-email-label">Save your results and get notified when we launch new tools</div>
-        <div class="reveal-email-row">
-          <input type="email" class="reveal-email-inp" id="rev-email" placeholder="your@email.com">
-          <button class="reveal-email-btn" onclick="saveRevealEmail()">Save Results</button>
-        </div>
-        <div class="reveal-email-ok" id="rev-email-ok">✓ Saved. Full results below.</div>
-        <div class="reveal-email-skip" onclick="goToResults()">Skip — show me my results →</div>
-      </div>
+    <!-- One job: get them to the full reading -->
+    <div class="reveal-cta-wrap" id="reveal-cta-wrap" style="display:none;">
+      <p class="reveal-more-hint">Your detailed reading is ready — strengths, development areas, and how your dimensions interact.</p>
+      <button class="cta-btn reveal-cta-btn" onclick="goToResults()">See Your Full Reading <span class="cta-arrow">→</span></button>
     </div>
   </div>
 </div>
@@ -342,7 +323,46 @@
       <div class="rarity-line" id="rarity-line"></div>
     </div>
 
-    <!-- SHARE CARD — prominent, visual, at top -->
+    <!-- STRENGTHS — first value the user sees, before any ask -->
+    <div class="sec-hd-strength" id="strengths-hd">Your strongest dimensions</div>
+    <div class="insight-cards" id="strength-cards"></div>
+
+    <!-- INLINE EMAIL CAPTURE — after first value, framed as save-not-subscribe -->
+    <div class="inline-save" id="inline-save">
+      <div class="inline-save-row">
+        <div class="inline-save-text">
+          <div class="inline-save-h">Save your reading</div>
+          <p>Get a permanent link to this profile. We'll also tell you when benchmarking opens — nothing else.</p>
+        </div>
+        <div class="inline-save-form" id="inline-save-form">
+          <input type="email" id="einp" placeholder="your@email.com" autocomplete="email">
+          <button onclick="submitEmail()">Save</button>
+        </div>
+      </div>
+      <div class="inline-save-ok" id="eok">✓ Saved. You're all set.</div>
+    </div>
+
+    <!-- Constellation -->
+    <div class="const-row">
+      <svg id="constellation" width="180" height="180" viewBox="0 0 180 180" style="flex-shrink:0;filter:drop-shadow(0 0 12px rgba(212,168,67,.14));"></svg>
+      <div class="const-text">
+        <div class="ct-title">Your unique profile shape</div>
+        <div class="ct-body" id="ct-body"></div>
+      </div>
+    </div>
+
+    <!-- COMBINATION INSIGHTS -->
+    <div class="combo-section" id="combo-section">
+      <div class="combo-title">How your dimensions interact</div>
+      <div id="combo-items"></div>
+    </div>
+
+    <!-- DEVELOPMENT AREAS -->
+    <div class="sec-hd-dev">Your development areas</div>
+    <div class="dev-cards" id="dev-cards"></div>
+
+    <!-- SHARE — moved here, after they've consumed the full reading -->
+    <div class="sec-hd" style="margin-top:36px;">Share your reading</div>
     <div class="sc2-wrap" id="scard">
       <div class="sc2-top">
         <div class="sc2-ring">
@@ -361,7 +381,6 @@
       <div class="sc2-url">humanometer.com</div>
     </div>
 
-    <!-- SHARE BUTTONS — redesigned, invitational not transactional -->
     <div class="share-block">
       <div class="share-block-label" id="share-rarity-label"></div>
       <div class="share-primary">
@@ -386,29 +405,6 @@
         </button>
       </div>
     </div>
-
-    <!-- STRENGTHS -->
-    <div class="sec-hd-strength" id="strengths-hd">Your strongest dimensions</div>
-    <div class="insight-cards" id="strength-cards"></div>
-
-    <!-- Constellation -->
-    <div class="const-row">
-      <svg id="constellation" width="180" height="180" viewBox="0 0 180 180" style="flex-shrink:0;filter:drop-shadow(0 0 12px rgba(212,168,67,.14));"></svg>
-      <div class="const-text">
-        <div class="ct-title">Your unique profile shape</div>
-        <div class="ct-body" id="ct-body"></div>
-      </div>
-    </div>
-
-    <!-- COMBINATION INSIGHTS -->
-    <div class="combo-section" id="combo-section">
-      <div class="combo-title">How your dimensions interact</div>
-      <div id="combo-items"></div>
-    </div>
-
-    <!-- DEVELOPMENT AREAS -->
-    <div class="sec-hd-dev">Your development areas</div>
-    <div class="dev-cards" id="dev-cards"></div>
 
     <!-- AFFILIATE COURSES — contextual, below dev cards -->
     <div class="affiliate-section" id="affiliate-section">
@@ -499,17 +495,6 @@
     <!-- Teams footnote -->
     <div class="teams-note">Running a team or hiring? <a href="mailto:hello@humanometer.com" class="teams-link">Ask about team readings →</a></div>
 
-    <!-- EMAIL CAPTURE — repositioned and reframed -->
-    <div class="ecap">
-      <h3>Save your results</h3>
-      <p>We'll email you a permanent link to your profile and be the first to know when we launch new tools.</p>
-      <p class="ecap-promise">No regular emails. We only contact you when something worth knowing happens.</p>
-      <div class="erow" id="email-form-row">
-        <input type="email" class="einp" id="einp" placeholder="your@email.com">
-        <button class="ebtn" onclick="submitEmail()">Save My Results</button>
-      </div>
-      <div class="eok" id="eok">✓ Saved. We'll be in touch when we launch new tools.</div>
-    </div>
   </div>
 </div>
 <div class="sticky-share" id="sticky-share">

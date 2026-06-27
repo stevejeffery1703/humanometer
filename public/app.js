@@ -267,7 +267,7 @@ async function showReveal(){
           revTag.textContent=S.arch.tag;
           // Show share + email prompt after reveal
           setTimeout(()=>{
-            document.getElementById('reveal-share').style.display='block';
+            document.getElementById('reveal-cta-wrap').style.display='block';
           },600);
         },300);
       },300);
@@ -276,17 +276,6 @@ async function showReveal(){
 }
 
 function goToResults(){buildResults();}
-
-function saveRevealEmail(){
-  const v=document.getElementById('rev-email').value.trim();
-  if(!v||!v.includes('@')){alert('Please enter a valid email address.');return;}
-  S.savedEmail=v;
-  postEmail(v);
-  document.getElementById('rev-email-ok').style.display='block';
-  document.getElementById('reveal-email-row').style.display='none';
-  document.getElementById('reveal-email-label').style.display='none';
-  setTimeout(goToResults,1200);
-}
 
 /* ═══════════════════════════ RESULTS ═══════════════════════════ */
 function buildResults(){
@@ -937,11 +926,15 @@ function buyPack(type){
 }
 
 function submitEmail(){
-  const v=document.getElementById('einp').value.trim();
+  const inp=document.getElementById('einp');
+  if(!inp)return;
+  const v=inp.value.trim();
   if(!v||!v.includes('@'))return;
   S.savedEmail=v;
   postEmail(v);
-  const row=document.getElementById('email-form-row');if(row)row.style.display='none';
-  document.querySelector('.ebtn').style.display='none';
-  document.getElementById('eok').style.display='block';
+  // Inline-save form on results screen
+  const form=document.getElementById('inline-save-form');
+  if(form)form.style.display='none';
+  const ok=document.getElementById('eok');
+  if(ok)ok.style.display='block';
 }

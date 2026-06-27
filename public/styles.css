@@ -196,12 +196,17 @@ h1.hero em{font-style:italic;color:var(--gold);}
    REVEAL TRANSITION
 ══════════════════════════════ */
 #reveal{align-items:center;justify-content:center;background:var(--bg);}
-.reveal-inner{text-align:center;animation:upIn .6s ease both;}
-.reveal-ring{width:120px;height:120px;border-radius:50%;border:2px solid var(--gold);background:var(--gdim);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 0 40px rgba(212,168,67,.2);}
-.reveal-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:var(--gold);line-height:1;}
-.reveal-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
-.reveal-arch{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,4vw,36px);font-weight:700;margin-bottom:8px;}
-.reveal-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(14px,2.4vw,20px);color:var(--gold);}
+.reveal-inner{text-align:center;animation:upIn .6s ease both;padding:24px;}
+.reveal-ring{width:140px;height:140px;border-radius:50%;border:2px solid var(--gold);background:var(--gdim);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 0 60px rgba(212,168,67,.22);}
+.reveal-num{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;}
+.reveal-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.reveal-arch{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4.5vw,42px);font-weight:700;margin-bottom:10px;}
+.reveal-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(15px,2.6vw,22px);color:var(--gold);margin-bottom:36px;}
+
+/* Reveal CTA — one job, no distractions */
+.reveal-cta-wrap{max-width:480px;margin:0 auto;animation:upIn .5s .4s ease both;}
+.reveal-more-hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;max-width:380px;margin-left:auto;margin-right:auto;}
+.reveal-cta-btn{font-size:14px !important;padding:18px 36px !important;}
 
 /* ══════════════════════════════
    RESULTS
@@ -346,6 +351,40 @@ h1.hero em{font-style:italic;color:var(--gold);}
 .ebtn{background:var(--gold);color:#07090f;border:none;padding:11px 18px;font-family:'Outfit',sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all .2s;}
 .ebtn:hover{background:var(--gold2);}
 .eok{color:var(--ok);font-size:14px;display:none;}
+
+/* INLINE SAVE — sits between strengths and constellation. Lighter than
+   .ecap because it arrives just after the first valuable insight, not
+   as a goodbye ask. Two-column on desktop, stacked on mobile. */
+.inline-save{
+  background:linear-gradient(135deg,var(--gdim),rgba(91,154,224,.03));
+  border:1px solid var(--gbdr);
+  padding:20px 24px;margin:24px 0 36px;
+  animation:upIn .4s ease both;
+}
+.inline-save-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.inline-save-text{flex:1;min-width:220px;}
+.inline-save-h{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:4px;}
+.inline-save-text p{font-size:12.5px;color:var(--muted);line-height:1.55;margin:0;}
+.inline-save-form{display:flex;gap:8px;flex:1;min-width:260px;}
+.inline-save-form input{
+  flex:1;background:var(--bg);border:1px solid var(--gbdr);color:var(--text);
+  padding:11px 13px;font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:300;
+  outline:none;transition:border-color .2s;min-width:0;
+}
+.inline-save-form input:focus{border-color:var(--gold);}
+.inline-save-form input::placeholder{color:var(--muted);}
+.inline-save-form button{
+  background:var(--gold);color:#07090f;border:none;
+  padding:11px 22px;font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  white-space:nowrap;transition:all .2s;
+}
+.inline-save-form button:hover{background:var(--gold2);}
+.inline-save-ok{display:none;color:var(--ok);font-size:13.5px;text-align:center;padding:8px 0;}
+@media(max-width:520px){
+  .inline-save{padding:18px;}
+  .inline-save-row{flex-direction:column;align-items:stretch;gap:14px;}
+}
 
 /* Sticky share bar (exit intent) */
 .sticky-share{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--gold);padding:12px 24px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;z-index:300;animation:slideUp .35s ease both;}
