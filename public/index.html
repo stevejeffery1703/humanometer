@@ -45,7 +45,7 @@
 
 <!-- ══ JSON-LD: WebApplication ══ -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Humanometer","url":"https://humanometer.com/","description":"A free 5-minute assessment measuring five professional capabilities that AI cannot replicate: Adaptive Thinking, Ethical Judgement, Creative Synthesis, Empathic Accuracy, and Critical Scepticism.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","offers":[{"@type":"Offer","name":"Free Assessment","price":"0","priceCurrency":"GBP"},{"@type":"Offer","name":"Results Pack","price":"9.99","priceCurrency":"GBP"},{"@type":"Offer","name":"Benchmark","price":"3.99","priceCurrency":"GBP"}]}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Humanometer","url":"https://humanometer.com/","description":"A free 5-minute assessment measuring five professional capabilities that AI cannot replicate: Adaptive Thinking, Ethical Judgement, Creative Synthesis, Empathic Accuracy, and Critical Scepticism.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","offers":[{"@type":"Offer","name":"Free Assessment","price":"0","priceCurrency":"GBP"},{"@type":"Offer","name":"LinkedIn Boost","price":"4.99","priceCurrency":"GBP"},{"@type":"Offer","name":"Career Pack","price":"9.99","priceCurrency":"GBP"},{"@type":"Offer","name":"Interview Pro","price":"14.99","priceCurrency":"GBP"}]}
 </script>
 
 <!-- ══ JSON-LD: FAQPage ══ -->
@@ -170,7 +170,7 @@
       </div>
       <div class="faq-item">
         <h3 class="faq-q">Is it free?</h3>
-        <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. Optional paid add-ons include a LinkedIn-ready summary, personalised interview answers, and a permanent benchmarked profile.</p>
+        <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. The optional Results Pack (£9.99) generates a LinkedIn-ready summary, personalised interview answers, and a career synthesis from your exact scores.</p>
       </div>
       <div class="faq-item">
         <h3 class="faq-q">How is this different from a personality test?</h3>
@@ -255,7 +255,7 @@
       </div>
       <!-- Email save — positioned here at peak engagement -->
       <div class="reveal-email-wrap">
-        <div class="reveal-email-label">Save your results + get notified when your score can be benchmarked against your industry</div>
+        <div class="reveal-email-label">Save your results and get notified when we launch new tools</div>
         <div class="reveal-email-row">
           <input type="email" class="reveal-email-inp" id="rev-email" placeholder="your@email.com">
           <button class="reveal-email-btn" onclick="saveRevealEmail()">Save Results</button>
@@ -379,7 +379,7 @@
       <div class="locked-overlay">
         <div class="lock-icon">🔒</div>
         <div class="locked-title">Unlock your career assets</div>
-        <div class="locked-sub">Career synthesis · LinkedIn About rewrite · 5 personalised interview answers · Verified certificate</div>
+        <div class="locked-sub">LinkedIn About rewrite · Personalised interview answers · Career synthesis · Verified certificate</div>
       </div>
     </div>
 
@@ -389,46 +389,58 @@
       <p>Generated from your exact scores in seconds. Used by job seekers, career changers, and professionals preparing for interviews.</p>
     </div>
 
-    <!-- TIER 1: Results Pack (primary one-time) -->
-    <div class="tier-block tier-featured">
-      <div class="tier-label-wrap"><span class="tier-badge-top">Most popular</span></div>
-      <div class="tier-header">
-        <div class="tier-name">Results Pack</div>
-        <div class="tier-price">£9.99 <span class="tier-period">one-time</span></div>
-      </div>
-      <div class="tier-items">
-        <div class="tier-item">✦ LinkedIn 'About' section — written from your scores, ready to paste</div>
-        <div class="tier-item">✦ 5 personalised interview answers — specific to your profile</div>
-        <div class="tier-item">✦ Career synthesis — how your dimensions interact and what that means</div>
-      </div>
-      <button class="tier-btn" onclick="buyPack('results')">Get Results Pack · £9.99</button>
-    </div>
-
-    <!-- TIER 2: Benchmark (recurring) -->
-    <div class="tier-block tier-recurring">
+    <!-- TIER 1: LinkedIn Boost — entry, low friction -->
+    <div class="tier-block">
       <div class="tier-header">
         <div>
-          <div class="tier-name">Benchmark <span class="tier-new">New</span></div>
-          <div class="tier-sub">Own your results permanently</div>
+          <div class="tier-name">LinkedIn Boost</div>
+          <div class="tier-sub">Polish your profile in one click</div>
         </div>
-        <div class="tier-price">£3.99 <span class="tier-period">/ year</span></div>
+        <div class="tier-price">£4.99 <span class="tier-period">one-time</span></div>
       </div>
       <div class="tier-items">
-        <div class="tier-item">✦ Permanent results page at a unique URL you can link to</div>
-        <div class="tier-item">✦ Verified certificate — PDF with your scores and profile</div>
-        <div class="tier-item">✦ Annual re-test with score comparison ("up 8 points")</div>
-        <div class="tier-item">✦ Notified when your scores can be benchmarked against your industry</div>
+        <div class="tier-item">✦ LinkedIn 'About' section — written from your exact scores</div>
+        <div class="tier-item">✦ Verified results certificate (shareable PDF)</div>
+        <div class="tier-item">✦ Permanent results page</div>
       </div>
-      <button class="tier-btn tier-btn-sec" onclick="buyPack('benchmark')">Get Benchmark · £3.99/year</button>
+      <button class="tier-btn tier-btn-sec" onclick="buyPack('boost')">Get LinkedIn Boost · £4.99</button>
     </div>
 
-    <!-- BUNDLE -->
-    <div class="tier-bundle" id="bbar" onclick="buyPack('bundle')">
-      <div class="tier-bundle-left">
-        <div class="tier-bundle-name">⚡ Both together <span class="bb-save">Save £3.99</span></div>
-        <div class="tier-bundle-desc">Results Pack + Benchmark — everything, permanently</div>
+    <!-- TIER 2: Career Pack — flagship, most popular -->
+    <div class="tier-block tier-featured">
+      <div class="tier-label-wrap"><span class="tier-badge-top">Most popular · Best value</span></div>
+      <div class="tier-header">
+        <div>
+          <div class="tier-name">Career Pack</div>
+          <div class="tier-sub">Everything in Boost, plus interview prep</div>
+        </div>
+        <div class="tier-price">£9.99 <span class="tier-period">one-time</span> <span class="bb-was" style="margin-left:6px;">£19.97</span></div>
       </div>
-      <div class="tier-bundle-price">£9.99 <span class="tier-period">+ £3.99/yr</span> → <strong style="color:var(--gold)">£10.99 first year</strong></div>
+      <div class="tier-items">
+        <div class="tier-item">✦ Everything in LinkedIn Boost</div>
+        <div class="tier-item">✦ 5 personalised interview answers — specific to your profile</div>
+        <div class="tier-item">✦ Career synthesis — how your dimensions interact and the roles that suit you</div>
+        <div class="tier-item">✦ Full results PDF</div>
+      </div>
+      <button class="tier-btn" onclick="buyPack('career')">Get Career Pack · £9.99</button>
+    </div>
+
+    <!-- TIER 3: Interview Pro — high-intent job seekers -->
+    <div class="tier-block">
+      <div class="tier-header">
+        <div>
+          <div class="tier-name">Interview Pro</div>
+          <div class="tier-sub">Built for active job seekers</div>
+        </div>
+        <div class="tier-price">£14.99 <span class="tier-period">one-time</span></div>
+      </div>
+      <div class="tier-items">
+        <div class="tier-item">✦ Everything in Career Pack</div>
+        <div class="tier-item">✦ <strong>10</strong> personalised interview answers (including tough behavioural questions)</div>
+        <div class="tier-item">✦ Tailored cover-letter opener — written from your strongest dimensions</div>
+        <div class="tier-item">✦ 30-day development plan based on your profile</div>
+      </div>
+      <button class="tier-btn tier-btn-sec" onclick="buyPack('pro')">Get Interview Pro · £14.99</button>
     </div>
 
     <div class="pay-note" style="margin-top:10px;">Secure payment · Instant delivery · 30-day money-back guarantee</div>
@@ -439,13 +451,13 @@
     <!-- EMAIL CAPTURE — repositioned and reframed -->
     <div class="ecap">
       <h3>Save your results</h3>
-      <p>We'll email you a permanent link to your profile. You'll also be the first to know when your scores can be benchmarked against others in your industry — and when we launch new tools.</p>
+      <p>We'll email you a permanent link to your profile and be the first to know when we launch new tools.</p>
       <p class="ecap-promise">No regular emails. We only contact you when something worth knowing happens.</p>
       <div class="erow" id="email-form-row">
         <input type="email" class="einp" id="einp" placeholder="your@email.com">
         <button class="ebtn" onclick="submitEmail()">Save My Results</button>
       </div>
-      <div class="eok" id="eok">✓ Saved. We'll be in touch when benchmarking opens.</div>
+      <div class="eok" id="eok">✓ Saved. We'll be in touch when we launch new tools.</div>
     </div>
   </div>
 </div>
@@ -509,10 +521,12 @@
       <p>Everything below is written from your specific scores. Copy, save, or share directly.</p>
     </div>
     <div class="dtabs">
-      <button class="dtab act" onclick="tab('linkedin',this)">✍️ LinkedIn About</button>
-      <button class="dtab" onclick="tab('interview',this)">🎯 Interview Answers</button>
-      <button class="dtab" onclick="tab('cert',this)">🏅 Certificate</button>
-      <button class="dtab" onclick="tab('share',this)">📣 Share</button>
+      <button class="dtab act" id="dtab-linkedin"  onclick="tab('linkedin',this)">✍️ LinkedIn About</button>
+      <button class="dtab"      id="dtab-interview" onclick="tab('interview',this)">🎯 Interview Answers</button>
+      <button class="dtab"      id="dtab-cover"     onclick="tab('cover',this)">📝 Cover Letter</button>
+      <button class="dtab"      id="dtab-plan"      onclick="tab('plan',this)">🗓 30-Day Plan</button>
+      <button class="dtab"      id="dtab-cert"      onclick="tab('cert',this)">🏅 Certificate</button>
+      <button class="dtab"      id="dtab-share"     onclick="tab('share',this)">📣 Share</button>
     </div>
     <div class="dpanel act" id="dp-linkedin">
       <div class="out-box"><div class="out-lbl">Your LinkedIn 'About' section</div><div class="out-text" id="li-text">Generating…</div></div>
@@ -528,6 +542,22 @@
         <button class="btn-act pri" onclick="copyAllQA()">Copy all answers</button>
         <button class="btn-act" onclick="regenQA()">↺ Regenerate</button>
       </div>
+    </div>
+    <div class="dpanel" id="dp-cover">
+      <div class="out-box"><div class="out-lbl">Your cover-letter opener</div><div class="out-text" id="cover-text">Generating…</div></div>
+      <div class="out-acts">
+        <button class="btn-act pri" onclick="copyCover()">Copy to clipboard</button>
+        <button class="btn-act" onclick="regenCover()">↺ Regenerate</button>
+      </div>
+      <div class="out-tip">Two short paragraphs to open any cover letter — tailored to your strongest dimensions.</div>
+    </div>
+    <div class="dpanel" id="dp-plan">
+      <div class="out-box"><div class="out-lbl">Your 30-day development plan</div><div class="out-text" id="plan-text">Generating…</div></div>
+      <div class="out-acts">
+        <button class="btn-act pri" onclick="copyPlan()">Copy to clipboard</button>
+        <button class="btn-act" onclick="regenPlan()">↺ Regenerate</button>
+      </div>
+      <div class="out-tip">A focused 4-week plan to develop your weakest dimension while leaning into your strongest.</div>
     </div>
     <div class="dpanel" id="dp-cert">
       <div class="cw">

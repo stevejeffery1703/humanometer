@@ -117,9 +117,9 @@ async function handleEmail(request, env) {
 // ── /api/checkout ────────────────────────────────────────────
 
 const PRODUCTS = {
-  'results':   { name: 'Humanometer Results Pack',     amount: 999,  currency: 'gbp', mode: 'payment' },
-  'benchmark': { name: 'Humanometer Benchmark Access', amount: 399,  currency: 'gbp', mode: 'subscription' },
-  'bundle':    { name: 'Humanometer Complete Pack',    amount: 1099, currency: 'gbp', mode: 'payment' },
+  'boost':  { name: 'Humanometer LinkedIn Boost',  amount:  499, currency: 'gbp', mode: 'payment' },
+  'career': { name: 'Humanometer Career Pack',     amount:  999, currency: 'gbp', mode: 'payment' },
+  'pro':    { name: 'Humanometer Interview Pro',   amount: 1499, currency: 'gbp', mode: 'payment' },
 };
 
 async function handleCheckout(request, env) {
@@ -178,6 +178,12 @@ const ROUTES = {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // 301 redirect www → apex, preserving path + query
+    if (url.hostname === 'www.humanometer.com') {
+      url.hostname = 'humanometer.com';
+      return Response.redirect(url.toString(), 301);
+    }
 
     if (request.method === 'OPTIONS') return preflight();
 

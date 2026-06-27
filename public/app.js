@@ -593,22 +593,34 @@ async function startCheckout(){
 }
 
 /* Runs after returning from Stripe (?paid=true): rebuild results, animate the
-   fulfilment steps while the AI assets generate, then reveal the deliverables. */
+   fulfilment steps while the AI assets generate, then reveal the deliverables.
+   Only generates the assets the purchased tier actually includes. */
 async function runFulfilment(){
   buildResults();
   show('results');
   document.getElementById('pf-step').style.display='none';
   document.getElementById('proc-step').classList.add('show');
   document.getElementById('modal-bg').classList.add('open');
-  const steps=[['ps1',900],['ps2',700],['ps3',null],['ps4',null],['ps5',600]];
-  for(let i=0;i<steps.length;i++){
-    const[id,ms]=steps[i];const el=document.getElementById(id);el.classList.add('act');
-    if(ms)await delay(ms);
-    else if(id==='ps3')await genLinkedIn();
-    else if(id==='ps4')await genQA();
-    el.classList.remove('act');el.classList.add('done');
-  }
-  await delay(300);closePay();buildDeliverables();show('deliverables');
+  const tier = PACKS[S.selectedPack] || PACKS.career;
+  const tabs = tier.tabs;
+  // ps1 payment, ps2 analyse, ps3 LinkedIn, ps4 interview/cover/plan, ps5 certificate
+  await stepUI('ps1', 800);
+  await stepUI('ps2', 600);
+  if(tabs.includes('linkedin')) await stepUI('ps3', null, genLinkedIn);
+  else await stepUI('ps3', 200);
+  if(tabs.includes('interview')) await stepUI('ps4', null, ()=>genQA(S.selectedPack==='pro'?10:5));
+  else await stepUI('ps4', 200);
+  if(tabs.includes('cover')) await genCover();
+  if(tabs.includes('plan')) await genPlan();
+  await stepUI('ps5', 500);
+  await delay(250);closePay();buildDeliverables();show('deliverables');
+}
+
+async function stepUI(id, ms, work){
+  const el=document.getElementById(id); if(!el)return;
+  el.classList.add('act');
+  if(work) await work(); else if(ms) await delay(ms);
+  el.classList.remove('act'); el.classList.add('done');
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -653,44 +665,113 @@ Output ONLY the three paragraphs separated by a blank line.`;
     const d=await r.json();S.liText=d.content.map(b=>b.text||'').join('').trim();
   }catch(e){S.liText=`[Could not generate — check API connection]\nProfile: ${S.arch.name}, ${S.overall}/100`;}
 }
-async function genQA(){
+const QA_STD = [
+  '"Tell me about yourself."',
+  '"What\'s your greatest professional strength?"',
+  '"How do you handle situations where there\'s no clear right answer?"',
+  '"Tell me about a time you had to push back on something you disagreed with."',
+  '"What makes you different from other candidates?"'
+];
+const QA_PRO_EXTRA = [
+  '"Describe a time you failed and what you learned from it."',
+  '"Tell me about a conflict with a colleague and how you resolved it."',
+  '"How do you stay productive when priorities keep shifting?"',
+  '"Give an example of a decision you made with incomplete information."',
+  '"Where do you see yourself in five years — and how does this role fit?"'
+];
+
+async function genQA(count){
+  count = count||5;
   const{tr}=profileStr();
-  const p=`Write 5 personalised interview answers for someone with this profile:
+  const qs = (count===10 ? [...QA_STD, ...QA_PRO_EXTRA] : QA_STD).map((q,i)=>`${i+1}. ${q}`).join('\n');
+  const p=`Write ${count} personalised interview answers for someone with this profile:
 Archetype: ${S.arch.name}, Scores: ${tr}, Overall: ${S.overall}/100
 
 Questions:
-1. "Tell me about yourself."
-2. "What's your greatest professional strength?"
-3. "How do you handle situations where there's no clear right answer?"
-4. "Tell me about a time you had to push back on something you disagreed with."
-5. "What makes you different from other candidates?"
+${qs}
 
 Each answer: 90-110 words. Specific to their profile. First person. Natural spoken rhythm, as if said aloud in an interview. Ground each answer in their genuine trait scores.
-Return ONLY a JSON array of 5 objects with keys "question" and "answer". No markdown, no fences, no preamble.`;
+Return ONLY a JSON array of ${count} objects with keys "question" and "answer". No markdown, no fences, no preamble.`;
   try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content:p}]})});
+    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:count===10?2000:1200,messages:[{role:'user',content:p}]})});
     const d=await r.json();
     S.qaData=JSON.parse(d.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim());
-  }catch(e){S.qaData=[1,2,3,4,5].map(n=>({question:`Question ${n}`,answer:'[Could not generate — please retry]'}));}
+  }catch(e){S.qaData=Array.from({length:count},(_,i)=>({question:`Question ${i+1}`,answer:'[Could not generate — please retry]'}));}
+}
+
+async function genCover(){
+  const{tr,strong}=profileStr();
+  const p=`Write a cover-letter OPENER for someone with this Humanometer profile.
+Archetype: ${S.arch.name} — "${S.arch.tag}"
+Scores: ${tr}
+Strongest dimension: ${strong.name} (${S.pcts[strong.id]}/100)
+
+Two short paragraphs, around 90 words total. First person. Open with a distinctive sentence that signals who they are professionally. Second paragraph: what they bring that's specific to their top dimensions. Generic enough to fit most roles but specific enough that it reads as genuinely about them.
+Rules: no clichés, no "passionate", no "team player", no hashtags, no salutation, no "Dear Hiring Manager". Output ONLY the two paragraphs separated by a blank line.`;
+  try{
+    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:p}]})});
+    const d=await r.json();S.coverText=d.content.map(b=>b.text||'').join('').trim();
+  }catch(e){S.coverText='[Could not generate — please retry]';}
+}
+
+async function genPlan(){
+  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  const top=sorted[0]; const bottom=sorted[sorted.length-1];
+  const{tr}=profileStr();
+  const p=`Write a focused 30-day development plan for someone with this Humanometer profile.
+Archetype: ${S.arch.name}. Scores: ${tr}. Strongest: ${top.name} (${S.pcts[top.id]}). Developing: ${bottom.name} (${S.pcts[bottom.id]}).
+
+Structure: 4 weekly sections. Each week:
+- A short heading (8 words max)
+- 3 concrete actions (one short paragraph each, 2-3 sentences)
+- One reflection prompt at the end
+
+Goal: develop the user's weakest dimension while leaning into their strongest. Specific, practical, no fluff. Use plain Markdown — bold weekly headings with ** **, dash bullets for actions. No preamble or summary. Around 350 words.`;
+  try{
+    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:p}]})});
+    const d=await r.json();S.planText=d.content.map(b=>b.text||'').join('').trim();
+  }catch(e){S.planText='[Could not generate — please retry]';}
 }
 
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
+/* Render all panels, but only show tabs/panels for what the purchased tier includes.
+   Activates the first allowed tab so the user lands on something visible. */
 function buildDeliverables(){
-  document.getElementById('li-text').textContent=S.liText;
+  // LinkedIn
+  if(S.liText) document.getElementById('li-text').textContent=S.liText;
+  // Interview
   const ql=document.getElementById('qa-list');ql.innerHTML='';
-  S.qaData.forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">0${i+1}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
+  (S.qaData||[]).forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
+  // Cover letter
+  if(S.coverText) document.getElementById('cover-text').textContent=S.coverText;
+  // Plan
+  if(S.planText) document.getElementById('plan-text').textContent=S.planText;
+  // Certificate
   document.getElementById('cert-name').textContent=S.uname||'Your Name';
   document.getElementById('cert-arch').textContent=S.arch.name+' — '+S.arch.tag;
   document.getElementById('cert-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const cs=document.getElementById('cert-scores');cs.innerHTML='';
   TRAITS.forEach(t=>{const el=document.createElement('div');el.className='cscore';el.innerHTML=`<div class="cscore-v" style="color:${t.color}">${S.pcts[t.id]}</div><div class="cscore-l">${t.name.split(' ')[0]}</div>`;cs.appendChild(el);});
+  // Share card on deliverables page
   document.getElementById('dsc-n').textContent=S.overall;
   document.getElementById('dsc-arch').textContent=S.arch.name;
   const dt=document.getElementById('dsc-traits');dt.innerHTML='';
   TRAITS.forEach(t=>{const s=document.createElement('span');s.className='sc-t';s.textContent=`${t.name.split(' ')[0]} ${S.pcts[t.id]}`;dt.appendChild(s);});
-  // Also update deliverables share panel
-  const dspill=document.getElementById('dsc-traits');
-  if(dspill){dspill.innerHTML='';TRAITS.forEach(t=>{const s=document.createElement('span');s.className='sc-t';s.textContent=`${t.name.split(' ')[0]} ${S.pcts[t.id]}`;dspill.appendChild(s);});}
+
+  // Tier-aware tab visibility
+  const allowed = new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
+  ['linkedin','interview','cover','plan','cert','share'].forEach(id=>{
+    const t=document.getElementById('dtab-'+id);
+    const p=document.getElementById('dp-'+id);
+    const ok=allowed.has(id);
+    if(t)t.style.display=ok?'':'none';
+    if(p){p.style.display='';p.classList.remove('act');}
+  });
+  // Activate the first allowed tab
+  const first=[...allowed][0]||'linkedin';
+  const ft=document.getElementById('dtab-'+first); const fp=document.getElementById('dp-'+first);
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('act'));
+  if(ft)ft.classList.add('act'); if(fp)fp.classList.add('act');
 }
 function tab(id,btn){document.querySelectorAll('.dpanel').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('act'));document.getElementById('dp-'+id).classList.add('act');btn.classList.add('act');}
 
@@ -754,7 +835,16 @@ function copyShare(){
 function copyLI(){navigator.clipboard.writeText(S.liText).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1800);});}
 async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').textContent=S.liText;}
 function copyAllQA(){navigator.clipboard.writeText(S.qaData.map((qa,i)=>`${i+1}. ${qa.question}\n\n${qa.answer}`).join('\n\n---\n\n'));}
-async function regenQA(){document.getElementById('qa-list').innerHTML='<div style="color:var(--muted);padding:12px;">Regenerating…</div>';await genQA();const ql=document.getElementById('qa-list');ql.innerHTML='';S.qaData.forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">0${i+1}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});}
+async function regenQA(){
+  document.getElementById('qa-list').innerHTML='<div style="color:var(--muted);padding:12px;">Regenerating…</div>';
+  await genQA(S.selectedPack==='pro'?10:5);
+  const ql=document.getElementById('qa-list');ql.innerHTML='';
+  S.qaData.forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
+}
+function copyCover(){navigator.clipboard.writeText(S.coverText||'');}
+async function regenCover(){document.getElementById('cover-text').textContent='Regenerating…';await genCover();document.getElementById('cover-text').textContent=S.coverText;}
+function copyPlan(){navigator.clipboard.writeText(S.planText||'');}
+async function regenPlan(){document.getElementById('plan-text').textContent='Regenerating…';await genPlan();document.getElementById('plan-text').textContent=S.planText;}
 function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
 
 function retake(){show('landing');}
@@ -780,15 +870,26 @@ function buildAffiliateCards(){
   });
 }
 
+/* Single source of truth for tier definitions — used by buyPack, runFulfilment,
+   buildDeliverables. Keep aligned with PRODUCTS in src/worker.js. */
+const PACKS = {
+  boost:  { name:'LinkedIn Boost',  price:4.99,
+            includes:['LinkedIn About rewrite','Verified certificate','Permanent results page'],
+            tabs:['linkedin','cert','share'] },
+  career: { name:'Career Pack',     price:9.99,
+            includes:['LinkedIn About rewrite','5 personalised interview answers','Career synthesis','Full results PDF','Verified certificate'],
+            tabs:['linkedin','interview','cert','share'] },
+  pro:    { name:'Interview Pro',   price:14.99,
+            includes:['LinkedIn About rewrite','10 personalised interview answers','Tailored cover-letter opener','30-day development plan','Verified certificate'],
+            tabs:['linkedin','interview','cover','plan','cert','share'] }
+};
+
 function buyPack(type){
+  const pack=PACKS[type]; if(!pack)return;
   S.selectedPack=type;
-  const prices={results:9.99,benchmark:3.99,bundle:10.99};
-  document.getElementById('mpay-lbl').textContent=`Pay £${prices[type].toFixed(2)} · Instant Access`;
-  let rows='';
-  if(type==='results'){rows=`<div class="orow"><span>LinkedIn Rewrite</span><span>included</span></div><div class="orow"><span>5 Interview Answers</span><span>included</span></div><div class="orow"><span>Career Synthesis</span><span>included</span></div>`;}
-  else if(type==='benchmark'){rows=`<div class="orow"><span>Permanent results page</span><span>included</span></div><div class="orow"><span>Verified certificate PDF</span><span>included</span></div><div class="orow"><span>Annual re-test + comparison</span><span>included</span></div>`;}
-  else{rows=`<div class="orow"><span>Results Pack</span><span>£9.99</span></div><div class="orow"><span>Benchmark (year 1)</span><span>£1.00</span></div><div class="orow" style="color:var(--ok)"><span>Bundle saving</span><span>−£3.99</span></div>`;}
-  rows+=`<div class="orow"><span>Total</span><span>£${prices[type].toFixed(2)}</span></div>`;
+  document.getElementById('mpay-lbl').textContent=`Pay £${pack.price.toFixed(2)} · Instant Access`;
+  const rows = pack.includes.map(i=>`<div class="orow"><span>${i}</span><span>included</span></div>`).join('')
+    + `<div class="orow"><span>Total</span><span>£${pack.price.toFixed(2)}</span></div>`;
   document.getElementById('morder').innerHTML=rows;
   document.getElementById('pf-step').style.display='block';
   document.getElementById('proc-step').classList.remove('show');

@@ -17,7 +17,23 @@
       "Bash(node -e ' *)",
       "Bash(file public/og-image.png)",
       "Bash(curl -s https://humanometer.stevejeffery1703.workers.dev/)",
-      "Bash(curl -sk https://humanometer.stevejeffery1703.workers.dev/)"
+      "Bash(curl -sk https://humanometer.stevejeffery1703.workers.dev/)",
+      "Bash(git config *)",
+      "Bash(echo \"sslBackend: $?\")",
+      "Bash(echo \"sslCAInfo: $?\")",
+      "Bash(echo \"sslVerify: $?\")",
+      "Bash(echo \"set http.sslBackend = $\\(git config --global --get http.sslBackend\\)\")",
+      "mcp__mcp-registry__list_connectors",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(cd \"/c/Users/steve/.claude/plugins\" 2>/dev/null && find . -maxdepth 4 -iname \"*stripe*\" 2>/dev/null | head -20 *)",
+      "Bash(curl -sk -X POST https://humanometer.stevejeffery1703.workers.dev/api/email -H 'Content-Type: application/json' -d '{\"name\":\"Steve\",\"email\":\"sj@allsaintskirk.com\",\"scores\":{\"adaptive\":72,\"ethical\":81,\"creative\":64,\"empathic\":58,\"critical\":77}}')",
+      "Bash(curl -s http://localhost:8788/api/counter)",
+      "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"boost\"}')",
+      "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"career\"}')",
+      "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"pro\"}')",
+      "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"nonexistent\"}')",
+      "Bash(curl -sk -X POST https://humanometer.com/api/checkout -H 'Content-Type: application/json' -d '{\"product\":\"boost\"}')",
+      "Bash(curl -skI \"https://www.humanometer.com/\")"
     ]
   }
 }
