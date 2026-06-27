@@ -32,14 +32,26 @@ async function handleCounter(request, env) {
 
 // ── /api/generate ────────────────────────────────────────────
 
+// Models the frontend is allowed to request. Anything else falls back to default.
+const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'];
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
+
 async function handleGenerate(request, env) {
-  let prompt;
+  let body;
   try {
-    ({ prompt } = await request.json());
+    body = await request.json();
   } catch (e) {
     return json({ error: 'Invalid JSON' }, 400);
   }
-  if (!prompt) return json({ error: 'No prompt' }, 400);
+
+  const messages = body.messages;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return json({ error: 'No messages' }, 400);
+  }
+
+  // Validate model against allowlist and clamp max_tokens (public endpoint — limit abuse)
+  const model = ALLOWED_MODELS.includes(body.model) ? body.model : DEFAULT_MODEL;
+  const max_tokens = Math.min(Math.max(parseInt(body.max_tokens) || 1024, 1), 2000);
 
   try {
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -49,28 +61,15 @@ async function handleGenerate(request, env) {
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        stream: true,
-        system: 'You are a professional career development expert. Write clearly and confidently. Be specific. Avoid corporate clichés.',
-        messages: [{ role: 'user', content: prompt }],
-      }),
+      body: JSON.stringify({ model, max_tokens, messages }),
     });
 
+    const data = await upstream.json();
     if (!upstream.ok) {
-      const err = await upstream.text();
-      return json({ error: err }, 502);
+      return json({ error: data.error?.message || 'Anthropic API error' }, 502);
     }
-
-    return new Response(upstream.body, {
-      headers: {
-        ...CORS,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'X-Accel-Buffering': 'no',
-      },
-    });
+    // Return the raw Anthropic response — the frontend reads data.content[].text
+    return json(data);
   } catch (e) {
     return json({ error: e.message }, 500);
   }
@@ -118,8 +117,9 @@ async function handleEmail(request, env) {
 // ── /api/checkout ────────────────────────────────────────────
 
 const PRODUCTS = {
-  'results-pack': { name: 'Humanometer Results Pack',    amount: 999, currency: 'gbp', mode: 'payment' },
-  'benchmark':    { name: 'Humanometer Benchmark Access', amount: 399, currency: 'gbp', mode: 'subscription' },
+  'results':   { name: 'Humanometer Results Pack',     amount: 999,  currency: 'gbp', mode: 'payment' },
+  'benchmark': { name: 'Humanometer Benchmark Access', amount: 399,  currency: 'gbp', mode: 'subscription' },
+  'bundle':    { name: 'Humanometer Complete Pack',    amount: 1099, currency: 'gbp', mode: 'payment' },
 };
 
 async function handleCheckout(request, env) {

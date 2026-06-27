@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(where wrangler *)",
-      "Bash(npx wrangler *)"
+      "Bash(npx wrangler *)",
+      "Bash(not exist *)",
+      "Bash(mkdir -p .claude)",
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:claude.ai)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(curl -s http://localhost:8788/)",
+      "Bash(curl -s http://localhost:8788/styles.css)",
+      "Bash(curl -s http://localhost:8788/app.js)",
+      "Bash(command -v rsvg-convert magick convert inkscape)",
+      "Bash(node -e \"try{require.resolve\\('sharp'\\);console.log\\('sharp available'\\)}catch\\(e\\){console.log\\('no sharp'\\)}\")",
+      "Bash(node -e ' *)",
+      "Bash(file public/og-image.png)"
     ]
   }
 }
