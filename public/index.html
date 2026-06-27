@@ -98,90 +98,141 @@
 <div id="landing" class="screen active">
   <header class="topbar" role="banner">
     <div class="topbar-logo">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
         <path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/>
         <circle cx="11" cy="12" r="1.4" fill="#d4a843"/>
         <line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
-    <span style="font-size:11px;color:var(--muted);letter-spacing:.06em;">Free &middot; 5 minutes</span>
+    <span class="topbar-meta">Free · 5 min</span>
   </header>
   <main class="land-inner" role="main" id="main-content">
+    <!-- HERO — CTA above the fold -->
     <p class="hero-instrument-label">Professional Human Capability Assessment</p>
     <h1 class="hero">Discover your <em>professional edge</em></h1>
-    <p class="deck">A precision reading of the professional skills that make you irreplaceable</p>
-    <div class="hrule"></div>
-    <p class="lede">AI is changing what employers need from people — fast. This free assessment identifies your specific strengths across five capabilities that research shows AI cannot replicate.</p>
+    <p class="deck">A precision reading of the five professional capabilities AI cannot replicate</p>
 
-    <div id="counter-wrap" class="social-proof hidden" aria-live="polite">
-      <div class="sp-avatars" aria-hidden="true">
-        <div class="sp-av" style="background:#1a2535;">&#128105;</div>
-        <div class="sp-av" style="background:#1e1a35;">&#129473;</div>
-        <div class="sp-av" style="background:#1a2a25;">&#128104;</div>
-        <div class="sp-av" style="background:#2a1a1a;">&#128105;</div>
-        <div class="sp-av" style="background:#1a2030;">&#129473;</div>
+    <div class="hero-actions">
+      <button class="cta-btn" onclick="startQuiz()" aria-label="Start the free Humanometer assessment">Take Your Reading <span class="cta-arrow">→</span></button>
+      <div class="cta-meta">
+        <span><strong>15</strong> scenarios</span>
+        <span class="cta-meta-sep">·</span>
+        <span><strong>5</strong> minutes</span>
+        <span class="cta-meta-sep">·</span>
+        <span>Full results free</span>
       </div>
-      <p class="sp-text"><strong id="counter-display"></strong> professionals have taken their Humanometer reading</p>
     </div>
 
-    <section class="context-block" aria-labelledby="why-heading">
-      <h2 id="why-heading" class="context-block-h2">Why this matters right now</h2>
-      <p>Half of all professionals are worried about AI replacing their role. Most of that anxiety is misdirected — AI replaces tasks, not people. The professionals thriving right now are those who can clearly articulate what they bring that AI cannot.</p>
-      <p>The five dimensions this assessment measures are drawn from World Economic Forum future-of-work research, LinkedIn&#39;s analysis of the fastest-growing in-demand skills, and employer data on what actually differentiates candidates in 2026. Your results are a specific, scored breakdown &#8212; not a personality label.</p>
-      <div class="stat-row">
-        <div class="stat-item"><div class="stat-num">51%</div><div class="stat-lbl">of workers worried about AI displacement in 2026</div></div>
-        <div class="stat-item"><div class="stat-num">56%</div><div class="stat-lbl">wage premium for workers with strong human&#8209;AI collaboration skills</div></div>
-        <div class="stat-item"><div class="stat-num">6%</div><div class="stat-lbl">of companies actively reskilling &#8212; most people are on their own</div></div>
-      </div>
-    </section>
+    <!-- Live counter — clean dots, no emoji avatars -->
+    <div id="counter-wrap" class="social-proof hidden" aria-live="polite">
+      <div class="sp-pulse" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="sp-text"><strong id="counter-display"></strong> professionals already read</p>
+    </div>
 
-    <h2 class="dims-label">Five dimensions measured</h2>
-    <div class="pills" role="list">
+    <!-- TRAIT PILLS — quick scan of what's measured -->
+    <div class="pills" role="list" aria-label="The five dimensions">
       <div class="pill" role="listitem">Adaptive Thinking</div>
       <div class="pill" role="listitem">Ethical Judgement</div>
       <div class="pill" role="listitem">Creative Synthesis</div>
       <div class="pill" role="listitem">Empathic Accuracy</div>
       <div class="pill" role="listitem">Critical Scepticism</div>
     </div>
-    <div class="meta">
-      <div class="mi"><div class="dot"></div>15 scenario questions</div>
-      <div class="mi"><div class="dot"></div>Around 5 minutes</div>
-      <div class="mi"><div class="dot"></div>Detailed free results</div>
-      <div class="mi"><div class="dot"></div>No account required</div>
+
+    <!-- ACCORDIONS — heavy content collapsed by default -->
+    <div class="accordions">
+      <details class="accordion">
+        <summary>Why this matters right now</summary>
+        <div class="accordion-body">
+          <p>Half of all professionals are worried about AI replacing their role. Most of that anxiety is misdirected — AI replaces tasks, not people. The ones thriving are those who can clearly articulate what they bring that AI cannot.</p>
+          <p>The five dimensions measured here are drawn from World Economic Forum future-of-work research, LinkedIn's analysis of the fastest-growing in-demand skills, and employer data on what differentiates candidates in 2026. Your results are a specific, scored breakdown — not a personality label.</p>
+          <div class="stat-row">
+            <div class="stat-item"><div class="stat-num">51%</div><div class="stat-lbl">of workers worried about AI displacement in 2026</div></div>
+            <div class="stat-item"><div class="stat-num">56%</div><div class="stat-lbl">wage premium for strong human-AI collaboration skills</div></div>
+            <div class="stat-item"><div class="stat-num">6%</div><div class="stat-lbl">of companies actively reskilling — most people are on their own</div></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>How it works</summary>
+        <div class="accordion-body">
+          <div class="method-grid">
+            <div class="mi2"><div class="mn">15</div><div class="mt">Real-world scenarios with no obviously correct answer. Your instinctive response reveals more than a considered one.</div></div>
+            <div class="mi2"><div class="mn">5</div><div class="mt">Dimensions scored independently. Most people score very differently across the five — that's the point.</div></div>
+            <div class="mi2"><div class="mn">35s</div><div class="mt">Per question. The timer captures instinctive judgment. Instinct is harder to fake and more predictive than deliberate performance.</div></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>Frequently asked questions</summary>
+        <div class="accordion-body">
+          <div class="faq-item">
+            <h3 class="faq-q">What is the Humanometer?</h3>
+            <p class="faq-a">A free 5-minute online assessment measuring five professional capabilities AI cannot replicate: Adaptive Thinking, Ethical Judgement, Creative Synthesis, Empathic Accuracy, and Critical Scepticism. You get a scored reading across each dimension — not a single personality label.</p>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-q">Is it free?</h3>
+            <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. Optional one-time paid packs (from £4.99) generate AI-personalised LinkedIn copy, interview answers, and more from your exact scores.</p>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-q">How is this different from a personality test?</h3>
+            <p class="faq-a">Unlike Myers-Briggs or 16Personalities, the Humanometer is grounded in current labour-market research on which human skills are growing in demand because of AI. It produces five independently scored dimensions rather than a fixed personality type.</p>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-q">How long does it take?</h3>
+            <p class="faq-a">About 5 minutes — 15 timed scenario questions designed to capture instinctive rather than deliberated answers, which research shows are more predictive of genuine capability.</p>
+          </div>
+        </div>
+      </details>
     </div>
-    <button class="cta-btn" onclick="startQuiz()" aria-label="Start the free Humanometer assessment">Take Your Reading &#x2192;</button>
-    <p class="sub-note">Free &middot; Timed questions to keep results honest &middot; Share your results when done</p>
 
-    <section class="method-note" aria-labelledby="how-heading">
-      <h2 id="how-heading" class="method-hd">How the Humanometer works</h2>
-      <div class="method-grid">
-        <div class="mi2"><div class="mn">15</div><div class="mt">Real-world scenarios with no obviously correct answer. Your instinctive response reveals more than a considered one.</div></div>
-        <div class="mi2"><div class="mn">5</div><div class="mt">Dimensions scored independently. Most people score very differently across the five &#8212; that&#39;s the point.</div></div>
-        <div class="mi2"><div class="mn">25s</div><div class="mt">Per question. The timer captures instinctive judgment. Instinct is harder to fake and more predictive than deliberate performance.</div></div>
-      </div>
-    </section>
-
-    <section class="faq-section" aria-labelledby="faq-heading">
-      <h2 id="faq-heading" class="method-hd">Frequently asked questions</h2>
-      <div class="faq-item">
-        <h3 class="faq-q">What is the Humanometer?</h3>
-        <p class="faq-a">A free 5-minute online assessment measuring five professional capabilities AI cannot replicate: Adaptive Thinking, Ethical Judgement, Creative Synthesis, Empathic Accuracy, and Critical Scepticism. You get a scored reading across each dimension &#8212; not a single personality label.</p>
-      </div>
-      <div class="faq-item">
-        <h3 class="faq-q">Is it free?</h3>
-        <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. The optional Results Pack (£9.99) generates a LinkedIn-ready summary, personalised interview answers, and a career synthesis from your exact scores.</p>
-      </div>
-      <div class="faq-item">
-        <h3 class="faq-q">How is this different from a personality test?</h3>
-        <p class="faq-a">Unlike Myers-Briggs or 16Personalities, the Humanometer is grounded in current labour-market research on which human skills are growing in demand because of AI. It produces five independently scored dimensions rather than a fixed personality type.</p>
-      </div>
-      <div class="faq-item">
-        <h3 class="faq-q">How long does it take?</h3>
-        <p class="faq-a">About 5 minutes &#8212; 15 questions, each timed at 25&#8211;30 seconds to capture instinctive rather than deliberated answers, which research shows are more predictive of genuine capability.</p>
-      </div>
-    </section>
+    <!-- Secondary CTA — for people who scrolled the accordions -->
+    <div class="hero-actions hero-actions-bottom">
+      <button class="cta-btn" onclick="startQuiz()" aria-label="Start the free Humanometer assessment">Take Your Reading <span class="cta-arrow">→</span></button>
+    </div>
   </main>
+</div>
+
+<!-- ══ PRE-QUIZ READINESS ══ -->
+<div id="prequiz" class="screen">
+  <header class="topbar" role="banner">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="1.4" fill="#d4a843"/><line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div class="wm">Human<b>ometer</b></div>
+    </div>
+    <button class="ghost-btn" onclick="show('landing')">← Back</button>
+  </header>
+  <div class="prequiz-inner">
+    <p class="hero-instrument-label">Before you begin</p>
+    <h2 class="prequiz-title">A few seconds to get ready</h2>
+    <div class="prequiz-points">
+      <div class="prequiz-point">
+        <div class="prequiz-num">1</div>
+        <div>
+          <div class="prequiz-h">Answer instinctively</div>
+          <p>There are no right answers. The first answer that feels true to <em>you</em> is more accurate than the one you think you should give.</p>
+        </div>
+      </div>
+      <div class="prequiz-point">
+        <div class="prequiz-num">2</div>
+        <div>
+          <div class="prequiz-h">Each question is timed (~35 seconds)</div>
+          <p>The timer keeps your reading honest. Don't overthink — go with your first instinct.</p>
+        </div>
+      </div>
+      <div class="prequiz-point">
+        <div class="prequiz-num">3</div>
+        <div>
+          <div class="prequiz-h">Set aside 5 quiet minutes</div>
+          <p>You'll get the most accurate reading if you can focus without interruption. The whole assessment takes about 5 minutes.</p>
+        </div>
+      </div>
+    </div>
+    <button class="cta-btn" onclick="actuallyStartQuiz()">I'm Ready — Begin <span class="cta-arrow">→</span></button>
+    <p class="sub-note">Your answers stay on this device. Nothing is shared until you choose to share it.</p>
+  </div>
 </div>
 
 <!-- ══ QUIZ ══ -->

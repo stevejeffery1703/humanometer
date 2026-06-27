@@ -82,6 +82,31 @@ let S={
 /* ═══════════════════════════ UTILS ═══════════════════════════ */
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* Session persistence — mobile browsers aggressively unload tabs.
+   We save once results are computed so a user who switches apps and returns
+   lands back on their results, not the home page. */
+const HM_SESSION_KEY='hm_completed_session';
+function saveSession(){
+  try{
+    sessionStorage.setItem(HM_SESSION_KEY,JSON.stringify({
+      pcts:S.pcts,overall:S.overall,arch:S.arch,uname:S.uname,savedEmail:S.savedEmail
+    }));
+  }catch(e){}
+}
+function loadSession(){
+  try{
+    const raw=sessionStorage.getItem(HM_SESSION_KEY);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d||!d.pcts||!d.arch)return false;
+    S.pcts=d.pcts;S.overall=d.overall;S.arch=d.arch;
+    if(d.uname)S.uname=d.uname;
+    if(d.savedEmail)S.savedEmail=d.savedEmail;
+    return true;
+  }catch(e){return false;}
+}
+function clearSession(){try{sessionStorage.removeItem(HM_SESSION_KEY);}catch(e){}}
 function getBand(tid,pct){return BANDS[tid].find(b=>pct>=b.min);}
 
 /* ── REAL COUNTER via Cloudflare Pages Function ──
@@ -112,7 +137,12 @@ async function bumpCounter(){
 }
 
 /* ═══════════════════════════ QUIZ ═══════════════════════════ */
-function startQuiz(){
+// startQuiz shows the readiness interstitial; actuallyStartQuiz begins the questions.
+// Prevents mid-flow abandonment by setting expectations first (timer, instinct, focus).
+function startQuiz(){ show('prequiz'); }
+
+function actuallyStartQuiz(){
+  clearSession(); // fresh attempt — drop any previously-persisted results
   S={...S,qi:0,scores:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},maxes:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},susp:0,prods:new Set(['bundle']),sharedOnce:false};
   bumpCounter();
   show('quiz');
@@ -137,20 +167,13 @@ function renderQ(){
   // Progress
   document.getElementById('prog').style.width=pct+'%';
   document.getElementById('prog-pct').textContent=pct+'%';
-  document.getElementById('prog-label').innerHTML=`<strong>Taking your reading…</strong> Question ${S.qi+1} of ${QS.length}`;
+  document.getElementById('prog-label').innerHTML=`<strong>${S.qi+1}</strong> / ${QS.length}`;
   document.getElementById('q-section-lbl').textContent=`${tr.name} · ${(S.qi%3)+1} of 3`;
 
-  // Trait marker
-  const isFirstInTrait=(S.qi%3===0);
+  // Trait section marker removed — the .trait-tag below already shows the trait name.
+  // Keep the element hidden in case any CSS references it.
   const marker=document.getElementById('trait-marker');
-  const tsm=document.getElementById('tsm-inner');
-  if(isFirstInTrait){
-    tsm.textContent=`${tr.name} — 3 questions`;
-    tsm.style.color=tr.color;
-    marker.style.display='block';
-  } else {
-    marker.style.display='none';
-  }
+  if(marker)marker.style.display='none';
 
   // Question text
   const qt=document.getElementById('qtext');
@@ -158,7 +181,9 @@ function renderQ(){
   qt.textContent=q.text;
   document.getElementById('ttag').textContent=tr.name;
   document.getElementById('ttag').style.color=tr.color;
-  document.getElementById('qlbl').textContent=`Question ${S.qi+1} of ${QS.length}`;
+  // qlbl removed — progress bar already shows "N / 15"
+  const qlbl=document.getElementById('qlbl');
+  if(qlbl)qlbl.style.display='none';
 
   // Options
   const container=document.getElementById('opts');
@@ -173,7 +198,9 @@ function renderQ(){
     container.appendChild(btn);
   });
 
-  startTim(q.secs||25);
+  // Per-question times in data are 25–30s; +10s gives users more breathing room while
+  // preserving the instinctive-answer signal. Adjust here, not in the 15 question rows.
+  startTim((q.secs||25) + 10);
   S.at=Date.now();
 
   // Midpoint toast at Q8
@@ -220,6 +247,7 @@ async function showReveal(){
   TRAITS.forEach(t=>{S.pcts[t.id]=Math.round((S.scores[t.id]/S.maxes[t.id])*100);});
   S.overall=Math.round(Object.values(S.pcts).reduce((a,b)=>a+b,0)/5);
   S.arch=ARCHETYPES.find(a=>S.overall>=a.min)||ARCHETYPES[ARCHETYPES.length-1];
+  saveSession(); // persist so app-switch on mobile doesn't lose results
 
   show('reveal');
   const revNum=document.getElementById('rev-num');
@@ -626,16 +654,27 @@ async function stepUI(id, ms, work){
 document.addEventListener('DOMContentLoaded',()=>{
   initCounter();
   const params=new URLSearchParams(window.location.search);
+
+  // Post-Stripe-redirect fulfilment (highest priority — takes over the page)
   if(params.get('paid')==='true'){
     const saved=sessionStorage.getItem('hm_state');
     if(saved){
       try{
         const d=JSON.parse(saved);
         S.pcts=d.pcts;S.overall=d.overall;S.arch=d.arch;S.uname=d.uname;S.savedEmail=d.savedEmail;S.selectedPack=d.selectedPack;
-        history.replaceState({},'',window.location.pathname); // avoid re-trigger on refresh
+        history.replaceState({},'',window.location.pathname);
         runFulfilment();
+        return;
       }catch(e){}
     }
+  }
+
+  // Restore the user's results if the tab was reloaded (mobile app-switching
+  // commonly unloads the page). Without this they're dumped back at the home
+  // page after taking the test, which feels like their work was lost.
+  if(loadSession()){
+    buildResults();
+    show('results');
   }
 });
 
@@ -847,7 +886,7 @@ function copyPlan(){navigator.clipboard.writeText(S.planText||'');}
 async function regenPlan(){document.getElementById('plan-text').textContent='Regenerating…';await genPlan();document.getElementById('plan-text').textContent=S.planText;}
 function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
 
-function retake(){show('landing');}
+function retake(){clearSession();show('landing');}
 function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 20;if(s>=55)return 35;return 50;}
 
 function buildAffiliateCards(){

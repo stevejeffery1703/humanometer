@@ -33,7 +33,9 @@
       "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"pro\"}')",
       "Bash(curl -s -X POST http://localhost:8788/api/checkout -H \"Content-Type: application/json\" -d '{\"product\":\"nonexistent\"}')",
       "Bash(curl -sk -X POST https://humanometer.com/api/checkout -H 'Content-Type: application/json' -d '{\"product\":\"boost\"}')",
-      "Bash(curl -skI \"https://www.humanometer.com/\")"
+      "Bash(curl -skI \"https://www.humanometer.com/\")",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)"
     ]
   }
 }
