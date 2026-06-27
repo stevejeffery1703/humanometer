@@ -1,0 +1,17 @@
+{
+  "name": "humanometer",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-06-27",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  // Add your KV namespace IDs after running: npx wrangler kv namespace create HUMANOMETER_KV
+  "kv_namespaces": [
+    {
+      "binding": "HUMANOMETER_KV",
+      "id": "7dc0a0e8f083431aa042405000d3ffa4",
+      "preview_id": "9fba73948fdc4a49a84eed7255cd6441"
+    }
+  ]
+}

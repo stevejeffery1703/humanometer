@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humanometer — Discover Your Professional Edge</title>
+<meta name="description" content="A 15-question assessment that reveals your unique professional capability profile. Takes 5 minutes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1e293b;--navy-dark:#0f172a;--amber:#f59e0b;--amber-dark:#d97706;
+  --green:#059669;--bg:#f1f5f9;--white:#fff;--text:#1e293b;--muted:#64748b;
+  --border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.1),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.15),0 8px 32px rgba(0,0,0,.1);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.section{display:none}
+.section.active{display:block}
+
+/* NAV */
+nav{background:var(--navy);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:1.25rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--amber)}
+.counter-badge{font-size:.75rem;color:#94a3b8;font-weight:500}
+
+/* HERO */
+#hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);color:#fff;padding:5rem 1.5rem 4rem;text-align:center;min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#hero.active{display:flex}
+.hero-badge{display:inline-block;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--amber);font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.375rem 1rem;border-radius:100px;margin-bottom:1.5rem}
+.hero-title{font-size:clamp(2.25rem,5vw,3.5rem);font-weight:800;line-height:1.15;letter-spacing:-.03em;margin-bottom:1.25rem;max-width:700px}
+.hero-title em{font-style:normal;color:var(--amber)}
+.hero-sub{font-size:1.125rem;color:#94a3b8;max-width:520px;margin:0 auto 2.5rem;font-weight:400}
+.btn-primary{background:var(--amber);color:var(--navy);font-weight:700;font-size:1rem;padding:.875rem 2.25rem;border:none;border-radius:8px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;font-family:inherit}
+.btn-primary:hover{background:var(--amber-dark);transform:translateY(-1px);box-shadow:0 8px 24px rgba(245,158,11,.35)}
+.hero-stats{display:flex;gap:2.5rem;justify-content:center;margin-top:3rem;flex-wrap:wrap}
+.hero-stat strong{display:block;font-size:1.75rem;font-weight:800;color:#fff;line-height:1;margin-bottom:.25rem}
+.hero-stat span{font-size:.8125rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.traits-preview{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:2.5rem}
+.trait-chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#cbd5e1;font-size:.8125rem;font-weight:500;padding:.375rem .875rem;border-radius:100px}
+
+/* ASSESSMENT */
+#assessment{min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem}
+#assessment.active{display:flex}
+.progress-bar-wrap{width:100%;max-width:640px;margin-bottom:2rem}
+.progress-meta{display:flex;justify-content:space-between;font-size:.8125rem;font-weight:500;color:var(--muted);margin-bottom:.5rem}
+.progress-track{height:6px;background:#e2e8f0;border-radius:100px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--amber),#fbbf24);border-radius:100px;transition:width .4s ease}
+.question-card{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:2.5rem;width:100%;max-width:640px}
+.trait-label{display:inline-flex;align-items:center;gap:.375rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:1.25rem}
+.trait-dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.question-text{font-size:1.25rem;font-weight:600;line-height:1.45;color:var(--text);margin-bottom:2rem}
+.answer-options{display:flex;flex-direction:column;gap:.75rem}
+.answer-btn{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:inherit}
+.answer-btn:hover{border-color:var(--amber);background:#fffbeb}
+.answer-btn.selected{border-color:var(--amber);background:#fffbeb}
+.answer-btn.selected .answer-dot{background:var(--amber);border-color:var(--amber)}
+.answer-dot{width:20px;height:20px;border-radius:50%;border:2px solid #cbd5e1;flex-shrink:0;transition:all .18s}
+.answer-label{font-size:.875rem;font-weight:600;color:var(--muted);min-width:2rem;flex-shrink:0}
+.answer-text{font-size:.9375rem;font-weight:500;color:var(--text);line-height:1.4}
+
+/* ANALYSING */
+#analysing{min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+#analysing.active{display:flex}
+.spinner{width:56px;height:56px;border:4px solid #e2e8f0;border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* EMAIL MODAL */
+#email-modal{position:fixed;inset:0;background:rgba(15,23,42,.75);display:none;align-items:center;justify-content:center;z-index:200;padding:1.5rem}
+#email-modal.active{display:flex}
+.modal-card{background:#fff;border-radius:20px;padding:2.5rem;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.modal-card h2{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.modal-card>p{color:var(--muted);font-size:.9375rem;margin-bottom:1.5rem}
+.email-form{display:flex;flex-direction:column;gap:.875rem}
+.email-form input{padding:.875rem 1rem;border:2px solid var(--border);border-radius:8px;font-size:.9375rem;font-family:inherit;outline:none;transition:border-color .18s;width:100%}
+.email-form input:focus{border-color:var(--amber)}
+.btn-full{width:100%;justify-content:center}
+.skip-link{text-align:center;margin-top:.875rem;font-size:.8125rem;color:var(--muted)}
+.skip-link a{color:var(--muted);cursor:pointer;text-decoration:underline}
+
+/* RESULTS */
+#results{padding:3rem 1.5rem 5rem;max-width:800px;margin:0 auto}
+.results-header{text-align:center;margin-bottom:2.5rem}
+.results-header h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
+.results-header p{color:var(--muted);font-size:1rem}
+.combination-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);color:#fff;border-radius:16px;padding:2rem;margin-bottom:2rem;text-align:center}
+.combo-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--amber);margin-bottom:.5rem}
+.combo-type{font-size:1.75rem;font-weight:800;margin-bottom:.75rem}
+.combo-desc{font-size:.9375rem;color:#94a3b8;max-width:500px;margin:0 auto;line-height:1.6}
+.chart-wrap{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:2rem;margin-bottom:2rem;display:flex;flex-direction:column;align-items:center}
+.chart-wrap h3{font-size:.8125rem;font-weight:600;margin-bottom:1.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+#radarChart{max-width:320px;width:100%}
+.trait-bars{display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem;width:100%}
+.trait-bar-item{display:flex;align-items:center;gap:1rem}
+.trait-bar-name{font-size:.875rem;font-weight:600;width:100px;flex-shrink:0}
+.trait-bar-track{flex:1;height:10px;background:#f1f5f9;border-radius:100px;overflow:hidden}
+.trait-bar-fill{height:100%;border-radius:100px;transition:width 1s ease;width:0}
+.trait-bar-pct{font-size:.875rem;font-weight:700;width:3rem;text-align:right;flex-shrink:0}
+.section-label{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:1rem}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+@media(max-width:560px){.results-grid{grid-template-columns:1fr}}
+.trait-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:1.5rem;border-top:4px solid transparent}
+.trait-card.strength{border-top-color:var(--green)}
+.trait-card.development{border-top-color:var(--amber)}
+.trait-card-label{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.trait-card.strength .trait-card-label{color:var(--green)}
+.trait-card.development .trait-card-label{color:var(--amber-dark)}
+.trait-card h4{font-size:1.125rem;font-weight:700;margin-bottom:.375rem}
+.trait-card p{font-size:.875rem;color:var(--muted);line-height:1.5}
+.share-section{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:1.75rem;margin-bottom:2rem;text-align:center}
+.share-section h3{font-size:1rem;font-weight:700;margin-bottom:.375rem}
+.share-section p{font-size:.875rem;color:var(--muted);margin-bottom:1.25rem}
+.share-buttons{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.share-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.625rem 1.125rem;border-radius:8px;font-size:.875rem;font-weight:600;border:none;cursor:pointer;transition:all .18s;font-family:inherit}
+.share-btn:hover{transform:translateY(-1px);opacity:.9}
+.share-btn.linkedin{background:#0077b5;color:#fff}
+.share-btn.twitter{background:#000;color:#fff}
+.share-btn.whatsapp{background:#25d366;color:#fff}
+.share-btn.copy{background:#f1f5f9;color:var(--text);border:1px solid var(--border)}
+.upsell-section{margin-bottom:2rem}
+.upsell-section h2{font-size:1.375rem;font-weight:700;margin-bottom:.375rem}
+.upsell-section>p{color:var(--muted);margin-bottom:1.25rem;font-size:.9375rem}
+.upsell-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:560px){.upsell-cards{grid-template-columns:1fr}}
+.upsell-card{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:1.75rem;border:2px solid transparent;transition:all .2s;position:relative}
+.upsell-card.featured{border-color:var(--amber)}
+.upsell-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--navy);font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.25rem .875rem;border-radius:100px;white-space:nowrap}
+.upsell-card h3{font-size:1.0625rem;font-weight:700;margin-bottom:.25rem}
+.upsell-price{font-size:1.75rem;font-weight:800;color:var(--navy);margin:.75rem 0;line-height:1}
+.upsell-price sub{font-size:.875rem;font-weight:500;color:var(--muted)}
+.upsell-features{list-style:none;margin-bottom:1.25rem}
+.upsell-features li{font-size:.875rem;color:var(--muted);padding:.25rem 0;display:flex;align-items:flex-start;gap:.5rem}
+.upsell-features li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
+.btn-buy{display:block;width:100%;padding:.8125rem;border-radius:8px;font-family:inherit;font-size:.9375rem;font-weight:700;border:none;cursor:pointer;transition:all .18s;text-align:center}
+.btn-buy.primary{background:var(--amber);color:var(--navy)}
+.btn-buy.secondary{background:var(--bg);color:var(--text);border:2px solid var(--border)}
+.btn-buy:hover{transform:translateY(-1px)}
+.btn-buy:disabled{opacity:.6;cursor:not-allowed;transform:none}
+#ai-content{display:none}
+#ai-content.visible{display:block}
+.ai-section{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:1.75rem;margin-bottom:1rem}
+.ai-section h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.ai-section>p{color:var(--muted);font-size:.875rem;margin-bottom:1rem}
+.ai-output{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.9rem;line-height:1.7;white-space:pre-wrap;min-height:80px;color:var(--muted);font-style:italic}
+.ai-output.loaded{color:var(--text);font-style:normal}
+.btn-copy-ai{margin-top:.75rem;background:var(--bg);color:var(--text);border:1px solid var(--border);padding:.5rem 1rem;border-radius:6px;font-family:inherit;font-size:.8125rem;font-weight:600;cursor:pointer;transition:background .18s}
+.btn-copy-ai:hover{background:var(--border)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:#fff;padding:.75rem 1.25rem;border-radius:8px;font-size:.875rem;font-weight:500;z-index:300;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:480px){
+  .question-card{padding:1.5rem}
+  .question-text{font-size:1.1rem}
+  .results-header h1{font-size:1.5rem}
+  .combo-type{font-size:1.375rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Human<span>ometer</span></div>
+  <div class="counter-badge" id="counterBadge"></div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- HERO -->
+<section id="hero" class="section active">
+  <div class="hero-badge">Free 5-Minute Assessment</div>
+  <h1 class="hero-title">Discover your <em>professional edge</em></h1>
+  <p class="hero-sub">15 questions. 5 minutes. A clear picture of where you're strongest — and where to develop next.</p>
+  <button class="btn-primary" onclick="startAssessment()">
+    Start the Assessment
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="traits-preview">
+    <span class="trait-chip">Analytical</span>
+    <span class="trait-chip">Relational</span>
+    <span class="trait-chip">Executional</span>
+    <span class="trait-chip">Creative</span>
+    <span class="trait-chip">Influential</span>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>5</strong><span>Core Traits</span></div>
+    <div class="hero-stat"><strong>15</strong><span>Questions</span></div>
+    <div class="hero-stat"><strong id="heroCount">—</strong><span>Assessed so far</span></div>
+  </div>
+</section>
+
+<!-- ASSESSMENT -->
+<section id="assessment" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-meta">
+      <span id="qProgress">Question 1 of 15</span>
+      <span id="qTraitName"></span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:6.67%"></div>
+    </div>
+  </div>
+  <div class="question-card">
+    <div class="trait-label">
+      <div class="trait-dot" id="traitDot"></div>
+      <span id="traitLabel"></span>
+    </div>
+    <div class="question-text" id="questionText"></div>
+    <div class="answer-options" id="answerOptions"></div>
+  </div>
+</section>
+
+<!-- ANALYSING -->
+<section id="analysing" class="section">
+  <div class="spinner"></div>
+  <h2 style="font-size:1.375rem;font-weight:700;margin-bottom:.5rem">Analysing your responses…</h2>
+  <p style="color:var(--muted);font-size:.9375rem">Building your capability profile</p>
+</section>
+
+<!-- EMAIL MODAL -->
+<div id="email-modal">
+  <div class="modal-card">
+    <h2>Your results are ready</h2>
+    <p>Enter your details to unlock your full capability profile and save your results.</p>
+    <div class="email-form">
+      <input type="text" id="emailName" placeholder="First name" autocomplete="given-name">
+      <input type="email" id="emailAddress" placeholder="Work email" autocomplete="email">
+      <button class="btn-primary btn-full" onclick="submitEmail()">See My Results →</button>
+    </div>
+    <div class="skip-link"><a onclick="skipEmail()">Skip for now</a></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<section id="results" class="section">
+  <div class="results-header">
+    <div class="hero-badge" style="margin-bottom:1rem">Your Capability Profile</div>
+    <h1 id="resultsTitle">Your Humanometer Profile</h1>
+    <p id="resultsSubtitle">Here's how your professional capabilities stack up</p>
+  </div>
+
+  <div class="combination-card">
+    <div class="combo-label">Your Profile Type</div>
+    <div class="combo-type" id="comboType">—</div>
+    <div class="combo-desc" id="comboDesc">—</div>
+  </div>
+
+  <div class="chart-wrap">
+    <h3>Capability Radar</h3>
+    <svg id="radarChart" viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="trait-bars" id="traitBars"></div>
+  </div>
+
+  <div class="section-label">Your Strengths</div>
+  <div class="results-grid" id="strengthsGrid"></div>
+
+  <div class="section-label" style="margin-top:1.5rem">Development Areas</div>
+  <div class="results-grid" id="developmentGrid"></div>
+
+  <div class="share-section">
+    <h3>Share your profile type</h3>
+    <p>Let your network know what makes you stand out professionally</p>
+    <div class="share-buttons">
+      <button class="share-btn linkedin" onclick="share('linkedin')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </button>
+      <button class="share-btn twitter" onclick="share('twitter')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.738-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X / Twitter
+      </button>
+      <button class="share-btn whatsapp" onclick="share('whatsapp')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="share-btn copy" onclick="copyLink()" id="copyBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy Link
+      </button>
+    </div>
+  </div>
+
+  <div class="upsell-section" id="upsellSection">
+    <h2>Get more from your results</h2>
+    <p>Unlock deeper insights and see how you compare to your peers</p>
+    <div class="upsell-cards">
+      <div class="upsell-card featured">
+        <div class="featured-badge">Most Popular</div>
+        <h3>Results Pack</h3>
+        <div class="upsell-price">£9.99 <sub>one-off</sub></div>
+        <ul class="upsell-features">
+          <li>AI-generated LinkedIn profile summary</li>
+          <li>5 tailored interview answers</li>
+          <li>Personalised development plan</li>
+          <li>Downloadable PDF report</li>
+          <li>Shareable profile certificate</li>
+        </ul>
+        <button class="btn-buy primary" id="buyPackBtn" onclick="startCheckout('results-pack',this)">Get Results Pack →</button>
+      </div>
+      <div class="upsell-card">
+        <h3>Benchmark Access</h3>
+        <div class="upsell-price">£3.99 <sub>/ year</sub></div>
+        <ul class="upsell-features">
+          <li>See your percentile rankings</li>
+          <li>Compare across your industry</li>
+          <li>Re-take annually to track growth</li>
+          <li>Trend analysis over time</li>
+        </ul>
+        <button class="btn-buy secondary" id="buyBenchBtn" onclick="startCheckout('benchmark',this)">Add Benchmark →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-content">
+    <h2 style="font-size:1.375rem;font-weight:700;margin-bottom:.375rem">Your AI-Generated Content</h2>
+    <p style="color:var(--muted);font-size:.9375rem;margin-bottom:1.25rem">Personalised to your capability profile</p>
+    <div class="ai-section">
+      <h3>LinkedIn Profile Summary</h3>
+      <p>Ready to add to your profile — click to copy</p>
+      <div class="ai-output" id="linkedinOutput">Generating your LinkedIn summary…</div>
+      <button class="btn-copy-ai" onclick="copyAI('linkedin')">Copy to clipboard</button>
+    </div>
+    <div class="ai-section">
+      <h3>Interview Answers</h3>
+      <p>5 tailored answers based on your strengths</p>
+      <div class="ai-output" id="interviewOutput">Generating your interview answers…</div>
+      <button class="btn-copy-ai" onclick="copyAI('interview')">Copy to clipboard</button>
+    </div>
+  </div>
+</section>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+
+const TRAITS = {
+  A: { name: 'Analytical', color: '#3b82f6' },
+  R: { name: 'Relational',  color: '#10b981' },
+  E: { name: 'Executional', color: '#f59e0b' },
+  C: { name: 'Creative',    color: '#8b5cf6' },
+  I: { name: 'Influential', color: '#ef4444' }
+};
+
+const TRAIT_STRENGTH_DESC = {
+  A: "You think in data and logic, turning complexity into clear insight. You're at your best when solving problems systematically.",
+  R: "You connect with people on a genuine level, reading rooms and building trust. Your empathy is a professional superpower.",
+  E: "You deliver reliably, turning plans into results. Teams count on you to follow through — and you always do.",
+  C: "You generate original ideas and challenge the status quo. You see possibilities others miss.",
+  I: "You shape decisions and inspire action. People take notice when you speak, and follow when you lead."
+};
+
+const TRAIT_DEV_DESC = {
+  A: "Building stronger analytical habits — data literacy, structured problem-solving, and evidence-based decisions — will unlock new levels of impact.",
+  R: "Developing deeper interpersonal awareness and communication flexibility will help you build stronger relationships and lead more effectively.",
+  E: "Strengthening your planning, prioritisation, and follow-through will help you deliver more consistently and earn greater trust.",
+  C: "Building creative confidence — through divergent thinking, exposure to new ideas, and willingness to challenge assumptions — will expand your range.",
+  I: "Developing executive presence, persuasion skills, and the ability to inspire others will significantly amplify your professional impact."
+};
+
+const QUESTIONS = [
+  { trait: 'A', text: "I back my decisions with data and evidence rather than intuition alone." },
+  { trait: 'A', text: "I regularly spot patterns and trends that others in my team miss." },
+  { trait: 'A', text: "When I encounter a problem, I naturally break it down into its component parts." },
+  { trait: 'R', text: "I pick up on how others are feeling even when they don't say it directly." },
+  { trait: 'R', text: "People often come to me when they need to talk something through." },
+  { trait: 'R', text: "I adjust my communication style depending on who I'm talking to." },
+  { trait: 'E', text: "I consistently deliver what I commit to, on time." },
+  { trait: 'E', text: "I find it easy to stay focused on priorities even when things get busy." },
+  { trait: 'E', text: "I proactively anticipate problems and put plans in place before they arise." },
+  { trait: 'C', text: "I regularly come up with ideas that are genuinely new to my organisation." },
+  { trait: 'C', text: "I'm comfortable challenging the way things have always been done." },
+  { trait: 'C', text: "When conventional approaches fail, I find alternative routes others haven't considered." },
+  { trait: 'I', text: "I can bring others around to my point of view without being forceful." },
+  { trait: 'I', text: "I'm effective at inspiring and motivating the people around me." },
+  { trait: 'I', text: "I'm comfortable presenting ideas and leading discussions in senior settings." }
+];
+
+const ANSWERS = [
+  { value: 4, label: 'Strongly agree' },
+  { value: 3, label: 'Agree' },
+  { value: 2, label: 'Disagree' },
+  { value: 1, label: 'Strongly disagree' }
+];
+
+const COMBINATIONS = {
+  'A+R': { label: 'Empathic Analyst', desc: "You combine rigorous thinking with genuine people understanding — a rare and powerful combination in leadership." },
+  'A+E': { label: 'Systematic Executor', desc: "You turn insight into action with precision. You're the person who not only figures out what needs doing, but actually gets it done." },
+  'A+C': { label: 'Innovative Thinker', desc: "You challenge assumptions with evidence. Your ideas aren't just original — they're grounded and persuasive." },
+  'A+I': { label: 'Strategic Influencer', desc: "You persuade with logic and clarity. Where others rely on charm, you build credibility through rigour." },
+  'R+E': { label: 'Reliable Partner', desc: "People trust you completely — to understand them and to deliver for them. You're the backbone of any strong team." },
+  'R+C': { label: 'Creative Connector', desc: "You generate ideas with and through people. Your creativity is collaborative and human-centred." },
+  'R+I': { label: 'People Leader', desc: "You lead from genuine connection. People follow you because they feel seen and valued." },
+  'E+C': { label: 'Pragmatic Innovator', desc: "You don't just have ideas — you ship them. You're the rarest kind of creative: one who executes." },
+  'E+I': { label: 'Driving Force', desc: "You move mountains and take people with you. High delivery with high influence is the mark of an exceptional operator." },
+  'C+I': { label: 'Visionary Catalyst', desc: "You see what's possible and you make others see it too. You set direction and inspire change." }
+};
+
+// ── STATE ────────────────────────────────────────────────────
+
+const state = {
+  currentQ: 0,
+  answers: [],
+  totalStartTime: null,
+  qStartTime: null,
+  scores: {},
+  userName: '',
+  userEmail: '',
+  paid: false
+};
+
+// ── INIT ─────────────────────────────────────────────────────
+
+(async function init() {
+  try {
+    const r = await fetch('/api/counter', { method: 'POST' });
+    const d = await r.json();
+    const n = (d.count || 0).toLocaleString();
+    document.getElementById('heroCount').textContent = n;
+    document.getElementById('counterBadge').textContent = n + ' assessed';
+  } catch(e) {
+    document.getElementById('heroCount').textContent = '—';
+  }
+
+  const p = new URLSearchParams(location.search);
+  if (p.get('paid') === 'true') {
+    state.paid = true;
+    const saved = sessionStorage.getItem('hm_results');
+    if (saved) {
+      const d = JSON.parse(saved);
+      state.scores = d.scores;
+      state.userName = d.userName || '';
+      showSection('results');
+      renderResults();
+      loadAIContent();
+    }
+  }
+})();
+
+// ── NAV ──────────────────────────────────────────────────────
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg, ms = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ── ASSESSMENT ───────────────────────────────────────────────
+
+function startAssessment() {
+  state.currentQ = 0;
+  state.answers = [];
+  state.totalStartTime = Date.now();
+  showSection('assessment');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.currentQ];
+  const trait = TRAITS[q.trait];
+  const pct = ((state.currentQ + 1) / QUESTIONS.length * 100).toFixed(2);
+
+  document.getElementById('qProgress').textContent = `Question ${state.currentQ + 1} of ${QUESTIONS.length}`;
+  document.getElementById('qTraitName').textContent = trait.name;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('traitDot').style.background = trait.color;
+  document.getElementById('traitLabel').textContent = trait.name;
+  document.getElementById('questionText').textContent = q.text;
+
+  const opts = document.getElementById('answerOptions');
+  opts.innerHTML = '';
+  ['A','B','C','D'].forEach((lbl, i) => {
+    const a = ANSWERS[i];
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<div class="answer-dot"></div><span class="answer-label">${lbl}</span><span class="answer-text">${a.label}</span>`;
+    btn.onclick = () => selectAnswer(a.value, btn);
+    opts.appendChild(btn);
+  });
+
+  state.qStartTime = Date.now();
+}
+
+function selectAnswer(value, btn) {
+  document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const elapsed = (Date.now() - state.qStartTime) / 1000;
+  state.answers.push({ qIndex: state.currentQ, value, time: elapsed });
+
+  setTimeout(() => {
+    state.currentQ++;
+    if (state.currentQ < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      finishAssessment();
+    }
+  }, 350);
+}
+
+function finishAssessment() {
+  showSection('analysing');
+  computeScores();
+  setTimeout(() => {
+    showSection('assessment'); // just to hide analysing
+    document.getElementById('email-modal').classList.add('active');
+  }, 2200);
+}
+
+function computeScores() {
+  const raw = { A: 0, R: 0, E: 0, C: 0, I: 0 };
+  state.answers.forEach(({ qIndex, value }) => {
+    raw[QUESTIONS[qIndex].trait] += value;
+  });
+  // 3–12 raw → 0–100%
+  Object.keys(raw).forEach(t => {
+    state.scores[t] = Math.round(((raw[t] - 3) / 9) * 100);
+  });
+}
+
+// ── EMAIL ────────────────────────────────────────────────────
+
+async function submitEmail() {
+  const name = document.getElementById('emailName').value.trim();
+  const email = document.getElementById('emailAddress').value.trim();
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email address'); return; }
+  state.userName = name;
+  state.userEmail = email;
+  fetch('/api/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, scores: state.scores })
+  }).catch(() => {});
+  document.getElementById('email-modal').classList.remove('active');
+  showResults();
+}
+
+function skipEmail() {
+  document.getElementById('email-modal').classList.remove('active');
+  showResults();
+}
+
+// ── RESULTS ──────────────────────────────────────────────────
+
+function showResults() {
+  sessionStorage.setItem('hm_results', JSON.stringify({ scores: state.scores, userName: state.userName }));
+  showSection('results');
+  renderResults();
+  if (state.paid) loadAIContent();
+}
+
+function renderResults() {
+  const { scores, userName } = state;
+  if (userName) document.getElementById('resultsTitle').textContent = `${userName}'s Capability Profile`;
+
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const top2 = ranked.slice(0, 2).map(([t]) => t).sort();
+  const comboKey = top2.join('+');
+  const combo = COMBINATIONS[comboKey] || { label: 'Versatile Professional', desc: 'You show well-rounded capability across multiple dimensions.' };
+  document.getElementById('comboType').textContent = combo.label;
+  document.getElementById('comboDesc').textContent = combo.desc;
+
+  drawRadar(scores);
+  renderBars(ranked);
+
+  const sg = document.getElementById('strengthsGrid');
+  sg.innerHTML = ranked.slice(0, 2).map(([t]) => `
+    <div class="trait-card strength">
+      <div class="trait-card-label">Strength</div>
+      <h4>${TRAITS[t].name}</h4>
+      <p>${TRAIT_STRENGTH_DESC[t]}</p>
+    </div>`).join('');
+
+  const dg = document.getElementById('developmentGrid');
+  dg.innerHTML = ranked.slice(-2).map(([t]) => `
+    <div class="trait-card development">
+      <div class="trait-card-label">Development Area</div>
+      <h4>${TRAITS[t].name}</h4>
+      <p>${TRAIT_DEV_DESC[t]}</p>
+    </div>`).join('');
+
+  if (state.paid) {
+    document.getElementById('upsellSection').style.display = 'none';
+    document.getElementById('ai-content').classList.add('visible');
+  }
+}
+
+function renderBars(ranked) {
+  const c = document.getElementById('traitBars');
+  c.innerHTML = ranked.map(([t, s]) => `
+    <div class="trait-bar-item">
+      <div class="trait-bar-name">${TRAITS[t].name}</div>
+      <div class="trait-bar-track"><div class="trait-bar-fill" style="background:${TRAITS[t].color}" data-target="${s}"></div></div>
+      <div class="trait-bar-pct" style="color:${TRAITS[t].color}">${s}%</div>
+    </div>`).join('');
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.trait-bar-fill').forEach(el => { el.style.width = el.dataset.target + '%'; });
+  });
+}
+
+// ── RADAR ────────────────────────────────────────────────────
+
+function drawRadar(scores) {
+  const svg = document.getElementById('radarChart');
+  const cx = 160, cy = 150, R = 105;
+  const keys = ['A', 'R', 'E', 'C', 'I'];
+  const n = keys.length;
+  svg.innerHTML = '';
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const pt = (angle, r) => ({ x: cx + r * Math.sin(angle), y: cy - r * Math.cos(angle) });
+  const poly = (r) => keys.map((_, i) => { const p = pt(2*Math.PI*i/n, r); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ');
+
+  // Grid
+  [1,2,3,4].forEach(l => {
+    const el = document.createElementNS(ns, 'polygon');
+    el.setAttribute('points', poly(R * l / 4));
+    el.setAttribute('fill', 'none');
+    el.setAttribute('stroke', '#e2e8f0');
+    el.setAttribute('stroke-width', '1');
+    svg.appendChild(el);
+  });
+
+  // Spokes + labels
+  keys.forEach((t, i) => {
+    const angle = 2*Math.PI*i/n;
+    const outer = pt(angle, R);
+    const lp = pt(angle, R + 22);
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+    line.setAttribute('x2', outer.x.toFixed(1)); line.setAttribute('y2', outer.y.toFixed(1));
+    line.setAttribute('stroke', '#e2e8f0'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+    const txt = document.createElementNS(ns, 'text');
+    txt.setAttribute('x', lp.x.toFixed(1)); txt.setAttribute('y', (lp.y + 4).toFixed(1));
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('font-size', '11');
+    txt.setAttribute('font-weight', '600'); txt.setAttribute('fill', '#64748b');
+    txt.setAttribute('font-family', 'Inter, sans-serif');
+    txt.textContent = TRAITS[t].name;
+    svg.appendChild(txt);
+  });
+
+  // Data polygon
+  const points = keys.map((t, i) => {
+    const p = pt(2*Math.PI*i/n, (scores[t]/100) * R);
+    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  }).join(' ');
+  const fill = document.createElementNS(ns, 'polygon');
+  fill.setAttribute('points', points);
+  fill.setAttribute('fill', 'rgba(245,159,11,0.15)');
+  fill.setAttribute('stroke', '#f59e0b');
+  fill.setAttribute('stroke-width', '2.5');
+  fill.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(fill);
+
+  // Dots
+  keys.forEach((t, i) => {
+    const p = pt(2*Math.PI*i/n, (scores[t]/100) * R);
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', p.x.toFixed(1)); c.setAttribute('cy', p.y.toFixed(1));
+    c.setAttribute('r', '4'); c.setAttribute('fill', '#f59e0b');
+    c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '2');
+    svg.appendChild(c);
+  });
+}
+
+// ── SHARE ────────────────────────────────────────────────────
+
+function getShareText() {
+  const type = document.getElementById('comboType').textContent;
+  return `I just took the Humanometer professional assessment — I'm a "${type}" 🎯 Discover your own capability profile:`;
+}
+
+function share(platform) {
+  const text = getShareText();
+  const url = 'https://humanometer.com';
+  const urls = {
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`,
+    twitter:  `https://x.com/intent/tweet?text=${encodeURIComponent(text + ' ' + url)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`
+  };
+  window.open(urls[platform], '_blank', 'noopener,width=600,height=500');
+}
+
+async function copyLink() {
+  const text = getShareText() + '\nhttps://humanometer.com';
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Copied!`;
+    setTimeout(() => { btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Link`; }, 2000);
+  } catch(e) { showToast('Could not copy to clipboard'); }
+}
+
+// ── CHECKOUT ─────────────────────────────────────────────────
+
+async function startCheckout(product, btn) {
+  const orig = btn.textContent;
+  btn.textContent = 'Loading…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product, email: state.userEmail, scores: state.scores })
+    });
+    const { url, error } = await r.json();
+    if (url) { window.location.href = url; return; }
+    throw new Error(error || 'No URL');
+  } catch(e) {
+    showToast('Could not start checkout — please try again');
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+// ── AI CONTENT ───────────────────────────────────────────────
+
+async function loadAIContent() {
+  document.getElementById('ai-content').classList.add('visible');
+  document.getElementById('upsellSection').style.display = 'none';
+
+  const ranked = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
+  const top2Names = ranked.slice(0, 2).map(([t]) => TRAITS[t].name).join(' and ');
+  const comboType = document.getElementById('comboType').textContent;
+  const name = state.userName || 'the professional';
+
+  const ctx = `Profile type: ${comboType}\nTop strengths: ${top2Names}\nTrait scores: ${Object.entries(state.scores).map(([t,s]) => `${TRAITS[t].name} ${s}%`).join(', ')}\nName: ${name}`;
+
+  streamAI(
+    `Write a professional LinkedIn "About" section (~150 words, 3 short paragraphs) for someone with this profile. First person. Confident, specific. No corporate clichés.\n\n${ctx}`,
+    'linkedinOutput'
+  );
+
+  streamAI(
+    `Write 5 tailored interview answers (STAR format, 3–4 sentences each) for someone with this profile. Label Q1–Q5 with a relevant interview question for each.\n\n${ctx}`,
+    'interviewOutput'
+  );
+}
+
+async function streamAI(prompt, outputId) {
+  const el = document.getElementById(outputId);
+  el.textContent = '';
+  el.classList.remove('loaded');
+  try {
+    const r = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    if (!r.ok) throw new Error('API error');
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let text = '';
+    el.classList.add('loaded');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = dec.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            text += evt.delta.text;
+            el.textContent = text;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    el.textContent = 'Could not generate content — please try again.';
+  }
+}
+
+async function copyAI(id) {
+  const el = document.getElementById(id + 'Output');
+  try { await navigator.clipboard.writeText(el.textContent); showToast('Copied to clipboard!'); }
+  catch(e) { showToast('Could not copy'); }
+}
+</script>
+</body>
+</html>
