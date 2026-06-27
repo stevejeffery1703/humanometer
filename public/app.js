@@ -808,57 +808,109 @@ function getShareText(platform='linkedin'){
   const pct=getPercentile(S.overall);
   const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   const top2=sorted.slice(0,2);
-  const peakLines=top2.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join(' · ');
+  const peakLines=top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ');
 
   if(platform==='linkedin'){
-    return `I just took the Humanometer — a 5-minute assessment of the skills AI can't replicate.
+    return `I just took the Humanometer — a free 5-minute assessment of the five professional capabilities AI can't replicate.
 
-My profile: "${S.arch.name}" · ${S.overall}/100 · Top ${pct}%
+My profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
 
-My two strongest dimensions:
+Strongest dimensions:
 ${top2.map(t=>`▸ ${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
 
-The full assessment also gives you a breakdown of your development areas, how your dimensions interact, and combination insights specific to your profile — not just a label.
+It produces a five-dimension scored breakdown — not a personality label — grounded in WEF and LinkedIn research on the skills growing in demand because of AI.
 
-Free to take (5 mins): humanometer.com
+Take 5 minutes and see your own reading 👉 https://humanometer.com
 
 What's your profile? Can you beat The ${S.arch.name}?`;
   }
 
   if(platform==='x'){
-    return `My Humanometer reading: "${S.arch.name}" · ${S.overall}/100 (top ${pct}%)\nTop strengths: ${peakLines}\nFull reading — dev areas, profile interactions — free at humanometer.com\nCan you beat it?`;
+    return `I'm "The ${S.arch.name}" on the Humanometer 🎯
+${S.overall}/100 (top ${pct}%) · Top: ${peakLines}
+
+A free 5-min reading of the human skills AI can't replicate.
+
+Take yours: https://humanometer.com`;
   }
 
   if(platform==='whatsapp'){
-    return `I took the Humanometer — a 5-min assessment of the skills AI can't replace.\n\nMy profile: "${S.arch.name}" · ${S.overall}/100 · Top ${pct}%\nTop strengths: ${peakLines}\n\nIt also gives a full breakdown of your development areas and how your dimensions interact — not just a personality label. Free at humanometer.com — what's yours?`;
+    return `Just took the Humanometer — a free 5-min assessment of the human skills AI can't replicate.
+
+I'm "The ${S.arch.name}" — ${S.overall}/100 (top ${pct}%).
+Strongest: ${peakLines}
+
+Take yours and see how we compare 👉 https://humanometer.com`;
   }
 
   // clipboard / generic
-  return `The Humanometer — My Results\n\nProfile: "${S.arch.name}"\nOverall: ${S.overall}/100 · Top ${pct}%\n\nTop strengths:\n${top2.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join('\n')}\n\nFull reading (development areas, profile interactions, career insights): humanometer.com\n\nCan you beat The ${S.arch.name}?`;
+  return `My Humanometer reading
+
+Profile: The ${S.arch.name}
+Overall: ${S.overall}/100 · Top ${pct}%
+
+Strongest dimensions:
+${top2.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
+
+Take the free 5-min assessment: https://humanometer.com`;
 }
 
+/* LinkedIn share is intentionally two-step:
+   1) Copy our crafted post text to the clipboard
+   2) Open LinkedIn's modern share-offsite URL (the old shareArticle endpoint
+      was deprecated and randomly substitutes other sites' OG meta — that's
+      what was producing the "Seismometer" preview)
+   The URL preview will use humanometer.com's OG image/title/description.
+   The user pastes the prepared text into the post composer. */
 function shareLinkedIn(){
-  S.sharedOnce=true;document.getElementById('sticky-share').classList.remove('show');
+  S.sharedOnce=true;
+  const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('linkedin');
-  window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent('https://humanometer.com')}&summary=${encodeURIComponent(txt)}`,'_blank','width=600,height=500');
+  const openShare = () => window.open(
+    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://humanometer.com')}`,
+    '_blank','noopener,width=620,height=600'
+  );
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{
+      showToast('Your post text is copied. Paste it into LinkedIn.');
+      openShare();
+    },()=>openShare());
+  } else { openShare(); }
 }
 function shareX(){
   S.sharedOnce=true;
   const txt=getShareText('x');
-  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`,'_blank','width=600,height=400');
+  // X's intent/tweet endpoint still accepts pre-filled text reliably; URL preview pulls OG meta.
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`,'_blank','noopener,width=600,height=480');
 }
 function shareWhatsApp(){
   S.sharedOnce=true;
   const txt=getShareText('whatsapp');
-  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
+  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank','noopener');
 }
 function copyShare(){
   S.sharedOnce=true;
-  navigator.clipboard.writeText(getShareText('clipboard')).then(()=>{
+  const txt=getShareText('clipboard');
+  navigator.clipboard.writeText(txt).then(()=>{
     const btn=event.target.closest('button');
+    if(!btn)return;
     const o=btn.innerHTML;btn.innerHTML='✓ Copied';btn.style.borderColor='var(--ok)';btn.style.color='var(--ok)';
     setTimeout(()=>{btn.innerHTML=o;btn.style.borderColor='';btn.style.color='';},2000);
   });
+}
+
+/* Small bottom-right toast for transient confirmations. */
+function showToast(msg, ms=3200){
+  let t=document.getElementById('hm-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hm-toast';t.className='hm-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm=setTimeout(()=>t.classList.remove('show'),ms);
 }
 function copyLI(){navigator.clipboard.writeText(S.liText).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1800);});}
 async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').textContent=S.liText;}

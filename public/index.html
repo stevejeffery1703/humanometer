@@ -21,8 +21,8 @@
 <!-- ══ OPEN GRAPH ══ -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Humanometer">
-<meta property="og:title" content="Humanometer — What Can't AI Replace About You?">
-<meta property="og:description" content="Free 5-minute assessment of 5 human capabilities AI can't replicate. Get your reading, see where you rank, share your profile.">
+<meta property="og:title" content="Humanometer — Discover Your Professional Edge">
+<meta property="og:description" content="A free 5-minute assessment of the five professional capabilities AI can't replicate. Get your scored reading and see where you stand.">
 <meta property="og:url" content="https://humanometer.com/">
 <meta property="og:image" content="https://humanometer.com/og-image.png">
 <meta property="og:image:secure_url" content="https://humanometer.com/og-image.png">
@@ -34,13 +34,13 @@
 
 <!-- ══ TWITTER / X ══ -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Humanometer — What Can't AI Replace About You?">
-<meta name="twitter:description" content="Free 5-minute assessment of 5 human capabilities AI can't replicate. Take your reading.">
+<meta name="twitter:title" content="Humanometer — Discover Your Professional Edge">
+<meta name="twitter:description" content="A free 5-minute assessment of the five professional capabilities AI can't replicate.">
 <meta name="twitter:image" content="https://humanometer.com/og-image.png">
 <meta name="twitter:image:alt" content="Humanometer — measure the professional skills AI can't replace">
 
 <!-- ══ FAVICON ══ -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090f'/%3E%3Cpath d='M 4 25 A 12 12 0 1 1 28 25' stroke='%23d4a843' stroke-width='2' fill='none'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23d4a843'/%3E%3Cline x1='16' y1='16' x2='23' y2='11' stroke='%23d4a843' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090f'/%3E%3Cpath d='M 4 25 A 12 12 0 1 1 28 25' stroke='%23d4a843' stroke-width='2' fill='none'/%3E%3Ccircle cx='16' cy='25' r='2.2' fill='%23d4a843'/%3E%3Cline x1='16' y1='25' x2='23' y2='17' stroke='%23d4a843' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <!-- ══ JSON-LD: WebApplication ══ -->
@@ -100,8 +100,8 @@
     <div class="topbar-logo">
       <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
         <path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/>
-        <circle cx="11" cy="12" r="1.4" fill="#d4a843"/>
-        <line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="11" cy="19" r="1.6" fill="#d4a843"/>
+        <line x1="11" y1="19" x2="16" y2="13" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
@@ -112,6 +112,8 @@
     <p class="hero-instrument-label">Professional Human Capability Assessment</p>
     <h1 class="hero">Discover your <em>professional edge</em></h1>
     <p class="deck">A precision reading of the five professional capabilities AI cannot replicate</p>
+
+    <p class="hero-explain">Grounded in World Economic Forum and LinkedIn research on the human capabilities AI <em>can't</em> replicate, the Humanometer is a research-backed assessment that produces a scored, five-dimension breakdown of your professional strengths — not a personality label.</p>
 
     <div class="hero-actions">
       <button class="cta-btn" onclick="startQuiz()" aria-label="Start the free Humanometer assessment">Take Your Reading <span class="cta-arrow">→</span></button>
@@ -124,10 +126,10 @@
       </div>
     </div>
 
-    <!-- Live counter — clean dots, no emoji avatars -->
+    <!-- Live counter — single static dot indicator -->
     <div id="counter-wrap" class="social-proof hidden" aria-live="polite">
-      <div class="sp-pulse" aria-hidden="true"><span></span><span></span><span></span></div>
-      <p class="sp-text"><strong id="counter-display"></strong> professionals already read</p>
+      <span class="sp-dot" aria-hidden="true"></span>
+      <p class="sp-text"><strong id="counter-display"></strong> professionals have measured their edge</p>
     </div>
 
     <!-- TRAIT PILLS — quick scan of what's measured -->
@@ -199,7 +201,7 @@
 <div id="prequiz" class="screen">
   <header class="topbar" role="banner">
     <div class="topbar-logo">
-      <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="1.4" fill="#d4a843"/><line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="19" r="1.6" fill="#d4a843"/><line x1="11" y1="19" x2="16" y2="13" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
     <button class="ghost-btn" onclick="show('landing')">← Back</button>
@@ -239,7 +241,7 @@
 <div id="quiz" class="screen">
   <div class="topbar">
     <div class="topbar-logo">
-      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="1.4" fill="#d4a843"/><line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="19" r="1.6" fill="#d4a843"/><line x1="11" y1="19" x2="16" y2="13" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
     <div class="quiz-topbar">
@@ -303,7 +305,7 @@
 <div id="results" class="screen">
   <div class="topbar">
     <div class="topbar-logo">
-      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="1.4" fill="#d4a843"/><line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="19" r="1.6" fill="#d4a843"/><line x1="11" y1="19" x2="16" y2="13" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
     <button class="ghost-btn" onclick="retake()">← Retake</button>
@@ -321,6 +323,31 @@
         <div class="ov-pct" id="ov-pct"></div>
       </div>
       <div class="rarity-line" id="rarity-line"></div>
+    </div>
+
+    <!-- WHAT'S NEXT — visible immediately so share + buy are never buried -->
+    <div class="next-strip">
+      <button class="next-card next-card-share" type="button" onclick="document.getElementById('share-anchor').scrollIntoView({behavior:'smooth',block:'start'})">
+        <div class="next-card-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <div class="next-card-text">
+          <div class="next-card-h">Share your reading</div>
+          <div class="next-card-sub">LinkedIn · X · WhatsApp · Copy</div>
+        </div>
+        <span class="next-card-arrow" aria-hidden="true">↓</span>
+      </button>
+      <button class="next-card next-card-buy" type="button" onclick="document.getElementById('upsell-anchor').scrollIntoView({behavior:'smooth',block:'start'})">
+        <span class="next-card-badge">From £4.99</span>
+        <div class="next-card-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="next-card-text">
+          <div class="next-card-h">Get your career assets</div>
+          <div class="next-card-sub">LinkedIn rewrite · Interview answers · More</div>
+        </div>
+        <span class="next-card-arrow" aria-hidden="true">↓</span>
+      </button>
     </div>
 
     <!-- STRENGTHS — first value the user sees, before any ask -->
@@ -362,8 +389,8 @@
     <div class="dev-cards" id="dev-cards"></div>
 
     <!-- SHARE — moved here, after they've consumed the full reading -->
-    <div class="sec-hd" style="margin-top:36px;">Share your reading</div>
-    <div class="sc2-wrap" id="scard">
+    <div class="sec-hd" style="margin-top:36px;scroll-margin-top:20px;" id="share-anchor">Share your reading</div>
+    <div class="sc2-wrap" id="scard" style="scroll-margin-top:20px;">
       <div class="sc2-top">
         <div class="sc2-ring">
           <div class="sc2-score" id="sc-n">—</div>
@@ -431,6 +458,7 @@
     </div>
 
     <!-- MONETISATION — restructured -->
+    <div id="upsell-anchor" style="scroll-margin-top:20px;"></div>
     <div class="upsell-intro">
       <h2>Turn your results into<br><em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold)">career assets</em></h2>
       <p>Generated from your exact scores in seconds. Used by job seekers, career changers, and professionals preparing for interviews.</p>
@@ -545,7 +573,7 @@
 <div id="deliverables" class="screen">
   <div class="topbar">
     <div class="topbar-logo">
-      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="1.4" fill="#d4a843"/><line x1="11" y1="12" x2="17" y2="8" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true" style="flex-shrink:0"><path d="M 3 19 A 9 9 0 1 1 19 19" stroke="#d4a843" stroke-width="1.5" fill="none"/><circle cx="11" cy="19" r="1.6" fill="#d4a843"/><line x1="11" y1="19" x2="16" y2="13" stroke="#d4a843" stroke-width="1.4" stroke-linecap="round"/></svg>
       <div class="wm">Human<b>ometer</b></div>
     </div>
     <button class="ghost-btn" onclick="retake()">Take again</button>

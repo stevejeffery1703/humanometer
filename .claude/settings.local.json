@@ -35,7 +35,8 @@
       "Bash(curl -sk -X POST https://humanometer.com/api/checkout -H 'Content-Type: application/json' -d '{\"product\":\"boost\"}')",
       "Bash(curl -skI \"https://www.humanometer.com/\")",
       "Skill(claude-api)",
-      "Skill(claude-api:*)"
+      "Skill(claude-api:*)",
+      "Bash(curl -sk \"https://humanometer.com/\")"
     ]
   }
 }
