@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where wrangler *)",
+      "Bash(npx wrangler *)"
+    ]
+  }
+}
