@@ -15,7 +15,9 @@
       "Bash(command -v rsvg-convert magick convert inkscape)",
       "Bash(node -e \"try{require.resolve\\('sharp'\\);console.log\\('sharp available'\\)}catch\\(e\\){console.log\\('no sharp'\\)}\")",
       "Bash(node -e ' *)",
-      "Bash(file public/og-image.png)"
+      "Bash(file public/og-image.png)",
+      "Bash(curl -s https://humanometer.stevejeffery1703.workers.dev/)",
+      "Bash(curl -sk https://humanometer.stevejeffery1703.workers.dev/)"
     ]
   }
 }
