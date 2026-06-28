@@ -1,10 +1,10 @@
 /* ═══════════════════════════ DATA ═══════════════════════════ */
 const TRAITS=[
   {id:'adaptive',name:'Adaptive Thinking', color:'#5b9ae0'},
-  {id:'ethical', name:'Ethical Judgement',  color:'#d4a843'},
+  {id:'ethical', name:'Ethical Judgment',  color:'#d4a843'},
   {id:'creative',name:'Creative Synthesis', color:'#9b72cf'},
   {id:'empathic',name:'Empathic Accuracy',  color:'#4ecdc4'},
-  {id:'critical',name:'Critical Scepticism',color:'#e07c5b'}
+  {id:'critical',name:'Critical Skepticism',color:'#e07c5b'}
 ];
 
 const BANDS={
@@ -12,13 +12,13 @@ const BANDS={
     {min:80,band:'Highly Adaptive',insight:'You treat change as raw material rather than disruption. Where others need a clear playbook, you build one as you go — and quickly enough that others rarely notice the uncertainty you navigated. This is the trait most strongly correlated with performing well in AI-era roles.',what:'<strong>In practice:</strong> you\'re the person others turn to when something breaks or shifts unexpectedly. You\'re most valuable in roles without fixed processes, and least comfortable doing the same thing indefinitely.'},
     {min:60,band:'Adaptable',insight:'You handle change well when you have some foundation to work from. You\'re not thrown by ambiguity, but you work best when you can orient yourself before acting rather than moving immediately into the unknown.',what:'<strong>In practice:</strong> you bring stability to change rather than just enthusiasm for it — often more valuable than pure agility. Someone who keeps a team functional through a transition rather than racing ahead of it.'},
     {min:40,band:'Selectively Adaptive',insight:'You adapt effectively within familiar territory but feel the friction more in genuinely novel situations. Your instinct is to draw on what you know before exploring what you don\'t — usually the right call, but can slow you when the situation is truly new.',what:'<strong>In practice:</strong> when facing a new situation, explicitly map what still applies from what you know before trying to solve what\'s genuinely unknown. That transition step is what gets skipped under pressure.'},
-    {min:0, band:'Stability-Oriented',insight:'You prefer established processes and clear expectations. In AI-era workplaces, people who reliably execute within well-defined systems are essential. But you may need to invest in building tolerance for ambiguity as the pace of change increases.',what:'<strong>In practice:</strong> practise making decisions with incomplete information in low-stakes situations. The ability to act without full certainty is increasingly non-optional in most professional contexts.'}
+    {min:0, band:'Stability-Oriented',insight:'You prefer established processes and clear expectations. In AI-era workplaces, people who reliably execute within well-defined systems are essential. But you may need to invest in building tolerance for ambiguity as the pace of change increases.',what:'<strong>In practice:</strong> practice making decisions with incomplete information in low-stakes situations. The ability to act without full certainty is increasingly non-optional in most professional contexts.'}
   ],
   ethical:[
-    {min:80,band:'Strong Ethical Compass',insight:'You notice ethical dimensions that others walk straight past — and you act on them, not performatively but because not doing so would compromise your sense of who you are. This is exceptionally rare and increasingly valuable as AI handles more decisions at scale.',what:'<strong>In practice:</strong> you\'re most valuable in roles involving policy, governance, client relationships, or any situation where the "technically correct" answer might not be the right one. Organisations deploying AI at scale urgently need your profile.'},
+    {min:80,band:'Strong Ethical Compass',insight:'You notice ethical dimensions that others walk straight past — and you act on them, not performatively but because not doing so would compromise your sense of who you are. This is exceptionally rare and increasingly valuable as AI handles more decisions at scale.',what:'<strong>In practice:</strong> you\'re most valuable in roles involving policy, governance, client relationships, or any situation where the "technically correct" answer might not be the right one. Organizations deploying AI at scale urgently need your profile.'},
     {min:60,band:'Ethically Grounded',insight:'You have clear personal values and act on them when it matters. You don\'t impose your ethics on others, but you won\'t compromise your own standards to avoid friction. You\'re trustworthy in a specific and valuable way.',what:'<strong>In practice:</strong> people know you\'ll flag a genuine problem rather than paper over it. This is undersold on most CVs — make it visible and specific.'},
-    {min:40,band:'Contextually Ethical',insight:'Your ethical judgement varies with context — stronger when the stakes are clear, less consistent in ambiguous situations or when social dynamics are in play. Not unprincipled; human in a way most ethical frameworks underestimate.',what:'<strong>In practice:</strong> the gap tends to show in the middle ground — situations that are uncomfortable but not clearly wrong. A simple personal rule ("what would I be comfortable explaining out loud?") can close this gap.'},
-    {min:0, band:'Pragmatically Oriented',insight:'You prioritise outcomes and tend to defer on ethical questions unless they\'re stark. Often this means trusting systems and hierarchies to handle them. In an AI-augmented world, more of these grey-area decisions escalate to humans precisely because they\'re too nuanced for automated systems.',what:'<strong>In practice:</strong> developing a stronger personal ethical framework is increasingly a career skill, not just a moral one. Start with the questions you\'d rather not have to answer in public.'}
+    {min:40,band:'Contextually Ethical',insight:'Your ethical judgment varies with context — stronger when the stakes are clear, less consistent in ambiguous situations or when social dynamics are in play. Not unprincipled; human in a way most ethical frameworks underestimate.',what:'<strong>In practice:</strong> the gap tends to show in the middle ground — situations that are uncomfortable but not clearly wrong. A simple personal rule ("what would I be comfortable explaining out loud?") can close this gap.'},
+    {min:0, band:'Pragmatically Oriented',insight:'You prioritize outcomes and tend to defer on ethical questions unless they\'re stark. Often this means trusting systems and hierarchies to handle them. In an AI-augmented world, more of these gray-area decisions escalate to humans precisely because they\'re too nuanced for automated systems.',what:'<strong>In practice:</strong> developing a stronger personal ethical framework is increasingly a career skill, not just a moral one. Start with the questions you\'d rather not have to answer in public.'}
   ],
   creative:[
     {min:80,band:'Synthetic Thinker',insight:'You instinctively connect across domains that others compartmentalise. Your ideas aren\'t just creative — they\'re structurally different, because they\'re built from components that don\'t usually appear together. This is one of the hardest capabilities for AI to replicate.',what:'<strong>In practice:</strong> your best work happens at intersections — between disciplines, problems, or audiences. You\'re less effective in roles requiring deep narrow expertise. Seek problems others have declared unsolvable.'},
@@ -27,15 +27,15 @@ const BANDS={
     {min:0, band:'Methodical Thinker',insight:'You\'re stronger at developing and executing ideas than generating them from scratch. Most good outcomes require far more execution than invention, and your ability to turn a rough idea into something real is genuinely valuable.',what:'<strong>In practice:</strong> position yourself as the person who makes ideas work rather than the person who has them. That\'s often where the actual value lives.'}
   ],
   empathic:[
-    {min:80,band:'Highly Empathic',insight:'You read situations and people with unusual accuracy — not by projecting your own state, but by genuinely modelling theirs. You notice what isn\'t said as much as what is. In any context involving relationships or persuasion, this is your dominant advantage.',what:'<strong>In practice:</strong> be careful not to absorb others\' emotional states in a way that compromises your judgement. Your superpower is reading the room; your risk is feeling responsible for it.'},
+    {min:80,band:'Highly Empathic',insight:'You read situations and people with unusual accuracy — not by projecting your own state, but by genuinely modelling theirs. You notice what isn\'t said as much as what is. In any context involving relationships or persuasion, this is your dominant advantage.',what:'<strong>In practice:</strong> be careful not to absorb others\' emotional states in a way that compromises your judgment. Your superpower is reading the room; your risk is feeling responsible for it.'},
     {min:60,band:'Empathically Aware',insight:'You pick up on emotional undercurrents reliably and respond thoughtfully. You\'re not always certain what\'s happening beneath the surface, but you notice when something is — and you act on it rather than ploughing through.',what:'<strong>In practice:</strong> your awareness shows most clearly in 1-to-1 contexts. In groups you may miss individual threads. Make a habit of checking in with quieter people in group settings.'},
-    {min:40,band:'Situationally Empathic',insight:'Your empathic response is reliable in clear emotional situations but less consistent in subtle ones. You respond well to obvious signals; you sometimes miss the middle ground — the person who says they\'re fine and isn\'t.',what:'<strong>In practice:</strong> the most valuable empathic skill is curiosity about ambiguous signals rather than certainty about clear ones. Practise asking one more question when something seems slightly off.'},
+    {min:40,band:'Situationally Empathic',insight:'Your empathic response is reliable in clear emotional situations but less consistent in subtle ones. You respond well to obvious signals; you sometimes miss the middle ground — the person who says they\'re fine and isn\'t.',what:'<strong>In practice:</strong> the most valuable empathic skill is curiosity about ambiguous signals rather than certainty about clear ones. Practice asking one more question when something seems slightly off.'},
     {min:0, band:'Analytically Oriented',insight:'You engage with people primarily through ideas and information rather than emotional attunement. This isn\'t coldness — it\'s a different orientation. You tend to be less swayed by emotional pressure and more consistent in your responses.',what:'<strong>In practice:</strong> in roles involving team leadership or client relationships, build explicit prompts to check emotional signals. What you miss isn\'t usually dramatic — it\'s the early warning signs.'}
   ],
   critical:[
-    {min:80,band:'Rigorous Thinker',insight:'You are genuinely hard to mislead. You identify the assumption buried in the premise, the statistic that doesn\'t pass the sniff test, the conclusion that doesn\'t follow. In an era when AI produces confident-sounding outputs at scale, this is one of the most practically valuable skills a person can have.',what:'<strong>In practice:</strong> your risk is over-scepticism in contexts requiring trust and momentum. Not every claim needs interrogating. Develop a calibrated sense of when rigour is the priority and when velocity matters more.'},
+    {min:80,band:'Rigorous Thinker',insight:'You are genuinely hard to mislead. You identify the assumption buried in the premise, the statistic that doesn\'t pass the sniff test, the conclusion that doesn\'t follow. In an era when AI produces confident-sounding outputs at scale, this is one of the most practically valuable skills a person can have.',what:'<strong>In practice:</strong> your risk is over-skepticism in contexts requiring trust and momentum. Not every claim needs interrogating. Develop a calibrated sense of when rigor is the priority and when velocity matters more.'},
     {min:60,band:'Critically Capable',insight:'You apply scrutiny when it matters and you usually know when that is. You don\'t accept things uncritically, but you don\'t paralyse things with excessive interrogation either.',what:'<strong>In practice:</strong> your critical thinking is strongest when you have time. Under pressure, you\'re more susceptible to plausible-sounding claims. A set of fast heuristics — quick questions you always ask — can protect against this.'},
-    {min:40,band:'Selectively Sceptical',insight:'You apply critical thinking when you\'re already suspicious, but less reliably when presented with confident, well-packaged information. Most misinformation succeeds precisely because it\'s packaged convincingly.',what:'<strong>In practice:</strong> build a habit of asking "what would have to be true for this to be wrong?" for any claim that supports what you already believe. Confirmation bias is the specific vulnerability here.'},
+    {min:40,band:'Selectively Skeptical',insight:'You apply critical thinking when you\'re already suspicious, but less reliably when presented with confident, well-packaged information. Most misinformation succeeds precisely because it\'s packaged convincingly.',what:'<strong>In practice:</strong> build a habit of asking "what would have to be true for this to be wrong?" for any claim that supports what you already believe. Confirmation bias is the specific vulnerability here.'},
     {min:0, band:'Trust-Oriented',insight:'You tend to extend trust to sources and confident-sounding claims. In stable, high-trust environments this is efficient. In information-saturated professional contexts, it creates risk.',what:'<strong>In practice:</strong> start with one habit: always ask for the original source when a claim matters. "A study shows..." is not a source. Tracing claims to their origin is the most practical critical-thinking skill you can build.'}
   ]
 };
@@ -54,15 +54,15 @@ const QS=[
   {trait:'adaptive',secs:25,text:"Something you've been doing a specific way for a long time turns out to have a significantly better alternative. How do you respond?",opts:[{t:"I switch, and I switch fast — the point was always the outcome, not the method",s:4},{t:"I test both in parallel for a while before committing",s:3},{t:"I'm interested, but I don't change something working without strong evidence",s:2},{t:"Change feels uncomfortable — I tend to stay with what I know unless forced to shift",s:1}]},
   {trait:'ethical',secs:30,text:"You're asked to send a message to customers that is technically accurate but you know creates a misleading impression. What do you do?",opts:[{t:"Push back — explain why it's misleading and propose a version that isn't",s:4},{t:"Send it — my job isn't to second-guess what I'm asked to do",s:1},{t:"Send it but flag my concern to someone above me",s:2},{t:"Rewrite it to be clearer on my own initiative and send that version instead",s:3}]},
   {trait:'ethical',secs:30,text:"You notice a colleague consistently taking credit in group settings for work that's partly or entirely yours. You…",opts:[{t:"Raise it with them directly and privately — I'd rather resolve it than escalate",s:4},{t:"Let it go; making an issue of it creates more problems than it solves",s:1},{t:"Find natural ways to make my contribution visible without directly confronting them",s:3},{t:"Mention it to someone I trust to gauge whether I'm reading the situation right",s:2}]},
-  {trait:'ethical',secs:30,text:"You discover something your organisation does — legal, profitable, normal in the industry — causes low-level harm to people outside the transaction. Most people there don't seem to think about it. You…",opts:[{t:"Look for the right channel to raise it — even if nothing changes, I need to flag it",s:4},{t:"It's not my responsibility; the organisation has implicitly decided this is acceptable",s:1},{t:"Sit with it for a while — I want to understand the full picture before doing anything",s:3},{t:"Mention it informally to someone I respect and see how they respond",s:2}]},
+  {trait:'ethical',secs:30,text:"You discover something your organization does — legal, profitable, normal in the industry — causes low-level harm to people outside the transaction. Most people there don't seem to think about it. You…",opts:[{t:"Look for the right channel to raise it — even if nothing changes, I need to flag it",s:4},{t:"It's not my responsibility; the organization has implicitly decided this is acceptable",s:1},{t:"Sit with it for a while — I want to understand the full picture before doing anything",s:3},{t:"Mention it informally to someone I respect and see how they respond",s:2}]},
   {trait:'creative',secs:25,text:"You're stuck on a problem and none of your usual approaches are working. What do you reach for?",opts:[{t:"How has a completely different field dealt with something structurally similar?",s:4},{t:"Talk it through with someone — articulating it out loud usually breaks something loose",s:3},{t:"Step away and do something unrelated — the answer usually arrives when I stop looking",s:3},{t:"Go back to basics and make sure I'm actually solving the right problem",s:3}]},
   {trait:'creative',secs:25,text:"You need to explain something genuinely complex to someone with no background in it. You instinctively reach for…",opts:[{t:"An analogy from everyday life that captures the essential structure, even if it loses some detail",s:4},{t:"A clear sequence — I build from first principles and don't skip steps",s:2},{t:"A visual — a diagram or sketch usually cuts through faster than words",s:3},{t:"A concrete example of it working in practice — showing is better than telling",s:3}]},
-  {trait:'creative',secs:30,text:"Two observations: most communication fails not because of what's said, but because of what the listener was already thinking. And: good architects design for how a space feels when it's empty, not when it's full.\n\nWhat's the most useful connection between those ideas?",opts:[{t:"Both require designing for an internal state rather than an observable behaviour — the real work is invisible",s:4},{t:"Both suggest the 'absent' person or moment is who you're actually designing for",s:4},{t:"Interesting parallel, but I'm not sure the analogy is precise enough to act on",s:2},{t:"Both show that the obvious interpretation of a problem usually isn't the real one",s:3}]},
+  {trait:'creative',secs:30,text:"Two observations: most communication fails not because of what's said, but because of what the listener was already thinking. And: good architects design for how a space feels when it's empty, not when it's full.\n\nWhat's the most useful connection between those ideas?",opts:[{t:"Both require designing for an internal state rather than an observable behavior — the real work is invisible",s:4},{t:"Both suggest the 'absent' person or moment is who you're actually designing for",s:4},{t:"Interesting parallel, but I'm not sure the analogy is precise enough to act on",s:2},{t:"Both show that the obvious interpretation of a problem usually isn't the real one",s:3}]},
   {trait:'empathic',secs:25,text:"Someone you're working with says 'no, it's fine' when you ask if everything's okay. You…",opts:[{t:"Take them at their word — pushing further feels intrusive",s:1},{t:"Ask one more specific question that makes it easier to say what's actually going on",s:4},{t:"Let it go for now but check back in the next day or two",s:3},{t:"Tell them my door is open if they want to talk, and leave it there",s:2}]},
   {trait:'empathic',secs:25,text:"You're in a group conversation and someone makes a point that lands in silence. Nobody responds. You notice the person's expression shift slightly. What are you reading?",opts:[{t:"They felt their point wasn't heard — deciding whether to let it drop or try again",s:4},{t:"I don't read much into silence — people are often just thinking",s:1},{t:"There could be many explanations — I'd need more context to say",s:2},{t:"Something's off — I'd probably find a way to bring their point back in",s:3}]},
   {trait:'empathic',secs:30,text:"You're trying to persuade someone of something and you can tell they're becoming defensive, even though they haven't said so. You…",opts:[{t:"Name what I'm observing and shift to understanding their perspective before continuing",s:4},{t:"Stay the course — backing down signals my position wasn't strong",s:1},{t:"Suggest pausing and returning to it later when the temperature has dropped",s:3},{t:"Ease off the pressure without making it explicit — give them space to come around",s:2}]},
   {trait:'critical',secs:25,text:"Someone cites a statistic that perfectly supports an argument you were already inclined to agree with. Your reaction?",opts:[{t:"That makes me more cautious — confirming evidence is exactly when I check most carefully",s:4},{t:"It reinforces my view; I didn't need the evidence but it's good to have",s:1},{t:"I'd want to know the source before putting much weight on it",s:3},{t:"Statistics are easily cherry-picked either way — I don't over-index on any single number",s:2}]},
-  {trait:'critical',secs:25,text:"An AI tool produces an analysis that says exactly what you hoped it would say. You…",opts:[{t:"That's when I scrutinise most carefully — flattering outputs are the ones most likely to be wrong",s:4},{t:"Feel relieved and move forward — it's useful confirmation",s:1},{t:"Check the inputs and logic before treating it as reliable",s:4},{t:"Use it, but note the caveat when I share it — I don't want to over-sell it",s:2}]},
+  {trait:'critical',secs:25,text:"An AI tool produces an analysis that says exactly what you hoped it would say. You…",opts:[{t:"That's when I scrutinize most carefully — flattering outputs are the ones most likely to be wrong",s:4},{t:"Feel relieved and move forward — it's useful confirmation",s:1},{t:"Check the inputs and logic before treating it as reliable",s:4},{t:"Use it, but note the caveat when I share it — I don't want to over-sell it",s:2}]},
   {trait:'critical',secs:30,text:"An article claims a major study proves something plausible. You want to know if it's actually true. First move?",opts:[{t:"Find the original study — not the article's summary — and look at what was actually measured",s:4},{t:"Check whether other credible sources report the same finding",s:3},{t:"Consider whether I have any reason to doubt it; if not, accept it provisionally",s:2},{t:"Plausible claims that fit existing evidence are usually fine to accept without hunting for the primary source",s:1}]}
 ];
 
@@ -297,7 +297,7 @@ function buildResults(){
     rarityEl.textContent=rarity;
   }
 
-  // Share block label — personalised to score
+  // Share block label — personalized to score
   const shareLblEl=document.getElementById('share-rarity-label');
   if(shareLblEl){
     shareLblEl.textContent=`You scored ${S.overall}/100 — top ${pct}% of all respondents. Post it.`;
@@ -388,7 +388,7 @@ const DEV_TIPS={
     ['At this level, your challenge is helping others develop their ethical reasoning without it feeling like a lecture. Ask questions rather than making statements when you notice ethical gaps.','Consider whether your strong ethical instincts are always calibrated correctly — occasionally a high ethical standard can become a barrier to pragmatic progress. Reflect on where the line is for you.'],
     ['The next development area is moral courage under social pressure — when the group is going one way and you know it\'s wrong. Prepare for this in advance: decide your lines before you\'re in the situation.','Practice making your ethical reasoning visible when it\'s low-stakes. Say "I\'m hesitating because I\'m not sure this is fair to X" in small situations. It makes the bigger moments easier.'],
     ['The middle-ground ethical situations are where your consistency matters most. Build a simple personal rule you can apply quickly: "Would I be comfortable if this decision was reported publicly?"','When you notice an ethical discomfort but are unsure whether to act on it, write it down. Often the act of articulating it clarifies whether it requires action — and creates a record if it later matters.'],
-    ['Start by noticing ethical dimensions in situations where the stakes are low. Ask yourself: "Who else is affected by this decision who isn\'t in the room?" This builds the habit before it matters.','Read one case study per month of an organisational ethics failure. Understanding how smart people ended up in compromised positions is the most practical ethics education available.']
+    ['Start by noticing ethical dimensions in situations where the stakes are low. Ask yourself: "Who else is affected by this decision who isn\'t in the room?" This builds the habit before it matters.','Read one case study per month of an organizational ethics failure. Understanding how smart people ended up in compromised positions is the most practical ethics education available.']
   ],
   creative:[
     ['Your synthesis ability is rare. The risk at this level is that your ideas outpace your audience\'s ability to follow. Invest in making your thinking legible — build the bridge, not just the destination.','Consider deliberately working in constrained, narrow domains occasionally. Deep expertise in a single area gives synthetic thinkers more to work with across domains.'],
@@ -403,10 +403,10 @@ const DEV_TIPS={
     ['Start by simply noticing emotional information in interactions rather than immediately responding to the content. Ask: "How does this person seem to be feeling?" before deciding how to respond.','Choose one relationship per month — a colleague, a client — and invest deliberately in understanding how they think and what they find difficult. Build the curiosity habit in small, contained doses.']
   ],
   critical:[
-    ['At this level, the development area is calibration — knowing when rigour is the right call and when it slows things down unnecessarily. Not every claim needs interrogating. Identify your highest-leverage moments.','Practice "steel-manning" — taking a position you disagree with and making the strongest possible case for it before critiquing it. This is the advanced form of critical thinking.'],
+    ['At this level, the development area is calibration — knowing when rigor is the right call and when it slows things down unnecessarily. Not every claim needs interrogating. Identify your highest-leverage moments.','Practice "steel-manning" — taking a position you disagree with and making the strongest possible case for it before critiquing it. This is the advanced form of critical thinking.'],
     ['Build a small set of fast heuristics you apply under pressure — three questions you always ask when evaluating a claim. Make them automatic so they work even when you\'re moving fast.','Identify your specific confirmation bias patterns. What kinds of claims do you tend to accept without scrutiny? Usually they\'re in the areas you care most about. That\'s where the blind spot lives.'],
     ['Build the habit of asking "what would have to be true for this to be wrong?" for any claim that supports what you already want to believe. Confirming evidence is the most dangerous kind.','Before sharing any statistic or claim in a professional context, spend 2 minutes finding the original source. Not the article about the study — the study. This habit alone will change how you evaluate information.'],
-    ['Start with one consistent practice: when someone cites a study or statistic that matters to a decision, ask for the source. Not aggressively — just as a matter of course. "Where\'s that from?" is a complete sentence.','Practise noticing when you accept something because it\'s plausible rather than because you\'ve verified it. Plausibility is not evidence. Building this distinction is the foundation of critical thinking.']
+    ['Start with one consistent practice: when someone cites a study or statistic that matters to a decision, ask for the source. Not aggressively — just as a matter of course. "Where\'s that from?" is a complete sentence.','Practice noticing when you accept something because it\'s plausible rather than because you\'ve verified it. Plausibility is not evidence. Building this distinction is the foundation of critical thinking.']
   ]
 };
 
@@ -425,10 +425,10 @@ function buildComboInsights(sorted, strengths, devs){
       'adaptive+critical':'Adaptability tempered by rigorous thinking is a rare and valuable combination. You change direction quickly, but you verify before you commit. This prevents the impulsiveness that sometimes accompanies high adaptability.',
       'ethical+creative':'Ethical grounding combined with creative synthesis gives you the ability to find solutions that are both novel and responsible — you generate ideas within real-world constraints that others either ignore or treat as unchallengeable.',
       'ethical+empathic':'These two together make you exceptionally trustworthy in interpersonal situations. You notice how people are feeling and you care about doing right by them. In leadership or client contexts, this combination is deeply differentiating.',
-      'ethical+critical':'Ethical judgement plus critical scepticism means you\'re hard to manipulate and hard to mislead into compromised positions. You question the framing, not just the conclusion.',
+      'ethical+critical':'Ethical judgment plus critical skepticism means you\'re hard to manipulate and hard to mislead into compromised positions. You question the framing, not just the conclusion.',
       'creative+empathic':'Creative synthesis and empathic accuracy together mean your ideas land. You don\'t just generate — you understand the audience and shape ideas to reach them. This is the combination that produces effective communication rather than just original thinking.',
-      'creative+critical':'Creative and critical in combination is unusual — most people are stronger in one. You generate ideas and evaluate them with genuine rigour. The risk is paralysis; the reward is reliably better output.',
-      'empathic+critical':'High empathy and high critical scepticism create a specific kind of intelligence: you understand what people feel and you question the reasoning beneath it. This makes you effective in situations requiring both trust and analytical clarity.'
+      'creative+critical':'Creative and critical in combination is unusual — most people are stronger in one. You generate ideas and evaluate them with genuine rigor. The risk is paralysis; the reward is reliably better output.',
+      'empathic+critical':'High empathy and high critical skepticism create a specific kind of intelligence: you understand what people feel and you question the reasoning beneath it. This makes you effective in situations requiring both trust and analytical clarity.'
     };
     const key=[top.id,second.id].sort().join('+');
     const combo=combos[key]||`Your strongest two dimensions — ${top.name} and ${second.name} — reinforce each other in your professional context. The combination creates capability that neither dimension produces independently.`;
@@ -438,25 +438,25 @@ function buildComboInsights(sorted, strengths, devs){
   // Insight 2: top strength + bottom development area — the dynamic tension
   if(top && bottom){
     const tensions={
-      'adaptive+ethical':'High adaptability with developing ethical judgement creates a specific watch-out: moving fast can mean not pausing long enough to notice when a line is being crossed. Build in a deliberate "is this right?" checkpoint before committing to new approaches.',
+      'adaptive+ethical':'High adaptability with developing ethical judgment creates a specific watch-out: moving fast can mean not pausing long enough to notice when a line is being crossed. Build in a deliberate "is this right?" checkpoint before committing to new approaches.',
       'adaptive+creative':'Strong adaptability with developing creative synthesis means you respond well to change but may default to known solutions rather than genuinely new ones. Invest in the generative phase before jumping to implementation.',
       'adaptive+empathic':'You adapt to situations quickly but may not always read how others are experiencing the same change. Build in explicit check-ins with people during transitions — don\'t assume your experience of change maps to theirs.',
       'adaptive+critical':'Adapting quickly with developing critical thinking creates a risk of moving confidently in the wrong direction. Build a pause-and-verify habit before committing to new approaches, especially when the evidence is thin.',
       'ethical+adaptive':'Strong ethical compass with developing adaptability means you know what\'s right but can struggle when the right path requires stepping into genuinely unknown territory. The ethical clarity is the foundation — build the tolerance for uncertainty on top of it.',
       'ethical+creative':'High ethical standards with developing creative synthesis can occasionally manifest as constraint-before-generation — you filter ideas for appropriateness before fully exploring them. Try separating the generative and evaluative phases deliberately.',
       'ethical+empathic':'Strong ethics with developing empathic accuracy creates a specific gap: you may act on principle when the situation actually calls for reading what the other person needs first. Ethical action and relational attunement aren\'t always the same thing.',
-      'ethical+critical':'Strong ethical grounding with developing critical scepticism means your values are clear but you may sometimes accept supporting evidence without sufficient scrutiny. Apply your ethical rigour to the evidence itself, not just the conclusion.',
+      'ethical+critical':'Strong ethical grounding with developing critical skepticism means your values are clear but you may sometimes accept supporting evidence without sufficient scrutiny. Apply your ethical rigor to the evidence itself, not just the conclusion.',
       'creative+adaptive':'Strong creative synthesis with developing adaptability — this is an interesting combination. You generate novel ideas but can be slower to adapt your approach when the context changes. Build the flexibility to shift your creative process, not just your output.',
-      'creative+ethical':'Strong creative thinking with developing ethical judgement creates a specific risk in ideation: not all novel ideas are responsible ones. Build an ethical filter as a deliberate stage in your creative process.',
+      'creative+ethical':'Strong creative thinking with developing ethical judgment creates a specific risk in ideation: not all novel ideas are responsible ones. Build an ethical filter as a deliberate stage in your creative process.',
       'creative+empathic':'Strong creative synthesis with developing empathic accuracy means your ideas may not always land with the intended audience. The idea generation is strong; invest equally in understanding who you\'re generating for.',
-      'creative+critical':'Strong creative output with developing critical scepticism means you generate prolifically but may not evaluate rigorously enough before committing. Build a structured evaluation phase after ideation.',
+      'creative+critical':'Strong creative output with developing critical skepticism means you generate prolifically but may not evaluate rigorously enough before committing. Build a structured evaluation phase after ideation.',
       'empathic+adaptive':'High empathic accuracy with developing adaptability means you read people exceptionally well but can find it harder to navigate when the whole situation is changing. Your relational anchors are strong — build situational flexibility around them.',
-      'empathic+ethical':'Strong empathic accuracy with developing ethical judgement creates a nuanced tension: you understand how people feel, which can make it harder to act on principle when doing so causes visible discomfort. Being kind and being ethical are sometimes different things.',
+      'empathic+ethical':'Strong empathic accuracy with developing ethical judgment creates a nuanced tension: you understand how people feel, which can make it harder to act on principle when doing so causes visible discomfort. Being kind and being ethical are sometimes different things.',
       'empathic+creative':'Strong empathic accuracy with developing creative synthesis means you understand your audience exceptionally well but may be slower to generate genuinely novel approaches for them. You have the insight — invest in the generative process.',
-      'empathic+critical':'High empathic accuracy with developing critical scepticism is a specific combination to watch: you\'re attuned to people, which can make you more susceptible to well-delivered but poorly-evidenced arguments. Conviction is not the same as correctness.',
-      'critical+adaptive':'High critical scepticism with developing adaptability can occasionally mean you scrutinise new approaches so thoroughly that you don\'t move quickly enough to test them. Distinguish between evaluating an idea and implementing it cautiously.',
-      'critical+ethical':'Strong critical thinking with developing ethical judgement — you question evidence rigorously, which is valuable, but may be less consistent in applying the same rigour to the ethical dimensions of decisions.',
-      'critical+creative':'High critical scepticism with developing creative synthesis can inhibit idea generation — you evaluate before you\'ve finished generating. Build a strict rule: no evaluation during ideation. Separate the phases completely.',
+      'empathic+critical':'High empathic accuracy with developing critical skepticism is a specific combination to watch: you\'re attuned to people, which can make you more susceptible to well-delivered but poorly-evidenced arguments. Conviction is not the same as correctness.',
+      'critical+adaptive':'High critical skepticism with developing adaptability can occasionally mean you scrutinize new approaches so thoroughly that you don\'t move quickly enough to test them. Distinguish between evaluating an idea and implementing it cautiously.',
+      'critical+ethical':'Strong critical thinking with developing ethical judgment — you question evidence rigorously, which is valuable, but may be less consistent in applying the same rigor to the ethical dimensions of decisions.',
+      'critical+creative':'High critical skepticism with developing creative synthesis can inhibit idea generation — you evaluate before you\'ve finished generating. Build a strict rule: no evaluation during ideation. Separate the phases completely.',
       'critical+empathic':'Rigorous critical thinking with developing empathic accuracy creates a profile that is analytically strong but can miss the relational dimension of situations. Build the deliberate habit of asking "how is this person experiencing this?" alongside "is this correct?"'
     };
     const tkey=[top.id,bottom.id].sort().join('+');
@@ -468,7 +468,7 @@ function buildComboInsights(sorted, strengths, devs){
   const spread=Math.max(...Object.values(S.pcts))-Math.min(...Object.values(S.pcts));
   let shapeInsight='';
   if(spread<20){
-    shapeInsight=`Your profile is unusually balanced — all five dimensions within ${spread} points of each other. This breadth is genuinely rare. It suggests you bring consistent capability across very different types of challenge, rather than being transformationally strong in one direction. In teams, this makes you the person who holds things together across boundaries. <strong>The development implication:</strong> choose one dimension to take to an exceptional level, rather than optimising for breadth.`;
+    shapeInsight=`Your profile is unusually balanced — all five dimensions within ${spread} points of each other. This breadth is genuinely rare. It suggests you bring consistent capability across very different types of challenge, rather than being transformationally strong in one direction. In teams, this makes you the person who holds things together across boundaries. <strong>The development implication:</strong> choose one dimension to take to an exceptional level, rather than optimizing for breadth.`;
   } else if(spread<35){
     shapeInsight=`Your profile has clear peaks and a relatively solid floor — a moderately concentrated shape. You have genuine standout strengths and functional capability everywhere else. <strong>The development implication:</strong> your most efficient investment is shoring up your lowest dimension, which would raise your overall effectiveness more than pushing your peaks further.`;
   } else {
@@ -712,7 +712,7 @@ async function genQA(count){
   count = count||5;
   const{tr}=profileStr();
   const qs = (count===10 ? [...QA_STD, ...QA_PRO_EXTRA] : QA_STD).map((q,i)=>`${i+1}. ${q}`).join('\n');
-  const p=`Write ${count} personalised interview answers for someone with this profile:
+  const p=`Write ${count} personalized interview answers for someone with this profile:
 Archetype: ${S.arch.name}, Scores: ${tr}, Overall: ${S.overall}/100
 
 Questions:
@@ -843,6 +843,19 @@ Strongest: ${peakLines}
 Take yours and see how we compare 👉 https://humanometer.com`;
   }
 
+  if(platform==='facebook'){
+    return `I just took the Humanometer — a free 5-minute assessment of the five professional capabilities AI can't replicate.
+
+My reading: The ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+Strongest: ${peakLines}
+
+It's a scored breakdown across five dimensions — grounded in research on the skills growing in demand because of AI, not a personality label.
+
+Take 5 minutes and see your own reading: https://humanometer.com
+
+What's your profile?`;
+  }
+
   // clipboard / generic
   return `My Humanometer reading
 
@@ -887,6 +900,23 @@ function shareWhatsApp(){
   S.sharedOnce=true;
   const txt=getShareText('whatsapp');
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank','noopener');
+}
+/* Facebook doesn't accept pre-filled text in the share URL (uses OG meta for
+   the link preview), so we copy the crafted post to the clipboard and prompt
+   the user to paste — same pattern as LinkedIn. */
+function shareFacebook(){
+  S.sharedOnce=true;
+  const txt=getShareText('facebook');
+  const openShare = () => window.open(
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://humanometer.com')}`,
+    '_blank','noopener,width=620,height=620'
+  );
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{
+      showToast('Your post text is copied. Paste it into Facebook.');
+      openShare();
+    },()=>openShare());
+  } else { openShare(); }
 }
 function copyShare(){
   S.sharedOnce=true;
@@ -957,10 +987,10 @@ const PACKS = {
             includes:['LinkedIn About rewrite','Verified certificate','Permanent results page'],
             tabs:['linkedin','cert','share'] },
   career: { name:'Career Pack',     price:9.99,
-            includes:['LinkedIn About rewrite','5 personalised interview answers','Career synthesis','Full results PDF','Verified certificate'],
+            includes:['LinkedIn About rewrite','5 personalized interview answers','Career synthesis','Full results PDF','Verified certificate'],
             tabs:['linkedin','interview','cert','share'] },
   pro:    { name:'Interview Pro',   price:14.99,
-            includes:['LinkedIn About rewrite','10 personalised interview answers','Tailored cover-letter opener','30-day development plan','Verified certificate'],
+            includes:['LinkedIn About rewrite','10 personalized interview answers','Tailored cover-letter opener','30-day development plan','Verified certificate'],
             tabs:['linkedin','interview','cover','plan','cert','share'] }
 };
 
