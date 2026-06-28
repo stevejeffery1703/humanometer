@@ -75,43 +75,109 @@ async function handleGenerate(request, env) {
   }
 }
 
-// ── /api/email ───────────────────────────────────────────────
+// ── /api/optin ───────────────────────────────────────────────
+// GDPR-friendly opt-in storage. Data lives in our own Cloudflare KV
+// namespace (HUMANOMETER_KV) under the key prefix `optin:<lowercased-email>`.
+// Required: { email, consent: true }. Optional: { name, source }.
+// Returns { success: true } on store; { error } otherwise.
 
-async function handleEmail(request, env) {
-  let name, email, scores;
+function isPlausibleEmail(s) {
+  if (typeof s !== 'string') return false;
+  s = s.trim();
+  if (s.length < 5 || s.length > 254) return false;
+  // Minimal sanity check — full RFC validation is for the email provider
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+async function handleOptin(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'Invalid JSON' }, 400); }
+
+  const email = String(body.email || '').trim().toLowerCase();
+  if (!isPlausibleEmail(email)) return json({ error: 'Invalid email' }, 400);
+  if (body.consent !== true) return json({ error: 'Consent required' }, 400);
+
+  const name = body.name ? String(body.name).trim().slice(0, 80) : '';
+  const source = body.source ? String(body.source).trim().slice(0, 40) : 'results-page';
+
+  const record = {
+    email,
+    name,
+    source,
+    optedInAt: new Date().toISOString(),
+    ip: request.headers.get('CF-Connecting-IP') || '',
+    country: request.headers.get('CF-IPCountry') || '',
+  };
+
   try {
-    ({ name, email, scores } = await request.json());
-  } catch (e) {
-    return json({ error: 'Invalid JSON' }, 400);
-  }
-  if (!email) return json({ error: 'No email' }, 400);
-
-  const mergeFields = {};
-  if (name) mergeFields.FNAME = name;
-  if (scores) {
-    Object.entries(scores).forEach(([t, s]) => { mergeFields[`TRAIT_${t}`] = String(s); });
-  }
-
-  try {
-    const r = await fetch(
-      `https://${env.MAILCHIMP_DC}.api.mailchimp.com/3.0/lists/${env.MAILCHIMP_AUDIENCE_ID}/members`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${env.MAILCHIMP_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email_address: email, status: 'subscribed', merge_fields: mergeFields }),
-      }
-    );
-    const data = await r.json();
-    if (!r.ok && data.title !== 'Member Exists') {
-      return json({ error: data.detail || 'Mailchimp error' }, 502);
-    }
+    await env.HUMANOMETER_KV.put('optin:' + email, JSON.stringify(record));
     return json({ success: true });
   } catch (e) {
-    return json({ error: e.message }, 500);
+    return json({ error: 'Storage failed' }, 500);
   }
+}
+
+// ── /api/unsubscribe ─────────────────────────────────────────
+// GDPR right-to-erasure endpoint. POST { email }. Deletes the matching
+// optin: key. Email-based delete is safe enough here: the worst-case
+// outcome of an unauthorized deletion is that someone stops receiving
+// emails they didn't want anyway.
+
+async function handleUnsubscribe(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'Invalid JSON' }, 400); }
+
+  const email = String(body.email || '').trim().toLowerCase();
+  if (!isPlausibleEmail(email)) return json({ error: 'Invalid email' }, 400);
+
+  try {
+    await env.HUMANOMETER_KV.delete('optin:' + email);
+    return json({ success: true });
+  } catch (e) {
+    return json({ error: 'Failed' }, 500);
+  }
+}
+
+// ── /api/admin/optins ────────────────────────────────────────
+// Admin-only CSV export of the opt-in list. Auth: ?key=<ADMIN_KEY>
+// (set ADMIN_KEY in the Cloudflare dashboard — Settings → Variables
+// and Secrets, as a Secret). Returns text/csv suitable for download.
+
+async function handleAdminOptins(request, env) {
+  const url = new URL(request.url);
+  const key = url.searchParams.get('key');
+  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  const csvEscape = (v) => {
+    const s = String(v == null ? '' : v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  };
+
+  const rows = ['email,name,opted_in_at,source,country,ip'];
+  let cursor;
+  do {
+    const list = await env.HUMANOMETER_KV.list({ prefix: 'optin:', cursor });
+    for (const k of list.keys) {
+      const val = await env.HUMANOMETER_KV.get(k.name);
+      if (!val) continue;
+      try {
+        const r = JSON.parse(val);
+        rows.push([r.email, r.name, r.optedInAt, r.source, r.country, r.ip].map(csvEscape).join(','));
+      } catch (e) { /* skip malformed */ }
+    }
+    cursor = list.list_complete ? null : list.cursor;
+  } while (cursor);
+
+  return new Response(rows.join('\n') + '\n', {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="humanometer-optins.csv"',
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 // ── /api/checkout ────────────────────────────────────────────
@@ -169,10 +235,12 @@ async function handleCheckout(request, env) {
 // ── ROUTER ───────────────────────────────────────────────────
 
 const ROUTES = {
-  '/api/counter':  handleCounter,
-  '/api/generate': handleGenerate,
-  '/api/email':    handleEmail,
-  '/api/checkout': handleCheckout,
+  '/api/counter':       handleCounter,
+  '/api/generate':      handleGenerate,
+  '/api/optin':         handleOptin,
+  '/api/unsubscribe':   handleUnsubscribe,
+  '/api/admin/optins':  handleAdminOptins,
+  '/api/checkout':      handleCheckout,
 };
 
 export default {

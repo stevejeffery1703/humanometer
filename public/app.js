@@ -147,13 +147,22 @@ function decodeReading(code){
   }
   return { pcts, archIdx };
 }
-function permalinkFor(pcts, arch){
+/* Name on permalink — short, URL-safe. Optional in the URL but required
+   in the UI before the user gets a Copy / Send button. Stripped to alnum,
+   space, apostrophe, hyphen — keeps it safe to render anywhere. */
+function sanitizeName(n){
+  return String(n||'').trim().replace(/[^\p{L}\p{N}\s'\-]/gu,'').replace(/\s+/g,' ').slice(0,40);
+}
+function permalinkFor(pcts, arch, name){
   const archIdx=Math.max(0, ARCHETYPES.findIndex(a=>a.name===arch.name));
-  return 'https://humanometer.com/?r='+encodeReading(pcts, archIdx);
+  let url='https://humanometer.com/?r='+encodeReading(pcts, archIdx);
+  const cleanName=sanitizeName(name);
+  if(cleanName) url+='&n='+encodeURIComponent(cleanName);
+  return url;
 }
 function currentPermalink(){
   if(!S.arch || !S.pcts) return null;
-  return permalinkFor(S.pcts, S.arch);
+  return permalinkFor(S.pcts, S.arch, S.uname);
 }
 
 /* ── REAL COUNTER via Cloudflare Pages Function ──
@@ -336,16 +345,28 @@ function buildResults(){
 
   // Shared-view mode: someone is looking at another person's reading
   const banner=document.getElementById('shared-banner');
+  const bannerText=banner?.querySelector('.shared-banner-text');
   const resEy=document.getElementById('res-ey-label');
   if(S.isShared){
     if(banner)banner.style.display='flex';
-    if(resEy)resEy.textContent='A Humanometer Reading';
+    if(resEy)resEy.textContent = S.uname
+      ? `${S.uname}'s Humanometer reading`
+      : 'A Humanometer Reading';
+    if(bannerText){
+      bannerText.innerHTML = S.uname
+        ? `You're viewing <strong>${escapeHtml(S.uname)}'s</strong> Humanometer reading. <strong>Want to discover your own professional edge?</strong>`
+        : `You're viewing someone's Humanometer reading. <strong>Want to discover your own professional edge?</strong>`;
+    }
   } else {
     if(banner)banner.style.display='none';
     if(resEy)resEy.textContent='Your Humanometer Reading';
   }
 
-  // Permalink (always generated — no email needed)
+  // Permalink block — two states:
+  //  • If S.uname is set (e.g. after entering name, or on a shared view), show
+  //    the generated URL + Copy + Send buttons.
+  //  • Otherwise show the name input + "Generate link" button.
+  renderPermalinkBlock();
   const permEl=document.getElementById('permalink-url');
   if(permEl){
     const link=currentPermalink();
@@ -641,22 +662,12 @@ function setupStickyShare(){
 
 function closePay(){document.getElementById('modal-bg').classList.remove('open');}
 
-/* Fire-and-forget email capture → Mailchimp via /api/email */
-function postEmail(email){
-  if(!email)return;
-  try{
-    fetch('/api/email',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:S.uname||'',email,scores:S.pcts})}).catch(()=>{});
-  }catch(e){}
-}
-
 async function startCheckout(){
   const em=document.getElementById('pe').value.trim();
   const nm=document.getElementById('pn').value.trim();
   if(!em||!em.includes('@')){alert('Please enter a valid email.');return;}
   if(!nm){alert('Please enter your name.');return;}
   S.uname=nm;S.savedEmail=em;
-  postEmail(em);
   // Persist the computed profile so we can restore it when Stripe redirects back
   sessionStorage.setItem('hm_state',JSON.stringify({
     pcts:S.pcts,overall:S.overall,arch:S.arch,uname:nm,savedEmail:em,selectedPack:S.selectedPack
@@ -743,6 +754,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       // to claim "The Vanguard" with a score of 30).
       const expected = ARCHETYPES.find(a=>S.overall>=a.min)||ARCHETYPES[ARCHETYPES.length-1];
       S.arch = expected;
+      S.uname = sanitizeName(params.get('n')||'');
       S.isShared = true;
       buildResults();
       show('results');
@@ -1102,19 +1114,6 @@ function buyPack(type){
   document.getElementById('modal-bg').classList.add('open');
 }
 
-function submitEmail(){
-  const inp=document.getElementById('einp');
-  if(!inp)return;
-  const v=inp.value.trim();
-  if(!v||!v.includes('@'))return;
-  S.savedEmail=v;
-  postEmail(v);
-  // Quieter optin block on results screen
-  const form=document.getElementById('optin-form');
-  if(form)form.style.display='none';
-  const ok=document.getElementById('eok');
-  if(ok)ok.style.display='block';
-}
 
 /* Copy the user's permalink to the clipboard with inline button feedback. */
 function copyPermalink(btn){
@@ -1131,4 +1130,131 @@ function copyPermalink(btn){
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(url).then(finish,()=>finish());
   } else { finish(); }
+}
+
+/* Minimal HTML escape for any user-supplied string rendered as HTML. */
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+/* Show either the "enter your name" step or the "link generated" step,
+   based on whether S.uname is set. Also pre-fills the input on retry. */
+function renderPermalinkBlock(){
+  const stepName=document.getElementById('permalink-step-name');
+  const stepLink=document.getElementById('permalink-step-link');
+  if(!stepName||!stepLink)return;
+  if(S.uname){
+    stepName.style.display='none';
+    stepLink.style.display='';
+    const nameDisplay=document.getElementById('permalink-name-display');
+    if(nameDisplay)nameDisplay.textContent=S.uname;
+  } else {
+    stepName.style.display='';
+    stepLink.style.display='none';
+    const input=document.getElementById('permalink-name-input');
+    if(input)input.value='';
+  }
+}
+
+function generatePermalink(){
+  const input=document.getElementById('permalink-name-input');
+  if(!input)return;
+  const name=sanitizeName(input.value);
+  if(!name){
+    input.focus();
+    input.style.borderColor='var(--bad,#e05c5c)';
+    setTimeout(()=>{input.style.borderColor='';},1500);
+    return;
+  }
+  S.uname=name;
+  saveSession(); // persist so reload restores name too
+  renderPermalinkBlock();
+  // Re-populate the URL since uname changed
+  const permEl=document.getElementById('permalink-url');
+  if(permEl){
+    const link=currentPermalink();
+    permEl.textContent=link.replace(/^https?:\/\//,'');
+    permEl.dataset.fullUrl=link;
+  }
+}
+
+function editPermalinkName(){
+  S.uname='';
+  saveSession();
+  renderPermalinkBlock();
+}
+
+/* Send the permalink to the user's chosen email provider.
+   - 'gmail'   → opens Gmail compose in a new tab (works when signed in)
+   - 'outlook' → opens Outlook web compose (consumer or 365, signed in)
+   - 'default' → mailto:, opens whatever the OS has registered
+   No data leaves the browser. Subject + body are pre-filled. */
+function sendPermalinkVia(provider){
+  const link=currentPermalink();
+  if(!link)return;
+  const subject='My Humanometer reading';
+  const body =
+    `Here's the permanent link to my Humanometer reading:\n\n` +
+    `${link}\n\n` +
+    `Humanometer measures the five professional capabilities AI can't replicate.\n` +
+    `Take your own reading (free, 5 min): https://humanometer.com`;
+  const e=encodeURIComponent;
+  let url;
+  if(provider==='gmail'){
+    url=`https://mail.google.com/mail/?view=cm&fs=1&su=${e(subject)}&body=${e(body)}`;
+  } else if(provider==='outlook'){
+    url=`https://outlook.live.com/mail/0/deeplink/compose?subject=${e(subject)}&body=${e(body)}`;
+  } else {
+    url=`mailto:?subject=${e(subject)}&body=${e(body)}`;
+  }
+  window.open(url,'_blank','noopener');
+}
+
+/* GDPR-compliant opt-in submission. Requires consent checkbox. Sends to
+   /api/optin which stores in Cloudflare KV. No third-party service. */
+async function submitOptin(ev){
+  if(ev)ev.preventDefault();
+  const emailInp=document.getElementById('optin-email');
+  const consentCb=document.getElementById('optin-consent');
+  const msg=document.getElementById('optin-msg');
+  const btn=document.getElementById('optin-submit');
+  if(!emailInp||!consentCb||!msg||!btn)return false;
+  const email=emailInp.value.trim();
+  if(!email||!email.includes('@')){
+    msg.className='optin-msg err';msg.textContent='Please enter a valid email address.';
+    return false;
+  }
+  if(!consentCb.checked){
+    msg.className='optin-msg err';msg.textContent='Please tick the consent box to subscribe.';
+    return false;
+  }
+  btn.disabled=true;const origBtn=btn.textContent;btn.textContent='Subscribing…';
+  msg.className='';msg.textContent='';
+  try{
+    const r=await fetch('/api/optin',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email,
+        name:S.uname||'',
+        consent:true,
+        source:S.isShared?'shared-view':'results-page'
+      })
+    });
+    const d=await r.json();
+    if(r.ok && d.success){
+      msg.className='optin-msg ok';
+      msg.innerHTML=`✓ Thanks — you're on the list. <a href="/unsubscribe.html?email=${encodeURIComponent(email)}">Change your mind?</a>`;
+      document.getElementById('optin-form').style.display='none';
+    } else {
+      msg.className='optin-msg err';
+      msg.textContent=d.error||'Something went wrong. Please try again.';
+      btn.disabled=false;btn.textContent=origBtn;
+    }
+  } catch(err){
+    msg.className='optin-msg err';
+    msg.textContent='Connection error. Please try again.';
+    btn.disabled=false;btn.textContent=origBtn;
+  }
+  return false;
 }
