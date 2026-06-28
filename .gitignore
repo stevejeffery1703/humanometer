@@ -33,4 +33,7 @@ build/
 .wrangler/
 
 # System
-.git/worker-configuration.d.ts
+.git/
+
+# Generated files
+worker-configuration.d.ts
