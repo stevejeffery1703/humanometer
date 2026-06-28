@@ -43,7 +43,9 @@
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:8788/?r=CXchuqZ\")",
       "Bash(curl -s \"http://localhost:8788/?r=CXchuqZ\")",
       "Bash(curl -sk -o /dev/null -w \"HTTP %{http_code} on humanometer.com/?r=CXchuqZ\\\\n\" \"https://humanometer.com/?r=CXchuqZ\")",
-      "Bash(curl -sk \"https://humanometer.com/?r=CXchuqZ\")"
+      "Bash(curl -sk \"https://humanometer.com/?r=CXchuqZ\")",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }
