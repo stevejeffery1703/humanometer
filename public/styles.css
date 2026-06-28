@@ -400,6 +400,100 @@ h1.hero em{font-style:italic;color:var(--gold);}
   .inline-save-h{font-size:19px;}
 }
 
+/* PERMALINK BLOCK — every reading has a permanent URL. Visible at the top
+   of results so it's discoverable without any ask. No email required. */
+.permalink-block{
+  background:linear-gradient(135deg,rgba(91,154,224,.08),rgba(212,168,67,.04));
+  border:1px solid var(--gbdr);border-left:3px solid #5b9ae0;
+  padding:18px 22px;margin:32px 0 24px;animation:upIn .35s ease both;
+}
+.permalink-label{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:#5b9ae0;margin-bottom:10px;font-weight:500;
+  display:flex;align-items:center;gap:7px;
+}
+.permalink-label-icon{font-size:13px;line-height:1;}
+.permalink-row{
+  display:flex;align-items:stretch;gap:8px;
+  background:var(--bg);border:1px solid var(--gbdr);padding:4px 4px 4px 14px;
+}
+.permalink-url{
+  flex:1;font-family:'DM Mono',monospace;font-size:13.5px;color:var(--text);
+  background:none;border:none;padding:10px 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+.permalink-copy{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--gold);color:#07090f;border:none;
+  padding:0 18px;font-family:'Outfit',sans-serif;font-weight:700;
+  font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.permalink-copy:hover{background:var(--gold2);}
+.permalink-copy.copied{background:var(--ok);color:#07090f;}
+.permalink-note{
+  font-size:11.5px;color:var(--muted);margin-top:8px;letter-spacing:.02em;
+  font-style:italic;opacity:.8;
+}
+@media(max-width:520px){
+  .permalink-block{padding:16px;}
+  .permalink-row{flex-direction:column;padding:0;gap:0;}
+  .permalink-url{padding:12px 14px;font-size:12.5px;border-bottom:1px solid var(--gbdr);}
+  .permalink-copy{padding:11px;justify-content:center;}
+}
+
+/* SHARED-VIEW BANNER — when arriving via /r/<code>, prompt the visitor
+   to take the assessment themselves. Sticky at top, hard to miss. */
+.shared-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#07090f;padding:12px 28px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:90;animation:upIn .4s ease both;
+}
+.shared-banner-text{
+  flex:1;font-size:13.5px;line-height:1.45;min-width:240px;font-weight:500;
+}
+.shared-banner-btn{
+  background:#07090f;color:var(--gold);border:none;
+  padding:10px 22px;font-family:'Outfit',sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.shared-banner-btn:hover{background:#1a1d28;transform:translateY(-1px);}
+@media(max-width:600px){
+  .shared-banner{padding:12px 18px;gap:12px;}
+  .shared-banner-text{font-size:13px;}
+}
+
+/* QUIET OPT-IN — replaces the prominent inline-save. Sits just above the
+   upsell. Email is for the marketing list now, no longer gating value. */
+.optin-block{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  background:rgba(255,255,255,.025);border:1px dashed var(--gbdr);
+  padding:14px 18px;margin:24px 0 36px;
+}
+.optin-text{flex:1;min-width:220px;font-size:12.5px;color:var(--muted);line-height:1.55;}
+.optin-text strong{color:var(--text);font-weight:500;}
+.optin-form{display:flex;gap:6px;flex:1;min-width:240px;}
+.optin-form input{
+  flex:1;background:var(--bg);border:1px solid var(--gbdr);color:var(--text);
+  padding:9px 12px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:300;
+  outline:none;transition:border-color .2s;min-width:0;
+}
+.optin-form input:focus{border-color:var(--gold);}
+.optin-form input::placeholder{color:var(--muted);}
+.optin-form button{
+  background:none;color:var(--gold);border:1px solid var(--gold);
+  padding:9px 16px;font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  white-space:nowrap;transition:all .2s;
+}
+.optin-form button:hover{background:var(--gdim);}
+.optin-ok{display:none;color:var(--ok);font-size:13px;}
+@media(max-width:520px){
+  .optin-block{flex-direction:column;align-items:stretch;}
+}
+
 /* WHAT'S NEXT strip — sits right after the score header so share + buy
    are visible immediately. Each card scrolls to its section below. */
 .next-strip{

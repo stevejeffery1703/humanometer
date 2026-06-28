@@ -310,10 +310,19 @@
     </div>
     <button class="ghost-btn" onclick="retake()">← Retake</button>
   </div>
+
+  <!-- SHARED-VIEW BANNER — only shown when arriving via /r/<code> -->
+  <div class="shared-banner" id="shared-banner" style="display:none;">
+    <div class="shared-banner-text">
+      You're viewing someone's Humanometer reading. <strong>Want to discover your own professional edge?</strong>
+    </div>
+    <button class="shared-banner-btn" onclick="retake()">Take the Free Assessment →</button>
+  </div>
+
   <div class="rbody">
 
     <div class="res-header">
-      <div class="res-ey" role="doc-subtitle">Your Humanometer Reading</div>
+      <div class="res-ey" id="res-ey-label" role="doc-subtitle">Your Humanometer Reading</div>
       <div class="arch-name" id="arch-name"></div>
       <div class="arch-tag" id="arch-tag"></div>
       <div class="overall-line">
@@ -350,12 +359,31 @@
       </button>
     </div>
 
+    <!-- PERMALINK — every reading has a permanent link, no login required.
+         Visible immediately so the user can copy and share without friction. -->
+    <div class="permalink-block" id="permalink-block">
+      <div class="permalink-label">
+        <span class="permalink-label-icon" aria-hidden="true">🔗</span>
+        Your permanent link
+      </div>
+      <div class="permalink-row">
+        <code class="permalink-url" id="permalink-url">humanometer.com/r/…</code>
+        <button class="permalink-copy" type="button" onclick="copyPermalink(this)" aria-label="Copy permanent link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy</span>
+        </button>
+      </div>
+      <p class="permalink-note">Lives forever · No login · Works in any share</p>
+    </div>
+
     <!-- STRENGTHS — first value the user sees, before any ask -->
     <div class="sec-hd-strength" id="strengths-hd">Your strongest dimensions</div>
     <div class="insight-cards" id="strength-cards"></div>
 
-    <!-- INLINE EMAIL CAPTURE — after first value, framed as save-not-subscribe -->
-    <div class="inline-save" id="inline-save">
+    <!-- INLINE EMAIL CAPTURE — moved lower (above upsell) since the permalink
+         above already covers the "save my reading" need. Kept for opt-in
+         marketing list only. -->
+    <div class="inline-save" id="inline-save" style="display:none;">
       <div class="inline-save-row">
         <div class="inline-save-text">
           <div class="inline-save-h">Save your reading</div>
@@ -461,7 +489,19 @@
       </div>
     </div>
 
-    <!-- MONETISATION — restructured -->
+    <!-- QUIETER EMAIL OPT-IN — for the marketing list, not gating value -->
+    <div class="optin-block" id="optin-block">
+      <div class="optin-text">
+        <strong>Want updates?</strong> When industry benchmarking opens and when new dimensions launch — nothing else.
+      </div>
+      <div class="optin-form" id="optin-form">
+        <input type="email" id="einp" placeholder="your@email.com" autocomplete="email">
+        <button onclick="submitEmail()">Notify me</button>
+      </div>
+      <div class="optin-ok" id="eok">✓ You're on the list.</div>
+    </div>
+
+    <!-- MONETIZATION — restructured -->
     <div id="upsell-anchor" style="scroll-margin-top:20px;"></div>
     <div class="upsell-intro">
       <h2>Turn your results into<br><em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold)">career assets</em></h2>

@@ -109,6 +109,53 @@ function loadSession(){
 function clearSession(){try{sessionStorage.removeItem(HM_SESSION_KEY);}catch(e){}}
 function getBand(tid,pct){return BANDS[tid].find(b=>pct>=b.min);}
 
+/* ── PERMALINKS ─────────────────────────────────────────────────────────
+   A reading is just five 0–100 percentages + an archetype index — 38 bits.
+   Pack into 7 base64-url characters → e.g. humanometer.com/r/aB3xY9z.
+   No backend needed; the URL itself carries the data. Lives forever.
+   Worker routes /r/* to index.html so the SPA can decode and render. */
+const PERM_CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const PERM_TRAIT_ORDER=['adaptive','ethical','creative','empathic','critical'];
+
+function encodeReading(pcts, archIdx){
+  let bits=0n;
+  for(const t of PERM_TRAIT_ORDER){
+    const v=Math.max(0,Math.min(100,Math.round(pcts[t]||0)));
+    bits=(bits<<7n)|BigInt(v);
+  }
+  bits=(bits<<3n)|BigInt(Math.max(0,Math.min(7,archIdx)));
+  let s='';
+  for(let i=0;i<7;i++){
+    s=PERM_CHARS[Number(bits&63n)]+s;
+    bits>>=6n;
+  }
+  return s;
+}
+function decodeReading(code){
+  if(!code||!/^[A-Za-z0-9_-]{7}$/.test(code))return null;
+  let bits=0n;
+  for(const ch of code){
+    const idx=PERM_CHARS.indexOf(ch);
+    if(idx<0)return null;
+    bits=(bits<<6n)|BigInt(idx);
+  }
+  const archIdx=Number(bits&7n); bits>>=3n;
+  const pcts={};
+  for(let i=PERM_TRAIT_ORDER.length-1;i>=0;i--){
+    pcts[PERM_TRAIT_ORDER[i]]=Number(bits&127n);
+    bits>>=7n;
+  }
+  return { pcts, archIdx };
+}
+function permalinkFor(pcts, arch){
+  const archIdx=Math.max(0, ARCHETYPES.findIndex(a=>a.name===arch.name));
+  return 'https://humanometer.com/?r='+encodeReading(pcts, archIdx);
+}
+function currentPermalink(){
+  if(!S.arch || !S.pcts) return null;
+  return permalinkFor(S.pcts, S.arch);
+}
+
 /* ── REAL COUNTER via Cloudflare Pages Function ──
    GET  /api/counter  → {count: N}  (read only, called on page load)
    POST /api/counter  → {count: N}  (increment, called on quiz start)
@@ -286,6 +333,25 @@ function buildResults(){
   const pct=getPercentile(S.overall);
   document.getElementById('ov-pct').innerHTML=`Top <strong>${pct}%</strong> of respondents`;
   document.getElementById('sticky-arch-name').textContent=S.arch.name;
+
+  // Shared-view mode: someone is looking at another person's reading
+  const banner=document.getElementById('shared-banner');
+  const resEy=document.getElementById('res-ey-label');
+  if(S.isShared){
+    if(banner)banner.style.display='flex';
+    if(resEy)resEy.textContent='A Humanometer Reading';
+  } else {
+    if(banner)banner.style.display='none';
+    if(resEy)resEy.textContent='Your Humanometer Reading';
+  }
+
+  // Permalink (always generated — no email needed)
+  const permEl=document.getElementById('permalink-url');
+  if(permEl){
+    const link=currentPermalink();
+    permEl.textContent=link ? link.replace(/^https?:\/\//,'') : '—';
+    permEl.dataset.fullUrl=link||'';
+  }
 
   // Rarity line — makes sharing feel worthwhile
   const rarityEl=document.getElementById('rarity-line');
@@ -658,6 +724,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   }
 
+  // Permalink view — primary form is ?r=<code>; we also accept /r/<code>
+  // as a fallback in case the Cloudflare assets layer ever lets it through.
+  // Decode, populate state, render results in "shared view" mode.
+  let permCode = params.get('r');
+  if(!permCode){
+    const pathMatch = window.location.pathname.match(/^\/r\/([A-Za-z0-9_-]{7})\/?$/);
+    if(pathMatch) permCode = pathMatch[1];
+  }
+  if(permCode){
+    const decoded = decodeReading(permCode);
+    if(decoded){
+      S.pcts = decoded.pcts;
+      // Recompute overall from pcts (don't trust the URL not to lie about it)
+      S.overall = Math.round(Object.values(S.pcts).reduce((a,b)=>a+b,0)/5);
+      // Use the URL-encoded archetype, but only if it matches what overall
+      // would naturally produce (defends against people hand-editing the URL
+      // to claim "The Vanguard" with a score of 30).
+      const expected = ARCHETYPES.find(a=>S.overall>=a.min)||ARCHETYPES[ARCHETYPES.length-1];
+      S.arch = expected;
+      S.isShared = true;
+      buildResults();
+      show('results');
+      return;
+    }
+  }
+
   // Restore the user's results if the tab was reloaded (mobile app-switching
   // commonly unloads the page). Without this they're dumped back at the home
   // page after taking the test, which feels like their work was lost.
@@ -820,38 +912,40 @@ ${top2.map(t=>`▸ ${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
 
 It produces a five-dimension scored breakdown — not a personality label — grounded in WEF and LinkedIn research on the skills growing in demand because of AI.
 
-Take 5 minutes and see your own reading 👉 https://humanometer.com
+See my full reading: ${currentPermalink()}
+Take yours (free, 5 min): https://humanometer.com
 
-What's your profile? Can you beat The ${S.arch.name}?`;
+What's your profile? Can you beat ${S.arch.name}?`;
   }
 
   if(platform==='x'){
-    return `I'm "The ${S.arch.name}" on the Humanometer 🎯
+    return `I'm "${S.arch.name}" on the Humanometer 🎯
 ${S.overall}/100 (top ${pct}%) · Top: ${peakLines}
 
-A free 5-min reading of the human skills AI can't replicate.
-
-Take yours: https://humanometer.com`;
+My full reading → ${currentPermalink()}
+Take yours (free, 5 min): https://humanometer.com`;
   }
 
   if(platform==='whatsapp'){
     return `Just took the Humanometer — a free 5-min assessment of the human skills AI can't replicate.
 
-I'm "The ${S.arch.name}" — ${S.overall}/100 (top ${pct}%).
+I'm "${S.arch.name}" — ${S.overall}/100 (top ${pct}%).
 Strongest: ${peakLines}
 
-Take yours and see how we compare 👉 https://humanometer.com`;
+My full reading: ${currentPermalink()}
+Take yours: https://humanometer.com`;
   }
 
   if(platform==='facebook'){
     return `I just took the Humanometer — a free 5-minute assessment of the five professional capabilities AI can't replicate.
 
-My reading: The ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+My reading: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
 Strongest: ${peakLines}
 
 It's a scored breakdown across five dimensions — grounded in research on the skills growing in demand because of AI, not a personality label.
 
-Take 5 minutes and see your own reading: https://humanometer.com
+See my full reading: ${currentPermalink()}
+Take yours (free, 5 min): https://humanometer.com
 
 What's your profile?`;
   }
@@ -859,13 +953,14 @@ What's your profile?`;
   // clipboard / generic
   return `My Humanometer reading
 
-Profile: The ${S.arch.name}
+Profile: ${S.arch.name}
 Overall: ${S.overall}/100 · Top ${pct}%
 
 Strongest dimensions:
 ${top2.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
 
-Take the free 5-min assessment: https://humanometer.com`;
+My full reading: ${currentPermalink()}
+Take yours (free, 5 min): https://humanometer.com`;
 }
 
 /* LinkedIn share is intentionally two-step:
@@ -880,7 +975,7 @@ function shareLinkedIn(){
   const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('linkedin');
   const openShare = () => window.open(
-    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://humanometer.com')}`,
+    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=600'
   );
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -908,7 +1003,7 @@ function shareFacebook(){
   S.sharedOnce=true;
   const txt=getShareText('facebook');
   const openShare = () => window.open(
-    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://humanometer.com')}`,
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=620'
   );
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -1014,9 +1109,26 @@ function submitEmail(){
   if(!v||!v.includes('@'))return;
   S.savedEmail=v;
   postEmail(v);
-  // Inline-save form on results screen
-  const form=document.getElementById('inline-save-form');
+  // Quieter optin block on results screen
+  const form=document.getElementById('optin-form');
   if(form)form.style.display='none';
   const ok=document.getElementById('eok');
   if(ok)ok.style.display='block';
+}
+
+/* Copy the user's permalink to the clipboard with inline button feedback. */
+function copyPermalink(btn){
+  const el=document.getElementById('permalink-url');
+  const url=(el && el.dataset.fullUrl) || el?.textContent || '';
+  if(!url)return;
+  const finish=()=>{
+    if(!btn)return;
+    const orig=btn.innerHTML;
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Copied!</span>';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},2200);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(finish,()=>finish());
+  } else { finish(); }
 }

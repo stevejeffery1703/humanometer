@@ -190,6 +190,14 @@ export default {
     const handler = ROUTES[url.pathname];
     if (handler) return handler(request, env, ctx);
 
+    // Permalinks (/r/<code>) — serve the SPA shell; the client decodes the
+    // path and renders the shared results screen. Without this, /r/* would
+    // 404 because no asset exists at that path.
+    if (url.pathname.startsWith('/r/')) {
+      const indexReq = new Request(new URL('/index.html', url), request);
+      return env.ASSETS.fetch(indexReq);
+    }
+
     // Fall through to static assets
     return env.ASSETS.fetch(request);
   },

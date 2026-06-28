@@ -36,7 +36,14 @@
       "Bash(curl -skI \"https://www.humanometer.com/\")",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(curl -sk \"https://humanometer.com/\")"
+      "Bash(curl -sk \"https://humanometer.com/\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} | content-type: %{content_type} | size: %{size_download}\\\\n\" http://localhost:8788/r/CXchuqZ)",
+      "Bash(curl -s http://localhost:8788/r/CXchuqZ)",
+      "Bash(curl -s -i http://localhost:8788/r/CXchuqZ)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:8788/?r=CXchuqZ\")",
+      "Bash(curl -s \"http://localhost:8788/?r=CXchuqZ\")",
+      "Bash(curl -sk -o /dev/null -w \"HTTP %{http_code} on humanometer.com/?r=CXchuqZ\\\\n\" \"https://humanometer.com/?r=CXchuqZ\")",
+      "Bash(curl -sk \"https://humanometer.com/?r=CXchuqZ\")"
     ]
   }
 }
