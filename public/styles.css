@@ -797,18 +797,6 @@ h1.hero em{font-style:italic;color:var(--gold);}
 /* ── RARITY LINE ── */
 .rarity-line{margin-top:10px;font-size:13px;color:var(--gold2);letter-spacing:.04em;font-style:italic;font-family:'Cormorant Garamond',serif;}
 
-/* ── AFFILIATE SECTION ── */
-.affiliate-section{margin-bottom:40px;}
-.aff-note{font-size:12.5px;color:var(--muted);margin-bottom:16px;margin-top:-10px;}
-.aff-grid{display:flex;flex-direction:column;gap:9px;}
-.aff-card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;text-decoration:none;color:inherit;transition:all .2s;}
-.aff-card:hover{border-color:var(--gbdr);transform:translateX(3px);}
-.aff-left{flex:1;}
-.aff-trait{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:2px;}
-.aff-name{font-size:13px;font-weight:500;margin-bottom:2px;}
-.aff-provider{font-size:11px;color:var(--muted);}
-.aff-arrow{color:var(--gold);font-size:15px;flex-shrink:0;opacity:.7;}
-
 /* ── MONETISATION TIERS ── */
 .tier-block{border:1px solid rgba(255,255,255,.08);padding:22px 24px;margin-bottom:12px;}
 .tier-featured{border-color:var(--gold);background:linear-gradient(135deg,var(--gdim),transparent);}

@@ -393,7 +393,6 @@ function buildResults(){
   buildInsightCards();
   drawConst();
   buildShareCard();
-  buildAffiliateCards();
   setupStickyShare();
 }
 
@@ -1067,25 +1066,6 @@ function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — $
 function retake(){clearSession();show('landing');}
 function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 20;if(s>=55)return 35;return 50;}
 
-function buildAffiliateCards(){
-  const sorted=[...TRAITS].sort((a,b)=>S.pcts[a.id]-S.pcts[b.id]);
-  const devTraits=sorted.slice(0,3);
-  const AFF={
-    adaptive:[{name:'Adaptability & Resilience at Work',provider:'LinkedIn Learning',url:'https://linkedin.com/learning'}],
-    ethical:[{name:'Ethics in the Age of AI',provider:'edX / MIT',url:'https://edx.org'}],
-    creative:[{name:'Creative Thinking: Techniques & Tools',provider:'Coursera',url:'https://coursera.org'}],
-    empathic:[{name:'Empathy & Emotional Intelligence',provider:'LinkedIn Learning',url:'https://linkedin.com/learning'}],
-    critical:[{name:'Critical Thinking & Problem Solving',provider:'edX',url:'https://edx.org'}]
-  };
-  const grid=document.getElementById('aff-grid');if(!grid)return;grid.innerHTML='';
-  devTraits.forEach(t=>{
-    const c=(AFF[t.id]||[])[0];if(!c)return;
-    const trait=TRAITS.find(tr=>tr.id===t.id);
-    const card=document.createElement('a');card.className='aff-card';card.href=c.url;card.target='_blank';card.rel='noopener';
-    card.innerHTML=`<div class="aff-left"><div class="aff-trait" style="color:${trait.color}">${trait.name}</div><div class="aff-name">${c.name}</div><div class="aff-provider">${c.provider}</div></div><div class="aff-arrow">→</div>`;
-    grid.appendChild(card);
-  });
-}
 
 /* Single source of truth for tier definitions — used by buyPack, runFulfilment,
    buildDeliverables. Keep aligned with PRODUCTS in src/worker.js. */
