@@ -50,7 +50,8 @@
       "Bash(curl -s -X POST http://localhost:8788/api/optin -H \"Content-Type: application/json\" -d '{\"email\":\"sj@allsaintskirk.com\",\"name\":\"Steve\",\"consent\":true,\"source\":\"local-test\"}')",
       "Bash(curl -s -X POST http://localhost:8788/api/optin -H \"Content-Type: application/json\" -d '{\"email\":\"notvalid\",\"consent\":true}')",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:8788/api/admin/optins\")",
-      "Bash(curl -s -X POST http://localhost:8788/api/unsubscribe -H \"Content-Type: application/json\" -d '{\"email\":\"sj@allsaintskirk.com\"}')"
+      "Bash(curl -s -X POST http://localhost:8788/api/unsubscribe -H \"Content-Type: application/json\" -d '{\"email\":\"sj@allsaintskirk.com\"}')",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:8788/?r=CXchuqZ&n=Maya\")"
     ]
   }
 }

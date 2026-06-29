@@ -142,9 +142,16 @@ function decodeReading(code){
   const archIdx=Number(bits&7n); bits>>=3n;
   const pcts={};
   for(let i=PERM_TRAIT_ORDER.length-1;i>=0;i--){
-    pcts[PERM_TRAIT_ORDER[i]]=Number(bits&127n);
+    const v=Number(bits&127n);
+    // Each percentage is encoded in 7 bits (0..127). A legitimate code from
+    // our encoder will always be 0..100. Anything above is URL tampering —
+    // reject the whole reading so we don't render bogus scores.
+    if(v>100)return null;
+    pcts[PERM_TRAIT_ORDER[i]]=v;
     bits>>=7n;
   }
+  // Same defence for the archetype index — only 5 archetypes exist.
+  if(archIdx>=ARCHETYPES.length)return null;
   return { pcts, archIdx };
 }
 /* Name on permalink — short, URL-safe. Optional in the URL but required
@@ -259,11 +266,12 @@ function renderQ(){
   startTim((q.secs||25) + 10);
   S.at=Date.now();
 
-  // Midpoint toast at Q8
+  // Midpoint toast at Q8 — repositioned to top to avoid covering options
+  // on mobile; auto-dismiss after 1.8s so it doesn't linger.
   if(S.qi===7){
     const toast=document.getElementById('midpt-toast');
     toast.classList.add('show');
-    setTimeout(()=>toast.classList.remove('show'),2800);
+    setTimeout(()=>toast.classList.remove('show'),1800);
   }
 }
 
@@ -341,7 +349,6 @@ function buildResults(){
   document.getElementById('ov-score').textContent=S.overall;
   const pct=getPercentile(S.overall);
   document.getElementById('ov-pct').innerHTML=`Top <strong>${pct}%</strong> of respondents`;
-  document.getElementById('sticky-arch-name').textContent=S.arch.name;
 
   // Shared-view mode: someone is looking at another person's reading
   const banner=document.getElementById('shared-banner');
@@ -1001,11 +1008,6 @@ function shareX(){
   const txt=getShareText('x');
   // X's intent/tweet endpoint still accepts pre-filled text reliably; URL preview pulls OG meta.
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`,'_blank','noopener,width=600,height=480');
-}
-function shareWhatsApp(){
-  S.sharedOnce=true;
-  const txt=getShareText('whatsapp');
-  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank','noopener');
 }
 /* Facebook doesn't accept pre-filled text in the share URL (uses OG meta for
    the link preview), so we copy the crafted post to the clipboard and prompt
