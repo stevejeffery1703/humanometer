@@ -151,7 +151,7 @@ function decodeReading(code){
    in the UI before the user gets a Copy / Send button. Stripped to alnum,
    space, apostrophe, hyphen — keeps it safe to render anywhere. */
 function sanitizeName(n){
-  return String(n||'').trim().replace(/[^\p{L}\p{N}\s'\-]/gu,'').replace(/\s+/g,' ').slice(0,40);
+  return String(n||'').trim().replace(/[^\p{L}\p{N}\s'\-]/gu,'').replace(/\s+/g,' ').slice(0,60);
 }
 function permalinkFor(pcts, arch, name){
   const archIdx=Math.max(0, ARCHETYPES.findIndex(a=>a.name===arch.name));
@@ -1111,6 +1111,9 @@ function buyPack(type){
   document.getElementById('pf-step').style.display='block';
   document.getElementById('proc-step').classList.remove('show');
   if(S.savedEmail){const pe=document.getElementById('pe');if(pe)pe.value=S.savedEmail;}
+  // Pre-fill the certificate name from the permalink name (S.uname),
+  // so users who already entered it don't have to type it twice.
+  if(S.uname){const pn=document.getElementById('pn');if(pn)pn.value=S.uname;}
   document.getElementById('modal-bg').classList.add('open');
 }
 

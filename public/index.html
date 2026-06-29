@@ -369,9 +369,9 @@
 
       <!-- Initial state: ask for name -->
       <div class="permalink-step" id="permalink-step-name">
-        <p class="permalink-intro">Add your first name and we'll generate a permanent link to your reading. It lives forever, no login required, and shows your name when shared.</p>
+        <p class="permalink-intro">Add your full name and we'll generate a permanent link to your reading. It lives forever, no login required, and shows your name when shared (and on your certificate if you buy a results pack).</p>
         <div class="permalink-name-row">
-          <input id="permalink-name-input" type="text" placeholder="Your first name" maxlength="40" autocomplete="given-name" onkeydown="if(event.key==='Enter')generatePermalink()">
+          <input id="permalink-name-input" type="text" placeholder="Your full name" maxlength="60" autocomplete="name" onkeydown="if(event.key==='Enter')generatePermalink()">
           <button type="button" onclick="generatePermalink()">Generate link</button>
         </div>
       </div>
