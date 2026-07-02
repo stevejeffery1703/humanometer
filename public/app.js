@@ -708,10 +708,11 @@ async function runFulfilment(){
   await stepUI('ps2', 600);
   if(tabs.includes('linkedin')) await stepUI('ps3', null, genLinkedIn);
   else await stepUI('ps3', 200);
-  if(tabs.includes('interview')) await stepUI('ps4', null, ()=>genQA(S.selectedPack==='pro'?10:5));
+  if(tabs.includes('interview')) await stepUI('ps4', null, genQA);
   else await stepUI('ps4', 200);
   if(tabs.includes('cover')) await genCover();
   if(tabs.includes('plan')) await genPlan();
+  if(tabs.includes('synthesis')) await genSynthesis();
   await stepUI('ps5', 500);
   await delay(250);closePay();buildDeliverables();show('deliverables');
 }
@@ -734,6 +735,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       try{
         const d=JSON.parse(saved);
         S.pcts=d.pcts;S.overall=d.overall;S.arch=d.arch;S.uname=d.uname;S.savedEmail=d.savedEmail;S.selectedPack=d.selectedPack;
+        // Stripe returns ?session_id=cs_... — the Worker verifies it's paid
+        // before generating any asset. Capture it before we strip the query.
+        S.sessionId=params.get('session_id')||'';
         history.replaceState({},'',window.location.pathname);
         runFulfilment();
         return;
@@ -778,97 +782,52 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 /* ═══════════════════════════ AI GEN ═══════════════════════════ */
-function profileStr(){
-  const tr=TRAITS.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join(', ');
-  const strong=TRAITS.reduce((a,b)=>S.pcts[a.id]>S.pcts[b.id]?a:b);
-  const weak=TRAITS.reduce((a,b)=>S.pcts[a.id]<S.pcts[b.id]?a:b);
-  return{tr,strong,weak};
+/* Assets are generated server-side after payment. The client sends only the
+   verified Stripe session id, the profile, and which asset it wants; the
+   Worker (/api/fulfil) verifies the payment, checks the tier includes that
+   asset, builds the prompt, and returns text. No prompts or model choices
+   live here anymore — that's what closed the old open /api/generate proxy. */
+function buildProfile(){
+  return {
+    scores:S.pcts,
+    archetype:S.arch?S.arch.name:'',
+    archetypeTag:S.arch?S.arch.tag:'',
+    overall:S.overall,
+    name:S.uname||''
+  };
+}
+async function fulfil(kind){
+  const r=await fetch('/api/fulfil',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({session_id:S.sessionId||'',kind,profile:buildProfile()})
+  });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok||!d||typeof d.text!=='string'){throw new Error((d&&d.error)||'Generation failed');}
+  return d.text.trim();
 }
 async function genLinkedIn(){
-  const{tr,strong}=profileStr();
-  const p=`Write a LinkedIn 'About' section for a professional with this Humanometer profile:
-Archetype: ${S.arch.name} — "${S.arch.tag}"
-Scores: ${tr}
-Overall: ${S.overall}/100, Strongest: ${strong.name} (${S.pcts[strong.id]}/100)
-
-Three paragraphs, ~60 words each (~180 words total).
-Para 1: Who they are professionally — open with their dominant human quality. First sentence must be distinctive and make a reader stop.
-Para 2: What they bring to teams — concrete, grounded in their top 2-3 traits. Specific enough it couldn't apply to anyone.
-Para 3: What they're working on or looking for — forward-facing, confident. One sentence on the kind of work that gets the best from them.
-
-Rules: First person. No clichés (no "passionate", "results-driven", "dynamic", "team player"). No emojis. No hashtags. Tone: confident, warm, real. Write as if you are them.
-Output ONLY the three paragraphs separated by a blank line.`;
-  try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:p}]})});
-    const d=await r.json();S.liText=d.content.map(b=>b.text||'').join('').trim();
-  }catch(e){S.liText=`[Could not generate — check API connection]\nProfile: ${S.arch.name}, ${S.overall}/100`;}
+  try{ S.liText=await fulfil('linkedin'); }
+  catch(e){ S.liText='[Could not generate — please retry]'; }
 }
-const QA_STD = [
-  '"Tell me about yourself."',
-  '"What\'s your greatest professional strength?"',
-  '"How do you handle situations where there\'s no clear right answer?"',
-  '"Tell me about a time you had to push back on something you disagreed with."',
-  '"What makes you different from other candidates?"'
-];
-const QA_PRO_EXTRA = [
-  '"Describe a time you failed and what you learned from it."',
-  '"Tell me about a conflict with a colleague and how you resolved it."',
-  '"How do you stay productive when priorities keep shifting?"',
-  '"Give an example of a decision you made with incomplete information."',
-  '"Where do you see yourself in five years — and how does this role fit?"'
-];
-
-async function genQA(count){
-  count = count||5;
-  const{tr}=profileStr();
-  const qs = (count===10 ? [...QA_STD, ...QA_PRO_EXTRA] : QA_STD).map((q,i)=>`${i+1}. ${q}`).join('\n');
-  const p=`Write ${count} personalized interview answers for someone with this profile:
-Archetype: ${S.arch.name}, Scores: ${tr}, Overall: ${S.overall}/100
-
-Questions:
-${qs}
-
-Each answer: 90-110 words. Specific to their profile. First person. Natural spoken rhythm, as if said aloud in an interview. Ground each answer in their genuine trait scores.
-Return ONLY a JSON array of ${count} objects with keys "question" and "answer". No markdown, no fences, no preamble.`;
+async function genQA(){
   try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:count===10?2000:1200,messages:[{role:'user',content:p}]})});
-    const d=await r.json();
-    S.qaData=JSON.parse(d.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim());
-  }catch(e){S.qaData=Array.from({length:count},(_,i)=>({question:`Question ${i+1}`,answer:'[Could not generate — please retry]'}));}
+    const t=await fulfil('qa');
+    S.qaData=JSON.parse(t.replace(/```json|```/g,'').trim());
+  }catch(e){
+    S.qaData=[{question:'Interview answers',answer:'[Could not generate — please retry]'}];
+  }
 }
-
 async function genCover(){
-  const{tr,strong}=profileStr();
-  const p=`Write a cover-letter OPENER for someone with this Humanometer profile.
-Archetype: ${S.arch.name} — "${S.arch.tag}"
-Scores: ${tr}
-Strongest dimension: ${strong.name} (${S.pcts[strong.id]}/100)
-
-Two short paragraphs, around 90 words total. First person. Open with a distinctive sentence that signals who they are professionally. Second paragraph: what they bring that's specific to their top dimensions. Generic enough to fit most roles but specific enough that it reads as genuinely about them.
-Rules: no clichés, no "passionate", no "team player", no hashtags, no salutation, no "Dear Hiring Manager". Output ONLY the two paragraphs separated by a blank line.`;
-  try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:p}]})});
-    const d=await r.json();S.coverText=d.content.map(b=>b.text||'').join('').trim();
-  }catch(e){S.coverText='[Could not generate — please retry]';}
+  try{ S.coverText=await fulfil('cover'); }
+  catch(e){ S.coverText='[Could not generate — please retry]'; }
 }
-
 async function genPlan(){
-  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
-  const top=sorted[0]; const bottom=sorted[sorted.length-1];
-  const{tr}=profileStr();
-  const p=`Write a focused 30-day development plan for someone with this Humanometer profile.
-Archetype: ${S.arch.name}. Scores: ${tr}. Strongest: ${top.name} (${S.pcts[top.id]}). Developing: ${bottom.name} (${S.pcts[bottom.id]}).
-
-Structure: 4 weekly sections. Each week:
-- A short heading (8 words max)
-- 3 concrete actions (one short paragraph each, 2-3 sentences)
-- One reflection prompt at the end
-
-Goal: develop the user's weakest dimension while leaning into their strongest. Specific, practical, no fluff. Use plain Markdown — bold weekly headings with ** **, dash bullets for actions. No preamble or summary. Around 350 words.`;
-  try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:p}]})});
-    const d=await r.json();S.planText=d.content.map(b=>b.text||'').join('').trim();
-  }catch(e){S.planText='[Could not generate — please retry]';}
+  try{ S.planText=await fulfil('plan'); }
+  catch(e){ S.planText='[Could not generate — please retry]'; }
+}
+async function genSynthesis(){
+  try{ S.synthText=await fulfil('synthesis'); }
+  catch(e){ S.synthText='[Could not generate — please retry]'; }
 }
 
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
@@ -882,12 +841,16 @@ function buildDeliverables(){
   (S.qaData||[]).forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
   // Cover letter
   if(S.coverText) document.getElementById('cover-text').textContent=S.coverText;
-  // Plan
-  if(S.planText) document.getElementById('plan-text').textContent=S.planText;
+  // Plan (markdown-lite bold headings; .out-text preserves the newlines)
+  if(S.planText) document.getElementById('plan-text').innerHTML=mdLite(S.planText);
+  // Career synthesis
+  if(S.synthText) document.getElementById('synth-text').innerHTML=mdLite(S.synthText);
+  // Full results sheet (printable)
+  buildFullResults();
   // Certificate
   document.getElementById('cert-name').textContent=S.uname||'Your Name';
   document.getElementById('cert-arch').textContent=S.arch.name+' — '+S.arch.tag;
-  document.getElementById('cert-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('cert-date').textContent=new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'});
   const cs=document.getElementById('cert-scores');cs.innerHTML='';
   TRAITS.forEach(t=>{const el=document.createElement('div');el.className='cscore';el.innerHTML=`<div class="cscore-v" style="color:${t.color}">${S.pcts[t.id]}</div><div class="cscore-l">${t.name.split(' ')[0]}</div>`;cs.appendChild(el);});
   // Share card on deliverables page
@@ -898,7 +861,7 @@ function buildDeliverables(){
 
   // Tier-aware tab visibility
   const allowed = new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
-  ['linkedin','interview','cover','plan','cert','share'].forEach(id=>{
+  ['linkedin','interview','synthesis','cover','plan','results','cert','share'].forEach(id=>{
     const t=document.getElementById('dtab-'+id);
     const p=document.getElementById('dp-'+id);
     const ok=allowed.has(id);
@@ -912,6 +875,48 @@ function buildDeliverables(){
   if(ft)ft.classList.add('act'); if(fp)fp.classList.add('act');
 }
 function tab(id,btn){document.querySelectorAll('.dpanel').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('act'));document.getElementById('dp-'+id).classList.add('act');btn.classList.add('act');}
+
+/* Minimal markdown for AI text: **bold** → <strong>. Newlines are preserved by
+   .out-text's white-space:pre-wrap, so we don't convert them here. Escapes
+   first so model output can never inject markup. */
+function mdLite(s){return escapeHtml(s||'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
+
+/* Build the printable full-reading sheet from the computed profile. */
+function buildFullResults(){
+  const el=document.getElementById('full-results-sheet');
+  if(!el||!S.arch)return;
+  const pct=getPercentile(S.overall);
+  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  const rows=sorted.map(t=>{
+    const v=S.pcts[t.id];const band=getBand(t.id,v);
+    return `<div class="fr-dim">
+      <div class="fr-dim-top"><span class="fr-dim-name">${t.name}</span><span class="fr-dim-score" style="color:${t.color}">${v}</span></div>
+      <div class="fr-bar"><div class="fr-bar-fill" style="width:${v}%;background:${t.color}"></div></div>
+      <div class="fr-band">${escapeHtml(band.band)}</div>
+      <div class="fr-insight">${escapeHtml(band.insight)}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    <div class="fr-head">
+      <div class="fr-brand">Humanometer · Full Reading · 2026</div>
+      <div class="fr-name">${escapeHtml(S.uname||'Your Reading')}</div>
+      <div class="fr-arch">${escapeHtml(S.arch.name)} — ${escapeHtml(S.arch.tag)}</div>
+      <div class="fr-overall"><span class="fr-overall-n">${S.overall}</span><span class="fr-overall-d">/100 · top ${pct}%</span></div>
+    </div>
+    <div class="fr-dims">${rows}</div>
+    <div class="fr-foot">Generated from your 15 answers at humanometer.com · ${new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}</div>`;
+}
+
+/* Print one deliverable cleanly. A body class scopes the print stylesheet so
+   only #cert-el or #full-results-sheet is visible in the printout. */
+function printDeliverable(kind){
+  const cls='printing-'+kind;
+  document.body.classList.add(cls);
+  const done=()=>document.body.classList.remove(cls);
+  window.addEventListener('afterprint',done,{once:true});
+  window.print();
+  setTimeout(done,1000);
+}
 
 /* ═══════════════════════════ SHARE ═══════════════════════════ */
 function getShareText(platform='linkedin'){
@@ -1055,14 +1060,16 @@ async function regenLI(){document.getElementById('li-text').textContent='Regener
 function copyAllQA(){navigator.clipboard.writeText(S.qaData.map((qa,i)=>`${i+1}. ${qa.question}\n\n${qa.answer}`).join('\n\n---\n\n'));}
 async function regenQA(){
   document.getElementById('qa-list').innerHTML='<div style="color:var(--muted);padding:12px;">Regenerating…</div>';
-  await genQA(S.selectedPack==='pro'?10:5);
+  await genQA();
   const ql=document.getElementById('qa-list');ql.innerHTML='';
   S.qaData.forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
 }
 function copyCover(){navigator.clipboard.writeText(S.coverText||'');}
 async function regenCover(){document.getElementById('cover-text').textContent='Regenerating…';await genCover();document.getElementById('cover-text').textContent=S.coverText;}
 function copyPlan(){navigator.clipboard.writeText(S.planText||'');}
-async function regenPlan(){document.getElementById('plan-text').textContent='Regenerating…';await genPlan();document.getElementById('plan-text').textContent=S.planText;}
+async function regenPlan(){document.getElementById('plan-text').textContent='Regenerating…';await genPlan();document.getElementById('plan-text').innerHTML=mdLite(S.planText);}
+function copySynth(){navigator.clipboard.writeText(S.synthText||'');}
+async function regenSynth(){document.getElementById('synth-text').textContent='Regenerating…';await genSynthesis();document.getElementById('synth-text').innerHTML=mdLite(S.synthText);}
 function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
 
 function retake(){clearSession();show('landing');}
@@ -1077,18 +1084,18 @@ const PACKS = {
             tabs:['linkedin','cert','share'] },
   career: { name:'Career Pack',     price:9.99,
             includes:['LinkedIn About rewrite','5 personalized interview answers','Career synthesis','Full results PDF','Verified certificate'],
-            tabs:['linkedin','interview','cert','share'] },
+            tabs:['linkedin','interview','synthesis','results','cert','share'] },
   pro:    { name:'Interview Pro',   price:14.99,
-            includes:['LinkedIn About rewrite','10 personalized interview answers','Tailored cover-letter opener','30-day development plan','Verified certificate'],
-            tabs:['linkedin','interview','cover','plan','cert','share'] }
+            includes:['LinkedIn About rewrite','10 personalized interview answers','Tailored cover-letter opener','30-day development plan','Career synthesis','Full results PDF','Verified certificate'],
+            tabs:['linkedin','interview','cover','plan','synthesis','results','cert','share'] }
 };
 
 function buyPack(type){
   const pack=PACKS[type]; if(!pack)return;
   S.selectedPack=type;
-  document.getElementById('mpay-lbl').textContent=`Pay £${pack.price.toFixed(2)} · Instant Access`;
+  document.getElementById('mpay-lbl').textContent=`Pay $${pack.price.toFixed(2)} · Instant Access`;
   const rows = pack.includes.map(i=>`<div class="orow"><span>${i}</span><span>included</span></div>`).join('')
-    + `<div class="orow"><span>Total</span><span>£${pack.price.toFixed(2)}</span></div>`;
+    + `<div class="orow"><span>Total</span><span>$${pack.price.toFixed(2)}</span></div>`;
   document.getElementById('morder').innerHTML=rows;
   document.getElementById('pf-step').style.display='block';
   document.getElementById('proc-step').classList.remove('show');

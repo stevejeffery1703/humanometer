@@ -1014,3 +1014,33 @@ num,
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
 @keyframes pop{0%{transform:scale(.95);opacity:0;}60%{transform:scale(1.03);}100%{transform:scale(1);opacity:1;}}
+
+/* ── FULL RESULTS SHEET (printable paid deliverable) ── */
+.fullres{background:var(--bg2);border:1px solid var(--gbdr);padding:32px 30px;max-width:640px;margin:0 auto;}
+@media(max-width:500px){.fullres{padding:20px 16px;}}
+.fr-head{text-align:center;border-bottom:1px solid var(--gbdr);padding-bottom:20px;margin-bottom:24px;}
+.fr-brand{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+.fr-name{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,5vw,34px);font-weight:700;line-height:1.1;margin-bottom:4px;}
+.fr-arch{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--gold);margin-bottom:14px;}
+.fr-overall-n{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:700;color:var(--text);}
+.fr-overall-d{font-size:13px;color:var(--muted);margin-left:6px;}
+.fr-dim{margin-bottom:20px;}
+.fr-dim-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:12px;}
+.fr-dim-name{font-size:14.5px;font-weight:500;color:var(--text);}
+.fr-dim-score{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;flex-shrink:0;}
+.fr-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.fr-bar-fill{height:100%;border-radius:3px;}
+.fr-band{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.fr-insight{font-size:13px;line-height:1.7;color:var(--muted);}
+.fr-foot{border-top:1px solid var(--gbdr);padding-top:16px;margin-top:4px;text-align:center;font-size:11px;color:var(--muted);letter-spacing:.04em;}
+
+/* ── PRINT ISOLATION: only the targeted deliverable prints ── */
+@media print{
+  body.printing-cert *, body.printing-results *{visibility:hidden;}
+  body.printing-cert #cert-el, body.printing-cert #cert-el *,
+  body.printing-results #full-results-sheet, body.printing-results #full-results-sheet *{visibility:visible;}
+  body.printing-cert #cert-el{position:absolute;left:0;top:0;width:100%;}
+  body.printing-results #full-results-sheet{position:absolute;left:0;top:0;width:100%;max-width:100%;border:none;}
+  body.printing-cert .out-acts, body.printing-results .out-acts{display:none !important;}
+  @page{margin:14mm;}
+}

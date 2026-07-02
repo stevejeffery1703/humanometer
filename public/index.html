@@ -30,7 +30,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Humanometer — measure the professional skills AI can't replace">
-<meta property="og:locale" content="en_GB">
+<meta property="og:locale" content="en_US">
 
 <!-- ══ TWITTER / X ══ -->
 <meta name="twitter:card" content="summary_large_image">
@@ -45,7 +45,7 @@
 
 <!-- ══ JSON-LD: WebApplication ══ -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Humanometer","url":"https://humanometer.com/","description":"A free 5-minute assessment measuring five professional capabilities that AI cannot replicate: Adaptive Thinking, Ethical Judgment, Creative Synthesis, Empathic Accuracy, and Critical Skepticism.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","offers":[{"@type":"Offer","name":"Free Assessment","price":"0","priceCurrency":"GBP"},{"@type":"Offer","name":"LinkedIn Boost","price":"4.99","priceCurrency":"GBP"},{"@type":"Offer","name":"Career Pack","price":"9.99","priceCurrency":"GBP"},{"@type":"Offer","name":"Interview Pro","price":"14.99","priceCurrency":"GBP"}]}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Humanometer","url":"https://humanometer.com/","description":"A free 5-minute assessment measuring five professional capabilities that AI cannot replicate: Adaptive Thinking, Ethical Judgment, Creative Synthesis, Empathic Accuracy, and Critical Skepticism.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","offers":[{"@type":"Offer","name":"Free Assessment","price":"0","priceCurrency":"USD"},{"@type":"Offer","name":"LinkedIn Boost","price":"4.99","priceCurrency":"USD"},{"@type":"Offer","name":"Career Pack","price":"9.99","priceCurrency":"USD"},{"@type":"Offer","name":"Interview Pro","price":"14.99","priceCurrency":"USD"}]}
 </script>
 
 <!-- ══ JSON-LD: FAQPage ══ -->
@@ -60,7 +60,7 @@
 
 <!-- ══ JSON-LD: WebSite ══ -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"Humanometer","url":"https://humanometer.com/","inLanguage":"en-GB"}
+{"@context":"https://schema.org","@type":"WebSite","name":"Humanometer","url":"https://humanometer.com/","inLanguage":"en-US"}
 </script>
 
 <!-- ══ FONTS ══ -->
@@ -176,7 +176,7 @@
           </div>
           <div class="faq-item">
             <h3 class="faq-q">Is it free?</h3>
-            <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. Optional one-time paid packs (from £4.99) generate AI-personalized LinkedIn copy, interview answers, and more from your exact scores.</p>
+            <p class="faq-a">Yes. The full assessment, all five dimension scores, development insights, and a shareable results card are completely free. Optional one-time paid packs (from $4.99) generate AI-personalized LinkedIn copy, interview answers, and more from your exact scores.</p>
           </div>
           <div class="faq-item">
             <h3 class="faq-q">How is this different from a personality test?</h3>
@@ -353,7 +353,7 @@
         <span class="next-card-arrow" aria-hidden="true">↓</span>
       </button>
       <button class="next-card next-card-buy" type="button" onclick="document.getElementById('upsell-anchor').scrollIntoView({behavior:'smooth',block:'start'})">
-        <span class="next-card-badge">From £4.99</span>
+        <span class="next-card-badge">From $4.99</span>
         <div class="next-card-icon" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
@@ -417,23 +417,6 @@
     <!-- STRENGTHS — first value the user sees, before any ask -->
     <div class="sec-hd-strength" id="strengths-hd">Your strongest dimensions</div>
     <div class="insight-cards" id="strength-cards"></div>
-
-    <!-- INLINE EMAIL CAPTURE — moved lower (above upsell) since the permalink
-         above already covers the "save my reading" need. Kept for opt-in
-         marketing list only. -->
-    <div class="inline-save" id="inline-save" style="display:none;">
-      <div class="inline-save-row">
-        <div class="inline-save-text">
-          <div class="inline-save-h">Save your reading</div>
-          <p>Get a permanent link to this profile. We'll also tell you when benchmarking opens — nothing else.</p>
-        </div>
-        <div class="inline-save-form" id="inline-save-form">
-          <input type="email" id="einp" placeholder="your@email.com" autocomplete="email">
-          <button onclick="submitEmail()">Save</button>
-        </div>
-      </div>
-      <div class="inline-save-ok" id="eok">✓ Saved. You're all set.</div>
-    </div>
 
     <!-- Constellation -->
     <div class="const-row">
@@ -548,14 +531,14 @@
           <div class="tier-name">LinkedIn Boost</div>
           <div class="tier-sub">Polish your profile in one click</div>
         </div>
-        <div class="tier-price">£4.99 <span class="tier-period">one-time</span></div>
+        <div class="tier-price">$4.99 <span class="tier-period">one-time</span></div>
       </div>
       <div class="tier-items">
         <div class="tier-item">✦ LinkedIn 'About' section — written from your exact scores</div>
         <div class="tier-item">✦ Verified results certificate (shareable PDF)</div>
         <div class="tier-item">✦ Permanent results page</div>
       </div>
-      <button class="tier-btn tier-btn-sec" onclick="buyPack('boost')">Get LinkedIn Boost · £4.99</button>
+      <button class="tier-btn tier-btn-sec" onclick="buyPack('boost')">Get LinkedIn Boost · $4.99</button>
     </div>
 
     <!-- TIER 2: Career Pack — flagship, most popular -->
@@ -566,7 +549,7 @@
           <div class="tier-name">Career Pack</div>
           <div class="tier-sub">Everything in Boost, plus interview prep</div>
         </div>
-        <div class="tier-price">£9.99 <span class="tier-period">one-time</span> <span class="bb-was" style="margin-left:6px;">£19.97</span></div>
+        <div class="tier-price">$9.99 <span class="tier-period">one-time</span></div>
       </div>
       <div class="tier-items">
         <div class="tier-item">✦ Everything in LinkedIn Boost</div>
@@ -574,7 +557,7 @@
         <div class="tier-item">✦ Career synthesis — how your dimensions interact and the roles that suit you</div>
         <div class="tier-item">✦ Full results PDF</div>
       </div>
-      <button class="tier-btn" onclick="buyPack('career')">Get Career Pack · £9.99</button>
+      <button class="tier-btn" onclick="buyPack('career')">Get Career Pack · $9.99</button>
     </div>
 
     <!-- TIER 3: Interview Pro — high-intent job seekers -->
@@ -584,7 +567,7 @@
           <div class="tier-name">Interview Pro</div>
           <div class="tier-sub">Built for active job seekers</div>
         </div>
-        <div class="tier-price">£14.99 <span class="tier-period">one-time</span></div>
+        <div class="tier-price">$14.99 <span class="tier-period">one-time</span></div>
       </div>
       <div class="tier-items">
         <div class="tier-item">✦ Everything in Career Pack</div>
@@ -592,12 +575,12 @@
         <div class="tier-item">✦ Tailored cover-letter opener — written from your strongest dimensions</div>
         <div class="tier-item">✦ 30-day development plan based on your profile</div>
       </div>
-      <button class="tier-btn tier-btn-sec" onclick="buyPack('pro')">Get Interview Pro · £14.99</button>
+      <button class="tier-btn tier-btn-sec" onclick="buyPack('pro')">Get Interview Pro · $14.99</button>
     </div>
 
     <div class="pay-note" style="margin-top:10px;">Secure payment via Stripe · Instant delivery</div>
 
-    <div class="legal-note"><a href="/privacy.html" class="teams-link">Privacy</a> &middot; <a href="/unsubscribe.html" class="teams-link">Unsubscribe</a></div>
+    <div class="legal-note"><a href="/privacy.html" class="teams-link">Privacy</a> &middot; <a href="/terms.html" class="teams-link">Terms</a> &middot; <a href="/unsubscribe.html" class="teams-link">Unsubscribe</a></div>
 
   </div>
 </div>
@@ -639,6 +622,7 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span id="mpay-lbl">Continue to secure payment</span>
       </button>
+      <p style="font-size:11px;line-height:1.6;color:var(--muted);margin-top:12px;text-align:center;">By continuing you agree to our <a href="/terms.html" target="_blank" rel="noopener" style="color:var(--gold);">Terms &amp; Refund Policy</a> and <a href="/privacy.html" target="_blank" rel="noopener" style="color:var(--gold);">Privacy Policy</a>, and you consent to immediate delivery of your digital assets — waiving the right to cancel once they're generated.</p>
       <div class="msec">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Secure payment via Stripe · Instant delivery
@@ -675,8 +659,10 @@
     <div class="dtabs">
       <button class="dtab act" id="dtab-linkedin"  onclick="tab('linkedin',this)">✍️ LinkedIn About</button>
       <button class="dtab"      id="dtab-interview" onclick="tab('interview',this)">🎯 Interview Answers</button>
+      <button class="dtab"      id="dtab-synthesis" onclick="tab('synthesis',this)">🧭 Career Synthesis</button>
       <button class="dtab"      id="dtab-cover"     onclick="tab('cover',this)">📝 Cover Letter</button>
       <button class="dtab"      id="dtab-plan"      onclick="tab('plan',this)">🗓 30-Day Plan</button>
+      <button class="dtab"      id="dtab-results"   onclick="tab('results',this)">📄 Full Results</button>
       <button class="dtab"      id="dtab-cert"      onclick="tab('cert',this)">🏅 Certificate</button>
       <button class="dtab"      id="dtab-share"     onclick="tab('share',this)">📣 Share</button>
     </div>
@@ -695,6 +681,14 @@
         <button class="btn-act" onclick="regenQA()">↺ Regenerate</button>
       </div>
     </div>
+    <div class="dpanel" id="dp-synthesis">
+      <div class="out-box"><div class="out-lbl">Your career synthesis</div><div class="out-text" id="synth-text">Generating…</div></div>
+      <div class="out-acts">
+        <button class="btn-act pri" onclick="copySynth()">Copy to clipboard</button>
+        <button class="btn-act" onclick="regenSynth()">↺ Regenerate</button>
+      </div>
+      <div class="out-tip">How your dimensions combine, the roles that fit you, and where to be deliberate.</div>
+    </div>
     <div class="dpanel" id="dp-cover">
       <div class="out-box"><div class="out-lbl">Your cover-letter opener</div><div class="out-text" id="cover-text">Generating…</div></div>
       <div class="out-acts">
@@ -711,6 +705,15 @@
       </div>
       <div class="out-tip">A focused 4-week plan to develop your weakest dimension while leaning into your strongest.</div>
     </div>
+    <div class="dpanel" id="dp-results">
+      <div class="cw">
+        <div id="full-results-sheet" class="fullres"></div>
+        <div class="out-acts">
+          <button class="btn-act pri" onclick="printDeliverable('results')">🖨 Save as PDF</button>
+        </div>
+        <div class="out-tip">Browser Print → Save as PDF for a high-quality file of your full reading.</div>
+      </div>
+    </div>
     <div class="dpanel" id="dp-cert">
       <div class="cw">
         <div class="cert" id="cert-el">
@@ -726,7 +729,7 @@
           </div>
         </div>
         <div class="out-acts">
-          <button class="btn-act pri" onclick="window.print()">🖨 Save as PDF</button>
+          <button class="btn-act pri" onclick="printDeliverable('cert')">🖨 Save as PDF</button>
           <button class="btn-act" onclick="copyCert()">Copy details</button>
         </div>
         <div class="out-tip">Browser Print → Save as PDF for a high-quality file.</div>

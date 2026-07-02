@@ -30,28 +30,224 @@ async function handleCounter(request, env) {
   }
 }
 
-// ── /api/generate ────────────────────────────────────────────
+// ── /api/fulfil ──────────────────────────────────────────────
+// Payment-gated AI generation. The client does NOT send prompts or pick a
+// model — it sends { session_id, kind, profile }. We:
+//   1. verify the Stripe Checkout Session is actually paid,
+//   2. confirm the requested asset is included in the purchased tier,
+//   3. build the prompt server-side from the (validated) profile,
+//   4. cap generations per session in KV (replay guard),
+//   5. then call Claude.
+// This replaces the old /api/generate, which forwarded arbitrary `messages`
+// from anyone — an open, unauthenticated proxy to the Anthropic API.
 
-// Models the frontend is allowed to request. Anything else falls back to default.
-const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'];
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const GEN_MODEL = 'claude-sonnet-4-6';
 
-async function handleGenerate(request, env) {
-  let body;
+// Which AI assets each product entitles the buyer to. Certificate and the
+// full-results PDF are rendered client-side (no AI), so they're not listed.
+const TIER_KINDS = {
+  boost:  ['linkedin'],
+  career: ['linkedin', 'qa', 'synthesis'],
+  pro:    ['linkedin', 'qa', 'cover', 'plan', 'synthesis'],
+};
+
+// Max Claude calls per paid session — covers first generation of every asset
+// plus a generous number of "regenerate" clicks. Stops a single valid
+// session_id being replayed for unlimited generations.
+const MAX_GENS_PER_SESSION = 40;
+
+const TRAIT_NAMES = [
+  ['adaptive', 'Adaptive Thinking'],
+  ['ethical',  'Ethical Judgment'],
+  ['creative', 'Creative Synthesis'],
+  ['empathic', 'Empathic Accuracy'],
+  ['critical', 'Critical Skepticism'],
+];
+const ARCHETYPE_NAMES = ['The Vanguard', 'The Architect', 'The Compass', 'The Connector', 'The Analyst'];
+
+function cleanName(n) {
+  return String(n || '').replace(/[^\p{L}\p{N}\s'\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+
+// Validate + normalise the client-supplied profile. Returns null if malformed.
+function normaliseProfile(p) {
+  if (!p || typeof p !== 'object') return null;
+  const scores = p.scores || {};
+  const out = {};
+  for (const [id] of TRAIT_NAMES) {
+    const v = Math.round(Number(scores[id]));
+    if (!Number.isFinite(v) || v < 0 || v > 100) return null;
+    out[id] = v;
+  }
+  const archetype = ARCHETYPE_NAMES.includes(p.archetype) ? p.archetype : 'The Analyst';
+  const tag = typeof p.archetypeTag === 'string' ? p.archetypeTag.slice(0, 120) : '';
+  let overall = Math.round(Number(p.overall));
+  if (!Number.isFinite(overall) || overall < 0 || overall > 100) {
+    overall = Math.round(Object.values(out).reduce((a, b) => a + b, 0) / TRAIT_NAMES.length);
+  }
+  return { scores: out, archetype, tag, overall, name: cleanName(p.name) };
+}
+
+function profileFacts(profile) {
+  const tr = TRAIT_NAMES.map(([id, name]) => `${name}: ${profile.scores[id]}/100`).join(', ');
+  let strong = TRAIT_NAMES[0], weak = TRAIT_NAMES[0];
+  for (const t of TRAIT_NAMES) {
+    if (profile.scores[t[0]] > profile.scores[strong[0]]) strong = t;
+    if (profile.scores[t[0]] < profile.scores[weak[0]]) weak = t;
+  }
+  return {
+    tr,
+    strongName: strong[1], strongVal: profile.scores[strong[0]],
+    weakName: weak[1], weakVal: profile.scores[weak[0]],
+  };
+}
+
+const QA_STD = [
+  '"Tell me about yourself."',
+  '"What\'s your greatest professional strength?"',
+  '"How do you handle situations where there\'s no clear right answer?"',
+  '"Tell me about a time you had to push back on something you disagreed with."',
+  '"What makes you different from other candidates?"',
+];
+const QA_PRO_EXTRA = [
+  '"Describe a time you failed and what you learned from it."',
+  '"Tell me about a conflict with a colleague and how you resolved it."',
+  '"How do you stay productive when priorities keep shifting?"',
+  '"Give an example of a decision you made with incomplete information."',
+  '"Where do you see yourself in five years — and how does this role fit?"',
+];
+
+// Returns { prompt, max_tokens } for an asset kind, or null.
+function buildPrompt(kind, product, profile) {
+  const f = profileFacts(profile);
+  const head = `Archetype: ${profile.archetype} — "${profile.tag}"\nScores: ${f.tr}\nOverall: ${profile.overall}/100`;
+
+  if (kind === 'linkedin') {
+    return { max_tokens: 600, prompt:
+`Write a LinkedIn 'About' section for a professional with this Humanometer profile:
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100)
+
+Three paragraphs, ~60 words each (~180 words total).
+Para 1: Who they are professionally — open with their dominant human quality. First sentence must be distinctive and make a reader stop.
+Para 2: What they bring to teams — concrete, grounded in their top 2-3 traits. Specific enough it couldn't apply to anyone.
+Para 3: What they're working on or looking for — forward-facing, confident. One sentence on the kind of work that gets the best from them.
+
+Rules: First person. No clichés (no "passionate", "results-driven", "dynamic", "team player"). No emojis. No hashtags. Tone: confident, warm, real. Write as if you are them.
+Output ONLY the three paragraphs separated by a blank line.` };
+  }
+
+  if (kind === 'qa') {
+    const count = product === 'pro' ? 10 : 5;
+    const list = (count === 10 ? [...QA_STD, ...QA_PRO_EXTRA] : QA_STD).map((q, i) => `${i + 1}. ${q}`).join('\n');
+    return { max_tokens: count === 10 ? 2000 : 1200, prompt:
+`Write ${count} personalized interview answers for someone with this profile:
+Archetype: ${profile.archetype}, Scores: ${f.tr}, Overall: ${profile.overall}/100
+
+Questions:
+${list}
+
+Each answer: 90-110 words. Specific to their profile. First person. Natural spoken rhythm, as if said aloud in an interview. Ground each answer in their genuine trait scores.
+Return ONLY a JSON array of ${count} objects with keys "question" and "answer". No markdown, no fences, no preamble.` };
+  }
+
+  if (kind === 'cover') {
+    return { max_tokens: 500, prompt:
+`Write a cover-letter OPENER for someone with this Humanometer profile.
+${head}
+Strongest dimension: ${f.strongName} (${f.strongVal}/100)
+
+Two short paragraphs, around 90 words total. First person. Open with a distinctive sentence that signals who they are professionally. Second paragraph: what they bring that's specific to their top dimensions. Generic enough to fit most roles but specific enough that it reads as genuinely about them.
+Rules: no clichés, no "passionate", no "team player", no hashtags, no salutation, no "Dear Hiring Manager". Output ONLY the two paragraphs separated by a blank line.` };
+  }
+
+  if (kind === 'plan') {
+    return { max_tokens: 900, prompt:
+`Write a focused 30-day development plan for someone with this Humanometer profile.
+Archetype: ${profile.archetype}. Scores: ${f.tr}. Strongest: ${f.strongName} (${f.strongVal}). Developing: ${f.weakName} (${f.weakVal}).
+
+Structure: 4 weekly sections. Each week:
+- A short heading (8 words max)
+- 3 concrete actions (one short paragraph each, 2-3 sentences)
+- One reflection prompt at the end
+
+Goal: develop the user's weakest dimension while leaning into their strongest. Specific, practical, no fluff. Use plain Markdown — bold weekly headings with ** **, dash bullets for actions. No preamble or summary. Around 350 words.` };
+  }
+
+  if (kind === 'synthesis') {
+    return { max_tokens: 700, prompt:
+`Write a "career synthesis" for someone with this Humanometer profile.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+Three short sections, each with a bold Markdown heading:
+**How your dimensions work together** — 2-3 sentences on how their strongest dimensions interact and what that combination produces.
+**Where you'll thrive** — concrete role types and work environments that fit this exact profile. Specific, not generic.
+**Where to be deliberate** — one honest, practical note on their weakest dimension and how to compensate for it.
+
+Second person ("you"). Warm, specific, grounded in the actual scores. No clichés, no emojis. Around 200 words. Plain Markdown only — no preamble.` };
+  }
+
+  return null;
+}
+
+// Confirm a Stripe Checkout Session is genuinely paid, and return its product.
+async function verifyPaidSession(session_id, env) {
+  if (!session_id || !/^cs_[A-Za-z0-9_]+$/.test(session_id)) return null;
+  if (!env.STRIPE_SECRET_KEY) return null;
   try {
-    body = await request.json();
+    const r = await fetch('https://api.stripe.com/v1/checkout/sessions/' + encodeURIComponent(session_id), {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+    });
+    if (!r.ok) return null;
+    const s = await r.json();
+    if (s.payment_status !== 'paid') return null;
+    const product = s.metadata && s.metadata.product;
+    if (!TIER_KINDS[product]) return null;
+    return { product };
   } catch (e) {
-    return json({ error: 'Invalid JSON' }, 400);
+    return null;
+  }
+}
+
+async function handleFulfil(request, env) {
+  // Defence-in-depth: reject obvious cross-origin callers. The payment
+  // verification below is the real gate; this just trims casual noise.
+  const origin = request.headers.get('Origin');
+  if (origin &&
+      !/^https?:\/\/(www\.)?humanometer\.com$/.test(origin) &&
+      !/^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+    return json({ error: 'Forbidden' }, 403);
   }
 
-  const messages = body.messages;
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return json({ error: 'No messages' }, 400);
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'Invalid JSON' }, 400); }
+
+  const kind = String(body.kind || '');
+  const session_id = String(body.session_id || '');
+
+  const paid = await verifyPaidSession(session_id, env);
+  if (!paid) return json({ error: 'Payment could not be verified' }, 402);
+
+  if (!TIER_KINDS[paid.product].includes(kind)) {
+    return json({ error: 'This asset is not included in your purchase' }, 403);
   }
 
-  // Validate model against allowlist and clamp max_tokens (public endpoint — limit abuse)
-  const model = ALLOWED_MODELS.includes(body.model) ? body.model : DEFAULT_MODEL;
-  const max_tokens = Math.min(Math.max(parseInt(body.max_tokens) || 1024, 1), 2000);
+  const profile = normaliseProfile(body.profile);
+  if (!profile) return json({ error: 'Invalid profile' }, 400);
+
+  // Per-session generation cap (replay / abuse guard).
+  try {
+    const key = 'genc:' + session_id;
+    const used = parseInt((await env.HUMANOMETER_KV.get(key)) || '0');
+    if (used >= MAX_GENS_PER_SESSION) {
+      return json({ error: 'Generation limit reached for this purchase' }, 429);
+    }
+    await env.HUMANOMETER_KV.put(key, String(used + 1), { expirationTtl: 60 * 60 * 24 * 60 });
+  } catch (e) { /* KV hiccup — payment is already verified, so allow through */ }
+
+  const built = buildPrompt(kind, paid.product, profile);
+  if (!built) return json({ error: 'Unknown asset' }, 400);
 
   try {
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -61,15 +257,18 @@ async function handleGenerate(request, env) {
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ model, max_tokens, messages }),
+      body: JSON.stringify({
+        model: GEN_MODEL,
+        max_tokens: built.max_tokens,
+        messages: [{ role: 'user', content: built.prompt }],
+      }),
     });
-
     const data = await upstream.json();
     if (!upstream.ok) {
       return json({ error: data.error?.message || 'Anthropic API error' }, 502);
     }
-    // Return the raw Anthropic response — the frontend reads data.content[].text
-    return json(data);
+    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    return json({ text });
   } catch (e) {
     return json({ error: e.message }, 500);
   }
@@ -183,9 +382,9 @@ async function handleAdminOptins(request, env) {
 // ── /api/checkout ────────────────────────────────────────────
 
 const PRODUCTS = {
-  'boost':  { name: 'Humanometer LinkedIn Boost',  amount:  499, currency: 'gbp', mode: 'payment' },
-  'career': { name: 'Humanometer Career Pack',     amount:  999, currency: 'gbp', mode: 'payment' },
-  'pro':    { name: 'Humanometer Interview Pro',   amount: 1499, currency: 'gbp', mode: 'payment' },
+  'boost':  { name: 'Humanometer LinkedIn Boost',  amount:  499, currency: 'usd', mode: 'payment' },
+  'career': { name: 'Humanometer Career Pack',     amount:  999, currency: 'usd', mode: 'payment' },
+  'pro':    { name: 'Humanometer Interview Pro',   amount: 1499, currency: 'usd', mode: 'payment' },
 };
 
 async function handleCheckout(request, env) {
@@ -236,7 +435,7 @@ async function handleCheckout(request, env) {
 
 const ROUTES = {
   '/api/counter':       handleCounter,
-  '/api/generate':      handleGenerate,
+  '/api/fulfil':        handleFulfil,
   '/api/optin':         handleOptin,
   '/api/unsubscribe':   handleUnsubscribe,
   '/api/admin/optins':  handleAdminOptins,
@@ -262,8 +461,11 @@ export default {
     // path and renders the shared results screen. Without this, /r/* would
     // 404 because no asset exists at that path.
     if (url.pathname.startsWith('/r/')) {
-      const indexReq = new Request(new URL('/index.html', url), request);
-      return env.ASSETS.fetch(indexReq);
+      // Serve the SPA shell WITHOUT redirecting. Fetching '/index.html' makes
+      // the assets layer 307 → '/', which drops the /r/<code> the client needs
+      // to decode. Fetching '/' returns index.html at 200 and the browser keeps
+      // the /r/<code> path, so the client can render the shared reading.
+      return env.ASSETS.fetch(new Request(new URL('/', url), request));
     }
 
     // Fall through to static assets
