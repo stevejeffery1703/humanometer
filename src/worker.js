@@ -41,7 +41,54 @@ async function handleCounter(request, env) {
 // This replaces the old /api/generate, which forwarded arbitrary `messages`
 // from anyone — an open, unauthenticated proxy to the Anthropic API.
 
-const GEN_MODEL = 'claude-sonnet-4-6';
+// Model selection. GEN_MODEL (optional Cloudflare var — set it in the dashboard
+// to change the primary with no code deploy) is tried first; if it's ever
+// retired, mistyped, or otherwise unavailable, we fall through to the next
+// model so a *paid* generation never breaks on a dead model id. Haiku is last —
+// cheap and near-always-available — as a final safety net. Fallbacks only ever
+// engage when a model is genuinely gone; picking the "most appropriate" primary
+// is your call via GEN_MODEL.
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const MODEL_FALLBACKS = ['claude-sonnet-4-6', 'claude-haiku-4-5'];
+
+function modelCandidates(env) {
+  return [...new Set([env.GEN_MODEL, DEFAULT_MODEL, ...MODEL_FALLBACKS].filter(Boolean))];
+}
+
+// Call Claude, trying each candidate model in order. Only fall through when the
+// model itself is unavailable (404 / not_found_error) — NOT on 429/500/overload,
+// which are transient and shouldn't burn through the whole list. Throws with
+// `.upstream = true` so the caller can distinguish an Anthropic error (502) from
+// an unexpected one (500).
+async function callClaude(env, max_tokens, prompt) {
+  const models = modelCandidates(env);
+  let lastModelError = null;
+  for (const model of models) {
+    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ model, max_tokens, messages: [{ role: 'user', content: prompt }] }),
+    });
+    const data = await upstream.json().catch(() => ({}));
+    if (upstream.ok) {
+      return (data.content || []).map(b => b.text || '').join('').trim();
+    }
+    if (upstream.status === 404 || data?.error?.type === 'not_found_error') {
+      lastModelError = data?.error?.message || `model ${model} unavailable`;
+      continue; // retired / bad id — try the next candidate
+    }
+    const err = new Error(data?.error?.message || 'Anthropic API error');
+    err.upstream = true; // transient/auth error — surface, don't cycle models
+    throw err;
+  }
+  const err = new Error('No model available (' + (lastModelError || 'all candidates returned 404') + ')');
+  err.upstream = true;
+  throw err;
+}
 
 // Which AI assets each product entitles the buyer to. Certificate and the
 // full-results PDF are rendered client-side (no AI), so they're not listed.
@@ -250,27 +297,10 @@ async function handleFulfil(request, env) {
   if (!built) return json({ error: 'Unknown asset' }, 400);
 
   try {
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: GEN_MODEL,
-        max_tokens: built.max_tokens,
-        messages: [{ role: 'user', content: built.prompt }],
-      }),
-    });
-    const data = await upstream.json();
-    if (!upstream.ok) {
-      return json({ error: data.error?.message || 'Anthropic API error' }, 502);
-    }
-    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    const text = await callClaude(env, built.max_tokens, built.prompt);
     return json({ text });
   } catch (e) {
-    return json({ error: e.message }, 500);
+    return json({ error: e.message }, e.upstream ? 502 : 500);
   }
 }
 
