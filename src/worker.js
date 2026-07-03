@@ -93,9 +93,11 @@ async function callClaude(env, max_tokens, prompt) {
 // Which AI assets each product entitles the buyer to. Certificate and the
 // full-results PDF are rendered client-side (no AI), so they're not listed.
 const TIER_KINDS = {
-  boost:  ['linkedin'],
-  career: ['linkedin', 'qa', 'synthesis'],
-  pro:    ['linkedin', 'qa', 'cover', 'plan', 'synthesis'],
+  boost:  ['edge', 'traps', 'linkedin'],
+  career: ['edge', 'traps', 'stories', 'guide', 'linkedin'],
+  // 'pro' mirrors 'career' until the role-tailored (job-description) assets ship;
+  // its checkout is disabled in the UI ("Coming soon") until then.
+  pro:    ['edge', 'traps', 'stories', 'guide', 'linkedin'],
 };
 
 // Max Claude calls per paid session — covers first generation of every asset
@@ -233,6 +235,79 @@ Three short sections, each with a bold Markdown heading:
 **Where to be deliberate** — one honest, practical note on their weakest dimension and how to compensate for it.
 
 Second person ("you"). Warm, specific, grounded in the actual scores. No clichés, no emojis. Around 200 words. Plain Markdown only — no preamble.` };
+  }
+
+  // ── Coaching assets (scores-only; nothing about the person is fabricated) ──
+  // These COACH the user rather than write content for them, so they can be
+  // personal without inventing any facts. Shared guardrail keeps every one of
+  // them honest — see the "no made-up facts" rule.
+  const guard =
+`Voice: a sharp, warm coach who respects the reader — direct, concrete, zero filler.
+Hard rules — never break these:
+- Never state a fact about this person you can't know: no job titles, employers, industries, dates, numbers, achievements, or past experiences. Where their own real detail belongs, tell them to recall it — never invent it and never drop a placeholder into the middle of a sentence.
+- Use only the trait scores above and general, widely-true career knowledge. Cite a score only when it earns the point, as evidence — not as a label in every sentence.
+- The specificity test: delete any sentence that would read the same for a candidate with very different scores. If it fits everyone, cut it.
+- Banned phrases: "passionate", "results-driven", "dynamic", "team player", "go-getter", "hit the ground running", "bring to the table", "wear many hats", "think outside the box", "hard worker", "fast-paced". No other clichés, no emojis, no hashtags.
+- Plain Markdown only: bold headings with ** **, dash "-" bullets. No "#" headings. No preamble and no sign-off.`;
+
+  if (kind === 'edge') {
+    return { max_tokens: 600, prompt:
+`Write a "Your Edge" reading for someone with this Humanometer profile.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+Three sections, each a bold Markdown heading followed by 2-3 sentences:
+**How your dimensions combine** — what their top two or three dimensions produce *together* that neither would alone. Name the specific effect, not a restated list of traits.
+**Where you'll do your best work** — concrete categories of role, team, and problem that fit this exact profile, and by implication what to steer clear of. Name real kinds of work, not adjectives.
+**Where to be deliberate** — one honest note on their weakest dimension: how it tends to show up, and one practical thing to do about it this week.
+
+Second person ("you"). Around 200 words.
+${guard}` };
+  }
+
+  if (kind === 'traps') {
+    return { max_tokens: 600, prompt:
+`Write "Know Your Traps" — the interview and workplace tendencies someone with this profile should watch for.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+One short opening sentence, then exactly three traps. Each:
+**A short, vivid bold name for the trap** — then two sentences: the tendency (following from a specific high score's shadow side or a low score's cost) and one concrete counter-move they can use in an interview this week.
+
+Every trap must follow from THIS score pattern specifically. If you'd hand the same trap to most candidates, cut it and find the real one. Around 180 words.
+${guard}` };
+  }
+
+  if (kind === 'stories') {
+    return { max_tokens: 800, prompt:
+`Write "Stories to Dig Up" — memory-joggers that help this person find their OWN real interview stories. You are a coach pointing them into their memory; you never invent a story for them.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+Structure:
+- One short framing paragraph naming the specific tension in their profile — what their strongest dimension makes easy and what their weakest leaves exposed — and what that means for how they should prepare.
+- Then 3-4 story prompts, each a bold name plus 2-3 sentences: what kind of real moment to search their memory for, and what an interviewer reads from it. Across the set, span a range of moment-types (a change-or-ambiguity moment, a people moment, a judgement moment, a moment they're proud of) so the resulting stories answer many different questions.
+- Flag the prompt tied to their WEAKEST dimension plainly: interviewers are trained to probe there, and people with this profile most often walk in without that story — so prepare it first. A small real moment beats an impressive invented one.
+- One closing line: pick ONE real moment per prompt where they remember the details and it ended well — three or four stories they can tell cold and reuse across many questions.
+
+Second person. Around 250 words.
+${guard}` };
+  }
+
+  if (kind === 'guide') {
+    return { max_tokens: 1400, prompt:
+`Write "The Interview Prep Guide" for someone with this Humanometer profile. This TEACHES them to build their own answers — it never writes a finished answer for them.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+Four sections, each a bold Markdown heading:
+**The questions you'll get — and what they're really testing** — five commonly-asked interview questions as dash bullets. For each: the question in quotes, one line on what the interviewer is actually measuring, and one tip tailored to this person's scores. At least one must be the kind of question designed to probe their WEAKEST dimension — flag that one as the one to rehearse hardest.
+**How to build an answer (STAR)** — the four parts (Situation, Task, Action, Result) in one line each, then ONE short worked example labelled exactly "Example — imitate the shape, don't copy it:" built on an obviously generic situation so they adapt it rather than lift it.
+**Your freeze-question playbook** — how to approach the three questions people stall on: "What's your greatest weakness?", "Why are you leaving?", and a failure-or-gap question. For each, the strategy and the trap to avoid — never a script.
+**Questions to ask them** — three sharp questions this person could ask an interviewer that fit their profile and also help them judge whether the role suits how they work.
+
+Second person. Practical, specific, no fluff. Around 550 words.
+${guard}` };
   }
 
   return null;
@@ -412,9 +487,9 @@ async function handleAdminOptins(request, env) {
 // ── /api/checkout ────────────────────────────────────────────
 
 const PRODUCTS = {
-  'boost':  { name: 'Humanometer LinkedIn Boost',  amount:  499, currency: 'usd', mode: 'payment' },
-  'career': { name: 'Humanometer Career Pack',     amount:  999, currency: 'usd', mode: 'payment' },
-  'pro':    { name: 'Humanometer Interview Pro',   amount: 1499, currency: 'usd', mode: 'payment' },
+  'boost':  { name: 'Humanometer Edge Report',     amount:  699, currency: 'usd', mode: 'payment' },
+  'career': { name: 'Humanometer Interview Kit',   amount: 1499, currency: 'usd', mode: 'payment' },
+  'pro':    { name: 'Humanometer Interview Coach',  amount: 1999, currency: 'usd', mode: 'payment' },
 };
 
 async function handleCheckout(request, env) {

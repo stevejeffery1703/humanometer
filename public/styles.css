@@ -53,6 +53,7 @@ h1.hero em{font-style:italic;color:var(--gold);}
 /* Hero explanatory paragraph — small but readable, between deck and CTA */
 .hero-explain{font-size:14.5px;line-height:1.7;color:var(--muted);max-width:640px;margin:18px 0 8px;}
 .hero-explain em{color:var(--gold2);font-style:italic;}
+.hero-explain .hl{font-style:normal;font-weight:600;color:#f7d774;background:rgba(240,201,106,.14);padding:.05em .28em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;}
 @media(max-width:600px){.hero-explain{font-size:14px;line-height:1.65;}}
 
 /* HERO actions — CTA block above the fold */
@@ -420,6 +421,12 @@ h1.hero em{font-style:italic;color:var(--gold);}
   border:1px solid var(--gbdr);border-left:3px solid #5b9ae0;
   padding:18px 22px;margin:32px 0 24px;animation:upIn .35s ease both;
 }
+/* Permalink accordion on the deliverables page (always available post-purchase) */
+.permalink-accordion{max-width:600px;margin:4px auto 22px;}
+.permalink-accordion>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;justify-content:center;padding:12px 16px;font-size:13px;font-weight:600;color:#5b9ae0;border:1px solid var(--gbdr);border-left:3px solid #5b9ae0;background:var(--bg2);}
+.permalink-accordion>summary::-webkit-details-marker{display:none;}
+.permalink-accordion>summary::marker{content:'';}
+.permalink-accordion .permalink-block{margin:12px 0 0;}
 .permalink-label{
   font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:#5b9ae0;margin-bottom:10px;font-weight:500;

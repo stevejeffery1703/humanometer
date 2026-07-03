@@ -74,8 +74,8 @@ let S={
   tim:null,tl:25,at:0,susp:0,
   overall:0,arch:null,pcts:{},
   prods:new Set(['bundle']),
-  uname:'',liText:'',qaData:[],
-  sharedOnce:false,
+  uname:'',liText:'',gen:{},
+  sharedOnce:false,purchased:false,
   honestyDismissed:false
 };
 
@@ -374,12 +374,6 @@ function buildResults(){
   //    the generated URL + Copy + Send buttons.
   //  • Otherwise show the name input + "Generate link" button.
   renderPermalinkBlock();
-  const permEl=document.getElementById('permalink-url');
-  if(permEl){
-    const link=currentPermalink();
-    permEl.textContent=link ? link.replace(/^https?:\/\//,'') : '—';
-    permEl.dataset.fullUrl=link||'';
-  }
 
   // Rarity line — makes sharing feel worthwhile
   const rarityEl=document.getElementById('rarity-line');
@@ -647,7 +641,7 @@ function buildShareCard(){
 function setupStickyShare(){
   let shown=false;
   const handler=()=>{
-    if(shown||S.sharedOnce)return;
+    if(shown||S.sharedOnce||S.purchased)return;
     const scrolled=window.scrollY+window.innerHeight;
     const total=document.body.scrollHeight;
     if(scrolled/total>0.82){
@@ -703,17 +697,23 @@ async function runFulfilment(){
   document.getElementById('modal-bg').classList.add('open');
   const tier = PACKS[S.selectedPack] || PACKS.career;
   const tabs = tier.tabs;
-  // ps1 payment, ps2 analyse, ps3 LinkedIn, ps4 interview/cover/plan, ps5 certificate
+  S.gen={};
+  // ps1 payment, ps2 analyse, ps3 edge/traps + LinkedIn, ps4 interview prep, ps5 certificate
   await stepUI('ps1', 800);
   await stepUI('ps2', 600);
-  if(tabs.includes('linkedin')) await stepUI('ps3', null, genLinkedIn);
-  else await stepUI('ps3', 200);
-  if(tabs.includes('interview')) await stepUI('ps4', null, genQA);
-  else await stepUI('ps4', 200);
-  if(tabs.includes('cover')) await genCover();
-  if(tabs.includes('plan')) await genPlan();
-  if(tabs.includes('synthesis')) await genSynthesis();
+  await stepUI('ps3', null, async()=>{
+    if(tabs.includes('edge'))     await genAsset('edge');
+    if(tabs.includes('traps'))    await genAsset('traps');
+    if(tabs.includes('linkedin')) await genLinkedIn();
+  });
+  await stepUI('ps4', null, async()=>{
+    if(tabs.includes('stories'))  await genAsset('stories');
+    if(tabs.includes('guide'))    await genAsset('guide');
+  });
   await stepUI('ps5', 500);
+  // Purchase complete — the "Get career assets" sticky bar no longer applies.
+  S.purchased=true;
+  const ss=document.getElementById('sticky-share'); if(ss)ss.classList.remove('show');
   await delay(250);closePay();buildDeliverables();show('deliverables');
 }
 
@@ -809,42 +809,26 @@ async function genLinkedIn(){
   try{ S.liText=await fulfil('linkedin'); }
   catch(e){ S.liText='[Could not generate — please retry]'; }
 }
-async function genQA(){
-  try{
-    const t=await fulfil('qa');
-    S.qaData=JSON.parse(t.replace(/```json|```/g,'').trim());
-  }catch(e){
-    S.qaData=[{question:'Interview answers',answer:'[Could not generate — please retry]'}];
-  }
-}
-async function genCover(){
-  try{ S.coverText=await fulfil('cover'); }
-  catch(e){ S.coverText='[Could not generate — please retry]'; }
-}
-async function genPlan(){
-  try{ S.planText=await fulfil('plan'); }
-  catch(e){ S.planText='[Could not generate — please retry]'; }
-}
-async function genSynthesis(){
-  try{ S.synthText=await fulfil('synthesis'); }
-  catch(e){ S.synthText='[Could not generate — please retry]'; }
+// Coaching assets (edge, traps, stories, guide) all return Markdown and render
+// identically, so one helper covers them. Text is kept in S.gen[kind].
+async function genAsset(kind){
+  S.gen=S.gen||{};
+  try{ S.gen[kind]=await fulfil(kind); }
+  catch(e){ S.gen[kind]='[Could not generate — please retry]'; }
 }
 
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
 /* Render all panels, but only show tabs/panels for what the purchased tier includes.
    Activates the first allowed tab so the user lands on something visible. */
 function buildDeliverables(){
-  // LinkedIn
+  // LinkedIn (plain-text draft)
   if(S.liText) document.getElementById('li-text').textContent=S.liText;
-  // Interview
-  const ql=document.getElementById('qa-list');ql.innerHTML='';
-  (S.qaData||[]).forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
-  // Cover letter
-  if(S.coverText) document.getElementById('cover-text').textContent=S.coverText;
-  // Plan (markdown-lite bold headings; .out-text preserves the newlines)
-  if(S.planText) document.getElementById('plan-text').innerHTML=mdLite(S.planText);
-  // Career synthesis
-  if(S.synthText) document.getElementById('synth-text').innerHTML=mdLite(S.synthText);
+  // Coaching assets (Markdown → mdLite; .out-text preserves the newlines)
+  const g=S.gen||{};
+  ['edge','traps','stories','guide'].forEach(k=>{
+    const el=document.getElementById(k+'-text');
+    if(el && g[k]) el.innerHTML=mdLite(g[k]);
+  });
   // Full results sheet (printable)
   buildFullResults();
   // Certificate
@@ -858,10 +842,12 @@ function buildDeliverables(){
   document.getElementById('dsc-arch').textContent=S.arch.name;
   const dt=document.getElementById('dsc-traits');dt.innerHTML='';
   TRAITS.forEach(t=>{const s=document.createElement('span');s.className='sc-t';s.textContent=`${t.name.split(' ')[0]} ${S.pcts[t.id]}`;dt.appendChild(s);});
+  // Permalink accordion (deliverables) — reflects whether a link exists yet.
+  renderPermalinkBlock();
 
   // Tier-aware tab visibility
   const allowed = new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
-  ['linkedin','interview','synthesis','cover','plan','results','cert','share'].forEach(id=>{
+  ['edge','traps','stories','guide','linkedin','results','cert','share'].forEach(id=>{
     const t=document.getElementById('dtab-'+id);
     const p=document.getElementById('dp-'+id);
     const ok=allowed.has(id);
@@ -925,64 +911,58 @@ function getShareText(platform='linkedin'){
   const top2=sorted.slice(0,2);
   const peakLines=top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ');
 
+  const link=currentPermalink()||'https://humanometer.com';
+
   if(platform==='linkedin'){
-    return `I just took the Humanometer — a free 5-minute assessment of the five professional capabilities AI can't replicate.
+    return `I just measured the five professional capabilities AI can't replicate — on the Humanometer.
 
 My profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+Strongest: ${top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ')}
 
-Strongest dimensions:
-${top2.map(t=>`▸ ${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
+It's a scored, five-dimension reading grounded in WEF and LinkedIn research on the human skills rising in value as AI spreads — not a personality type.
 
-It produces a five-dimension scored breakdown — not a personality label — grounded in WEF and LinkedIn research on the skills growing in demand because of AI.
-
-See my full reading: ${currentPermalink()}
-Take yours (free, 5 min): https://humanometer.com
-
-What's your profile? Can you beat ${S.arch.name}?`;
-  }
-
-  if(platform==='x'){
-    return `I'm "${S.arch.name}" on the Humanometer 🎯
-${S.overall}/100 (top ${pct}%) · Top: ${peakLines}
-
-My full reading → ${currentPermalink()}
-Take yours (free, 5 min): https://humanometer.com`;
-  }
-
-  if(platform==='whatsapp'){
-    return `Just took the Humanometer — a free 5-min assessment of the human skills AI can't replicate.
-
-I'm "${S.arch.name}" — ${S.overall}/100 (top ${pct}%).
-Strongest: ${peakLines}
-
-My full reading: ${currentPermalink()}
-Take yours: https://humanometer.com`;
-  }
-
-  if(platform==='facebook'){
-    return `I just took the Humanometer — a free 5-minute assessment of the five professional capabilities AI can't replicate.
-
-My reading: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
-Strongest: ${peakLines}
-
-It's a scored breakdown across five dimensions — grounded in research on the skills growing in demand because of AI, not a personality label.
-
-See my full reading: ${currentPermalink()}
+My full reading: ${link}
 Take yours (free, 5 min): https://humanometer.com
 
 What's your profile?`;
   }
 
+  if(platform==='x'){
+    return `I'm "${S.arch.name}" on the Humanometer — ${S.overall}/100, top ${pct}%.
+Top strengths: ${peakLines}
+
+The five professional capabilities AI can't replicate, scored in 5 minutes.
+My reading → ${link}
+Take yours (free): https://humanometer.com`;
+  }
+
+  if(platform==='whatsapp'){
+    return `Just took the Humanometer — the five professional skills AI can't replicate, scored in 5 minutes.
+
+I'm "${S.arch.name}" — ${S.overall}/100 (top ${pct}%). Strongest: ${peakLines}
+
+My reading: ${link}
+Try it: https://humanometer.com`;
+  }
+
+  if(platform==='facebook'){
+    return `I just took the Humanometer — a free 5-minute reading of the five professional capabilities AI can't replicate.
+
+I'm "${S.arch.name}" · ${S.overall}/100 (top ${pct}%). Strongest: ${peakLines}
+
+A scored, five-dimension breakdown grounded in research on the skills rising in value as AI spreads — not a personality type.
+
+My full reading: ${link}
+Take yours (free, 5 min): https://humanometer.com`;
+  }
+
   // clipboard / generic
-  return `My Humanometer reading
+  return `My Humanometer reading — the five professional capabilities AI can't replicate.
 
-Profile: ${S.arch.name}
-Overall: ${S.overall}/100 · Top ${pct}%
+Profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+Strongest: ${top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ')}
 
-Strongest dimensions:
-${top2.map(t=>`${t.name}: ${S.pcts[t.id]}/100`).join('\n')}
-
-My full reading: ${currentPermalink()}
+Full reading: ${link}
 Take yours (free, 5 min): https://humanometer.com`;
 }
 
@@ -997,13 +977,17 @@ function shareLinkedIn(){
   S.sharedOnce=true;
   const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('linkedin');
+  // Mobile: the OS share sheet carries the full text straight into LinkedIn's
+  // composer — this is what fixes "the share had no text, only the image".
+  if(navigator.share){ navigator.share({title:'My Humanometer reading',text:txt}).catch(()=>{}); return; }
+  // Desktop: LinkedIn's share URL can't be pre-filled, so copy the text to paste.
   const openShare = () => window.open(
     `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=600'
   );
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(()=>{
-      showToast('Your post text is copied. Paste it into LinkedIn.');
+      showToast('Your post text is copied — paste it into your LinkedIn post.');
       openShare();
     },()=>openShare());
   } else { openShare(); }
@@ -1019,14 +1003,18 @@ function shareX(){
    the user to paste — same pattern as LinkedIn. */
 function shareFacebook(){
   S.sharedOnce=true;
+  const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('facebook');
+  // Mobile: the OS share sheet carries the full text into Facebook's composer.
+  if(navigator.share){ navigator.share({title:'My Humanometer reading',text:txt}).catch(()=>{}); return; }
+  // Desktop: Facebook's sharer URL can't be pre-filled, so copy the text to paste.
   const openShare = () => window.open(
     `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=620'
   );
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(()=>{
-      showToast('Your post text is copied. Paste it into Facebook.');
+      showToast('Your post text is copied — paste it into your Facebook post.');
       openShare();
     },()=>openShare());
   } else { openShare(); }
@@ -1057,19 +1045,13 @@ function showToast(msg, ms=3200){
 }
 function copyLI(){navigator.clipboard.writeText(S.liText).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1800);});}
 async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').textContent=S.liText;}
-function copyAllQA(){navigator.clipboard.writeText(S.qaData.map((qa,i)=>`${i+1}. ${qa.question}\n\n${qa.answer}`).join('\n\n---\n\n'));}
-async function regenQA(){
-  document.getElementById('qa-list').innerHTML='<div style="color:var(--muted);padding:12px;">Regenerating…</div>';
-  await genQA();
-  const ql=document.getElementById('qa-list');ql.innerHTML='';
-  S.qaData.forEach((qa,i)=>{const el=document.createElement('div');el.className='qa';el.innerHTML=`<div class="qa-q"><span class="qa-n">${String(i+1).padStart(2,'0')}</span>${qa.question}</div><div class="qa-a">${qa.answer}</div>`;ql.appendChild(el);});
+// Coaching assets share one copy/regenerate pair (keyed by kind).
+function copyAsset(kind){navigator.clipboard.writeText((S.gen&&S.gen[kind])||'');}
+async function regenAsset(kind){
+  const el=document.getElementById(kind+'-text'); if(el)el.textContent='Regenerating…';
+  await genAsset(kind);
+  if(el)el.innerHTML=mdLite(S.gen[kind]);
 }
-function copyCover(){navigator.clipboard.writeText(S.coverText||'');}
-async function regenCover(){document.getElementById('cover-text').textContent='Regenerating…';await genCover();document.getElementById('cover-text').textContent=S.coverText;}
-function copyPlan(){navigator.clipboard.writeText(S.planText||'');}
-async function regenPlan(){document.getElementById('plan-text').textContent='Regenerating…';await genPlan();document.getElementById('plan-text').innerHTML=mdLite(S.planText);}
-function copySynth(){navigator.clipboard.writeText(S.synthText||'');}
-async function regenSynth(){document.getElementById('synth-text').textContent='Regenerating…';await genSynthesis();document.getElementById('synth-text').innerHTML=mdLite(S.synthText);}
 function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
 
 function retake(){clearSession();show('landing');}
@@ -1079,15 +1061,15 @@ function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 2
 /* Single source of truth for tier definitions — used by buyPack, runFulfilment,
    buildDeliverables. Keep aligned with PRODUCTS in src/worker.js. */
 const PACKS = {
-  boost:  { name:'LinkedIn Boost',  price:4.99,
-            includes:['LinkedIn About rewrite','Verified certificate','Permanent results page'],
-            tabs:['linkedin','cert','share'] },
-  career: { name:'Career Pack',     price:9.99,
-            includes:['LinkedIn About rewrite','5 personalized interview answers','Career synthesis','Full results PDF','Verified certificate'],
-            tabs:['linkedin','interview','synthesis','results','cert','share'] },
-  pro:    { name:'Interview Pro',   price:14.99,
-            includes:['LinkedIn About rewrite','10 personalized interview answers','Tailored cover-letter opener','30-day development plan','Career synthesis','Full results PDF','Verified certificate'],
-            tabs:['linkedin','interview','cover','plan','synthesis','results','cert','share'] }
+  boost:  { name:'Edge Report',     price:6.99,
+            includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots','LinkedIn About draft','Verified certificate','Permanent results page'],
+            tabs:['edge','traps','linkedin','cert','share'] },
+  career: { name:'Interview Kit',   price:14.99,
+            includes:['Everything in Edge Report','Stories to Dig Up — find your own best examples','The Interview Prep Guide','Full results PDF'],
+            tabs:['edge','traps','stories','guide','linkedin','results','cert','share'] },
+  pro:    { name:'Interview Coach',  price:19.99,
+            includes:['Everything in Interview Kit','Role-tailored interview brief (coming soon)'],
+            tabs:['edge','traps','stories','guide','linkedin','results','cert','share'] }
 };
 
 function buyPack(type){
@@ -1109,7 +1091,8 @@ function buyPack(type){
 
 /* Copy the user's permalink to the clipboard with inline button feedback. */
 function copyPermalink(btn){
-  const el=document.getElementById('permalink-url');
+  const root=btn&&btn.closest?btn.closest('.permalink-block'):null;
+  const el=(root&&root.querySelector('.js-perm-url'))||document.querySelector('.js-perm-url');
   const url=(el && el.dataset.fullUrl) || el?.textContent || '';
   if(!url)return;
   const finish=()=>{
@@ -1131,25 +1114,38 @@ function escapeHtml(s){
 
 /* Show either the "enter your name" step or the "link generated" step,
    based on whether S.uname is set. Also pre-fills the input on retry. */
+// Sync every permalink block on the page (there are two: one on the results
+// screen, one in the deliverables accordion). Works off classes, not ids, so
+// the same logic drives both — either the "enter your name" step or the
+// "link generated" step, based on whether S.uname is set.
 function renderPermalinkBlock(){
-  const stepName=document.getElementById('permalink-step-name');
-  const stepLink=document.getElementById('permalink-step-link');
-  if(!stepName||!stepLink)return;
-  if(S.uname){
-    stepName.style.display='none';
-    stepLink.style.display='';
-    const nameDisplay=document.getElementById('permalink-name-display');
-    if(nameDisplay)nameDisplay.textContent=S.uname;
-  } else {
-    stepName.style.display='';
-    stepLink.style.display='none';
-    const input=document.getElementById('permalink-name-input');
-    if(input)input.value='';
-  }
+  document.querySelectorAll('.permalink-block').forEach(root=>{
+    const stepName=root.querySelector('.js-perm-name');
+    const stepLink=root.querySelector('.js-perm-link');
+    if(!stepName||!stepLink)return;
+    if(S.uname){
+      stepName.style.display='none';
+      stepLink.style.display='';
+      const nameDisplay=root.querySelector('.js-perm-namedisplay');
+      if(nameDisplay)nameDisplay.textContent=S.uname;
+      const urlEl=root.querySelector('.js-perm-url');
+      if(urlEl){
+        const link=currentPermalink();
+        urlEl.textContent=link?link.replace(/^https?:\/\//,''):'—';
+        urlEl.dataset.fullUrl=link||'';
+      }
+    } else {
+      stepName.style.display='';
+      stepLink.style.display='none';
+      const input=root.querySelector('.js-perm-input');
+      if(input)input.value='';
+    }
+  });
 }
 
-function generatePermalink(){
-  const input=document.getElementById('permalink-name-input');
+function generatePermalink(el){
+  const root=el&&el.closest?el.closest('.permalink-block'):null;
+  const input=(root&&root.querySelector('.js-perm-input'))||document.querySelector('.js-perm-input');
   if(!input)return;
   const name=sanitizeName(input.value);
   if(!name){
@@ -1160,14 +1156,7 @@ function generatePermalink(){
   }
   S.uname=name;
   saveSession(); // persist so reload restores name too
-  renderPermalinkBlock();
-  // Re-populate the URL since uname changed
-  const permEl=document.getElementById('permalink-url');
-  if(permEl){
-    const link=currentPermalink();
-    permEl.textContent=link.replace(/^https?:\/\//,'');
-    permEl.dataset.fullUrl=link;
-  }
+  renderPermalinkBlock(); // fills the URL in every block
 }
 
 function editPermalinkName(){
