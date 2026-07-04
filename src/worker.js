@@ -101,9 +101,12 @@ const TIER_KINDS = {
 };
 
 // Max Claude calls per paid session — covers first generation of every asset
-// plus a generous number of "regenerate" clicks. Stops a single valid
-// session_id being replayed for unlimited generations.
-const MAX_GENS_PER_SESSION = 40;
+// plus a generous number of "regenerate" clicks AND the Interview Coach role
+// brief being re-run for many different jobs (its whole selling point). Every
+// call still requires a verified PAID session, so this only bounds how much a
+// single purchase (or a leaked session_id) can generate — worst case ~100 short
+// completions ≈ a few dollars of API cost against a $6.99–$19.99 sale.
+const MAX_GENS_PER_SESSION = 100;
 
 const TRAIT_NAMES = [
   ['adaptive', 'Adaptive Thinking'],
@@ -157,25 +160,8 @@ function buildPrompt(kind, profile, extra = {}) {
   const f = profileFacts(profile);
   const head = `Archetype: ${profile.archetype} — "${profile.tag}"\nScores: ${f.tr}\nOverall: ${profile.overall}/100`;
 
-  if (kind === 'linkedin') {
-    return { max_tokens: 600, prompt:
-`Write a LinkedIn 'About' section for a professional with this Humanometer profile:
-${head}
-Strongest: ${f.strongName} (${f.strongVal}/100)
-
-Three paragraphs, ~60 words each (~180 words total).
-Para 1: Who they are professionally — open with their dominant human quality. First sentence must be distinctive and make a reader stop.
-Para 2: What they bring to teams — concrete, grounded in their top 2-3 traits. Specific enough it couldn't apply to anyone.
-Para 3: What they're working on or looking for — forward-facing, confident. One sentence on the kind of work that gets the best from them.
-
-Rules: First person. No clichés (no "passionate", "results-driven", "dynamic", "team player"). No emojis. No hashtags. Tone: confident, warm, real. Write as if you are them.
-Output ONLY the three paragraphs separated by a blank line.` };
-  }
-
-  // ── Coaching assets (scores-only; nothing about the person is fabricated) ──
-  // These COACH the user rather than write content for them, so they can be
-  // personal without inventing any facts. Shared guardrail keeps every one of
-  // them honest — see the "no made-up facts" rule.
+  // Shared guardrail for every coaching asset — keeps output honest (no invented
+  // facts) and cliché-free. Defined up front so all branches (incl. linkedin) use it.
   const guard =
 `Voice: a sharp, warm coach who respects the reader — direct, concrete, zero filler.
 Hard rules — never break these:
@@ -184,6 +170,21 @@ Hard rules — never break these:
 - The specificity test: delete any sentence that would read the same for a candidate with very different scores. If it fits everyone, cut it.
 - Banned phrases: "passionate", "results-driven", "dynamic", "team player", "go-getter", "hit the ground running", "bring to the table", "wear many hats", "think outside the box", "hard worker", "fast-paced". No other clichés, no emojis, no hashtags.
 - Plain Markdown only: bold headings with ** **, dash "-" bullets. No "#" headings. No preamble and no sign-off.`;
+
+  if (kind === 'linkedin') {
+    return { max_tokens: 700, prompt:
+`Coach this person on their LinkedIn "About" section. Do NOT write a finished About for them to paste — give them the THEMES their profile says they should foreground, so they write it themselves, in their own voice, with their own real detail.
+${head}
+Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
+
+Open with one short line making clear this is what to emphasise, not text to copy.
+Then three or four themes, each a bold Markdown heading naming a strength this profile should lead with, then 2-3 sentences: why it lands with a reader or recruiter, and concretely how to show it in their own words — the kind of real example or angle to reach for, never a fabricated one. Tie each theme to a specific score.
+Then a bold "How to open" section: the shape of a strong first line for this profile as a pattern to adapt — illustrate it on an obviously generic example so they build their own rather than lift it — plus one thing to avoid.
+End with one line reminding them to write it themselves and drop in their own real specifics.
+
+Second person ("you"). Practical, around 300 words.
+${guard}` };
+  }
 
   if (kind === 'edge') {
     return { max_tokens: 600, prompt:
@@ -370,7 +371,7 @@ const ASSET_TITLES = {
   stories:  'Stories to Dig Up',
   guide:    'The Interview Prep Guide',
   role:     'Your Role-Tailored Brief',
-  linkedin: "Your LinkedIn 'About' draft",
+  linkedin: "Your LinkedIn 'About' — themes to emphasise",
 };
 const ASSET_ORDER = ['edge', 'traps', 'stories', 'guide', 'role', 'linkedin'];
 const ASSETS_TTL = 60 * 60 * 24 * 180; // 180 days

@@ -57,8 +57,8 @@ const QS=[
   {trait:'ethical',secs:30,text:"You discover something your organization does — legal, profitable, normal in the industry — causes low-level harm to people outside the transaction. Most people there don't seem to think about it. You…",opts:[{t:"Look for the right channel to raise it — even if nothing changes, I need to flag it",s:4},{t:"It's not my responsibility; the organization has implicitly decided this is acceptable",s:1},{t:"Sit with it for a while — I want to understand the full picture before doing anything",s:3},{t:"Mention it informally to someone I respect and see how they respond",s:2}]},
   {trait:'creative',secs:25,text:"You're stuck on a problem and none of your usual approaches are working. What do you reach for?",opts:[{t:"How has a completely different field dealt with something structurally similar?",s:4},{t:"Talk it through with someone — articulating it out loud usually breaks something loose",s:3},{t:"Step away and do something unrelated — the answer usually arrives when I stop looking",s:3},{t:"Go back to basics and make sure I'm actually solving the right problem",s:3}]},
   {trait:'creative',secs:25,text:"You need to explain something genuinely complex to someone with no background in it. You instinctively reach for…",opts:[{t:"An analogy from everyday life that captures the essential structure, even if it loses some detail",s:4},{t:"A clear sequence — I build from first principles and don't skip steps",s:2},{t:"A visual — a diagram or sketch usually cuts through faster than words",s:3},{t:"A concrete example of it working in practice — showing is better than telling",s:3}]},
-  {trait:'creative',secs:30,text:"Two observations: most communication fails not because of what's said, but because of what the listener was already thinking. And: good architects design for how a space feels when it's empty, not when it's full.\n\nWhat's the most useful connection between those ideas?",opts:[{t:"Both require designing for an internal state rather than an observable behavior — the real work is invisible",s:4},{t:"Both suggest the 'absent' person or moment is who you're actually designing for",s:4},{t:"Interesting parallel, but I'm not sure the analogy is precise enough to act on",s:2},{t:"Both show that the obvious interpretation of a problem usually isn't the real one",s:3}]},
-  {trait:'empathic',secs:25,text:"Someone you're working with says 'no, it's fine' when you ask if everything's okay. You…",opts:[{t:"Take them at their word — pushing further feels intrusive",s:1},{t:"Ask one more specific question that makes it easier to say what's actually going on",s:4},{t:"Let it go for now but check back in the next day or two",s:3},{t:"Tell them my door is open if they want to talk, and leave it there",s:2}]},
+  {trait:'creative',secs:30,text:"Two quick ideas: a great teacher plans for the students who stay quiet, and a great host plans for the guest who doesn't know anyone. What connects them?",opts:[{t:"Both design for the person who's easiest to overlook — the real skill is noticing who isn't speaking up",s:4},{t:"Both are about making sure nobody gets left behind",s:3},{t:"Both are just examples of planning ahead for people",s:2},{t:"Not much — teaching and hosting are pretty different jobs",s:1}]},
+  {trait:'empathic',secs:25,text:"You ask a colleague if everything's OK, and they reply 'no, it's fine.' You…",opts:[{t:"Take them at their word — pushing further feels intrusive",s:1},{t:"Ask one more specific question that makes it easier to say what's actually going on",s:4},{t:"Let it go for now but check back in the next day or two",s:3},{t:"Tell them my door is open if they want to talk, and leave it there",s:2}]},
   {trait:'empathic',secs:25,text:"You're in a group conversation and someone makes a point that lands in silence. Nobody responds. You notice the person's expression shift slightly. What are you reading?",opts:[{t:"They felt their point wasn't heard — deciding whether to let it drop or try again",s:4},{t:"I don't read much into silence — people are often just thinking",s:1},{t:"There could be many explanations — I'd need more context to say",s:2},{t:"Something's off — I'd probably find a way to bring their point back in",s:3}]},
   {trait:'empathic',secs:30,text:"You're trying to persuade someone of something and you can tell they're becoming defensive, even though they haven't said so. You…",opts:[{t:"Name what I'm observing and shift to understanding their perspective before continuing",s:4},{t:"Stay the course — backing down signals my position wasn't strong",s:1},{t:"Suggest pausing and returning to it later when the temperature has dropped",s:3},{t:"Ease off the pressure without making it explicit — give them space to come around",s:2}]},
   {trait:'critical',secs:25,text:"Someone cites a statistic that perfectly supports an argument you were already inclined to agree with. Your reaction?",opts:[{t:"That makes me more cautious — confirming evidence is exactly when I check most carefully",s:4},{t:"It reinforces my view; I didn't need the evidence but it's good to have",s:1},{t:"I'd want to know the source before putting much weight on it",s:3},{t:"Statistics are easily cherry-picked either way — I don't over-index on any single number",s:2}]},
@@ -934,7 +934,7 @@ async function restoreFromServer(sid){
    already has its own "Copy to clipboard". Includes the tier's AI assets plus a
    small header (name, archetype, scores). */
 const PACK_ORDER=['edge','traps','stories','guide','role','linkedin'];
-const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to Dig Up',guide:'The Interview Prep Guide',role:'Your Role-Tailored Brief',linkedin:"Your LinkedIn 'About' draft"};
+const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to Dig Up',guide:'The Interview Prep Guide',role:'Your Role-Tailored Brief',linkedin:"Your LinkedIn 'About' — themes to emphasise"};
 function packAssetText(k){return k==='linkedin'?(S.liText||''):((S.gen&&S.gen[k])||'');}
 function packItems(){
   const allowed=new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
@@ -1170,19 +1170,142 @@ function savePdfBlob(blob,filename,done){
   setTimeout(()=>URL.revokeObjectURL(url),1500);
   if(done)done();
 }
-async function downloadCertPdf(){
-  if(!S.arch)return;
-  const c=await renderCertCanvas(2); // 2× for crisp print
-  const blob=await canvasToPdfBlob(c);
-  savePdfBlob(blob,packFileBase()+'-certificate.pdf',()=>showToast('Saved your certificate as a PDF.'));
+/* Light (printable) PDF renderers. The on-screen cards stay as they are; these
+   are white-background versions drawn just for the one-tap PDFs, so printouts
+   look right on paper. Same canvas→JPEG→PDF path as the certificate. */
+function wrapText(x,text,maxW){
+  const words=String(text||'').replace(/\s+/g,' ').trim().split(' ');
+  const lines=[];let line='';
+  for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;}
+  if(line)lines.push(line);
+  return lines;
 }
+const LT={gold:'#a6791f',accent:'#c79a2e',txt:'#1c1c1c',mut:'#8a8371',body:'#3a352b',bord:'#e6ddc9',rule:'#cfc7b3'};
+function newLightCanvas(W,H,scale){
+  const c=document.createElement('canvas');c.width=W*scale;c.height=H*scale;
+  const x=c.getContext('2d');x.scale(scale,scale);
+  x.fillStyle='#ffffff';x.fillRect(0,0,W,H);
+  return {c,x};
+}
+
+async function renderCertLightCanvas(scale){
+  await fontsReady();scale=scale||1;const W=1000,H=680;const {c,x}=newLightCanvas(W,H,scale);
+  x.fillStyle='#fffdf7';x.fillRect(0,0,W,H);
+  x.strokeStyle=LT.accent;x.lineWidth=2;x.strokeRect(16,16,W-32,H-32);
+  x.strokeStyle='rgba(199,154,46,.35)';x.lineWidth=1;x.strokeRect(24,24,W-48,H-48);
+  x.textAlign='center';
+  setSpacing(x,'4px');x.fillStyle=LT.gold;x.font="600 15px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · VERIFIED READING · 2026',W/2,88);
+  setSpacing(x,'3px');x.fillStyle=LT.mut;x.font="400 15px 'Cormorant Garamond',Georgia,serif";x.fillText('THIS CERTIFIES THAT',W/2,150);setSpacing(x,'0px');
+  x.fillStyle=LT.txt;x.font="700 48px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Name',W/2,214);
+  x.fillStyle=LT.gold;x.font="700 24px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,256);
+  x.strokeStyle='rgba(199,154,46,.5)';x.lineWidth=1;x.beginPath();x.moveTo(W/2-30,290);x.lineTo(W/2+30,290);x.stroke();
+  const n=TRAITS.length,spanW=780,startX=W/2-spanW/2,step=spanW/n;
+  TRAITS.forEach((t,i)=>{const cx=startX+step*(i+0.5);
+    x.fillStyle=t.color;x.font="700 34px 'Cormorant Garamond',Georgia,serif";x.fillText(String(S.pcts[t.id]),cx,374);
+    setSpacing(x,'2px');x.fillStyle=LT.mut;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText(t.name.split(' ')[0].toUpperCase(),cx,400);setSpacing(x,'0px');});
+  x.textAlign='left';x.fillStyle=LT.txt;x.font="600 15px 'Outfit',Arial,sans-serif";x.fillText('humanometer.com',60,H-72);
+  x.fillStyle=LT.mut;x.font="400 13px 'Outfit',Arial,sans-serif";x.fillText(new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'}),60,H-48);
+  setSpacing(x,'2px');x.font="600 14px 'Outfit',Arial,sans-serif";
+  const ct='VERIFIED ✓',tw=x.measureText(ct).width,cw=tw+24,cX=W-60-cw,cY=H-92,cH=34;
+  x.fillStyle='rgba(199,154,46,.12)';x.strokeStyle='rgba(199,154,46,.4)';x.lineWidth=1;roundRectPath(x,cX,cY,cw,cH,4);x.fill();x.stroke();
+  x.fillStyle=LT.gold;x.textBaseline='middle';x.fillText(ct,cX+12,cY+cH/2+1);x.textBaseline='alphabetic';setSpacing(x,'0px');
+  return c;
+}
+
+async function renderCheatCanvas(scale){
+  await fontsReady();scale=scale||1;const W=1000,H=1540,M=64,R=W-M;const {c,x}=newLightCanvas(W,H,scale);
+  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]),strong=sorted[0],weak=sorted[sorted.length-1];
+  const rule=(x1,x2,yy,col)=>{x.strokeStyle=col||LT.rule;x.lineWidth=1;x.beginPath();x.moveTo(x1,yy);x.lineTo(x2,yy);x.stroke();};
+  let y=76;
+  x.textAlign='center';
+  setSpacing(x,'3px');x.fillStyle=LT.gold;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · INTERVIEW CHEAT SHEET · 2026',W/2,y);setSpacing(x,'0px');y+=40;
+  x.fillStyle=LT.txt;x.font="700 34px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Interview Prep',W/2,y);y+=28;
+  x.fillStyle=LT.gold;x.font="700 17px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,y);y+=22;
+  x.strokeStyle=LT.txt;x.lineWidth=2;x.beginPath();x.moveTo(M,y);x.lineTo(R,y);x.stroke();y+=34;
+  // score chips (centered)
+  x.font="600 14px 'Outfit',Arial,sans-serif";
+  const chips=TRAITS.map(t=>({t,l:t.name.split(' ')[0].toUpperCase()+' '+S.pcts[t.id]}));
+  const cH=32,pX=12,g=8;let tot=0;chips.forEach(ch=>{ch.w=x.measureText(ch.l).width+pX*2;tot+=ch.w+g;});tot-=g;
+  let cx=(W-tot)/2;
+  chips.forEach(ch=>{const isS=ch.t.id===strong.id,isW=ch.t.id===weak.id;
+    x.fillStyle=isS?'#fbf2da':(isW?'#fbeee8':'#faf7f0');x.strokeStyle=isS?LT.accent:(isW?'#e0b4a0':LT.bord);x.lineWidth=1;
+    roundRectPath(x,cx,y,ch.w,cH,6);x.fill();x.stroke();
+    x.fillStyle=ch.t.color;x.textBaseline='middle';x.textAlign='left';x.fillText(ch.l,cx+pX,y+cH/2+1);x.textBaseline='alphabetic';cx+=ch.w+g;});
+  y+=cH+26;
+  x.textAlign='left';x.fillStyle=LT.body;x.font="13px 'Outfit',Arial,sans-serif";
+  wrapText(x,'Interviewers probe your lowest dimension — '+weak.name+' — hardest. Prepare that story first. Lead with your '+strong.name+'.',R-M).forEach(l=>{x.fillText(l,M,y);y+=19;});
+  y+=20;
+  const heading=(t,sub)=>{x.fillStyle=LT.txt;setSpacing(x,'.5px');x.font="700 13px 'Outfit',Arial,sans-serif";x.fillText(t.toUpperCase(),M,y);
+    if(sub){const w=x.measureText(t.toUpperCase()).width;setSpacing(x,'0px');x.fillStyle=LT.mut;x.font="12px 'Outfit',Arial,sans-serif";x.fillText('   '+sub,M+w,y);}setSpacing(x,'0px');y+=9;rule(M,R,y,LT.bord);y+=24;};
+  heading('Your STAR stories','— 3–4 real ones you can tell cold');
+  for(let i=1;i<=4;i++){
+    x.beginPath();x.arc(M+9,y-5,9,0,Math.PI*2);x.fillStyle=LT.txt;x.fill();
+    x.fillStyle='#fff';x.font="700 11px 'Outfit',Arial,sans-serif";x.textAlign='center';x.fillText(String(i),M+9,y-1);x.textAlign='left';
+    rule(M+26,R,y,LT.txt);y+=6;
+    if(i===1){x.fillStyle='#a06a2e';x.font="italic 11px 'Outfit',Arial,sans-serif";y+=14;x.fillText('Make this the one that shows your '+weak.name+' — prepare it first.',M+26,y);}
+    y+=16;
+    ['S','T','A','R'].forEach(lab=>{x.fillStyle=LT.gold;x.font="700 12px 'Outfit',Arial,sans-serif";x.fillText(lab,M+26,y);rule(M+46,R,y+2,LT.rule);y+=23;});
+    y+=8;
+  }
+  y+=4;
+  heading('STAR in one line');
+  x.fillStyle=LT.body;x.font="13px 'Outfit',Arial,sans-serif";
+  wrapText(x,'Situation → Task → Action → Result. One sentence each; spend most of your words on Action and Result.',R-M).forEach(l=>{x.fillText(l,M,y);y+=19;});
+  y+=18;
+  heading('Freeze questions','— decide your angle before the room');
+  ['“What’s your greatest weakness?”','“Why are you leaving / did you leave?”','“Tell me about a time you failed.”'].forEach(q=>{
+    x.fillStyle=LT.txt;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText(q,M,y);y+=20;
+    x.fillStyle=LT.mut;x.font="11px 'Outfit',Arial,sans-serif";x.fillText('Your angle:',M,y);rule(M+62,R,y+1,LT.rule);y+=26;});
+  y+=6;
+  heading('3 questions to ask them');
+  for(let i=0;i<3;i++){rule(M,R,y,LT.rule);y+=30;}
+  y+=8;
+  heading('Before you walk in');
+  x.font="13px 'Outfit',Arial,sans-serif";
+  [ 'Lead with your strongest dimension — '+strong.name+' ('+S.pcts[strong.id]+'/100).',
+    'Have your '+weak.name+' story ready — that’s where they’ll push.',
+    'One real, specific moment beats an impressive vague one, every time.' ].forEach(r=>{
+    x.fillStyle=LT.gold;x.fillText('•',M,y);x.fillStyle=LT.body;
+    const ls=wrapText(x,r,R-M-16);ls.forEach((l,i)=>{x.fillText(l,M+16,y);if(i<ls.length-1)y+=18;});y+=22;});
+  y+=18;x.textAlign='center';x.fillStyle=LT.mut;x.font="11px 'Outfit',Arial,sans-serif";
+  x.fillText('humanometer.com · '+new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'}),W/2,y);
+  return c;
+}
+
+async function renderResultsCanvas(scale){
+  await fontsReady();scale=scale||1;const W=1000,H=1380,M=64,R=W-M;const {c,x}=newLightCanvas(W,H,scale);
+  const pct=getPercentile(S.overall),sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  let y=84;
+  x.textAlign='center';
+  setSpacing(x,'3px');x.fillStyle=LT.gold;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · FULL READING · 2026',W/2,y);setSpacing(x,'0px');y+=44;
+  x.fillStyle=LT.txt;x.font="700 40px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Reading',W/2,y);y+=30;
+  x.fillStyle=LT.gold;x.font="700 18px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,y);y+=40;
+  x.fillStyle=LT.txt;x.font="600 20px 'Outfit',Arial,sans-serif";x.fillText(S.overall+' / 100  ·  top '+pct+'%',W/2,y);y+=30;
+  x.strokeStyle=LT.bord;x.lineWidth=1;x.beginPath();x.moveTo(M,y);x.lineTo(R,y);x.stroke();y+=36;
+  x.textAlign='left';
+  sorted.forEach(t=>{const v=S.pcts[t.id],band=getBand(t.id,v);
+    x.fillStyle=LT.txt;x.font="600 16px 'Outfit',Arial,sans-serif";x.fillText(t.name,M,y);
+    x.fillStyle=t.color;x.font="700 24px 'Cormorant Garamond',Georgia,serif";x.textAlign='right';x.fillText(String(v),R,y+2);x.textAlign='left';y+=14;
+    x.fillStyle='#eee6d5';roundRectPath(x,M,y,R-M,7,3.5);x.fill();
+    x.fillStyle=t.color;roundRectPath(x,M,y,(R-M)*v/100,7,3.5);x.fill();y+=24;
+    setSpacing(x,'.5px');x.fillStyle=LT.gold;x.font="600 11px 'Outfit',Arial,sans-serif";x.fillText(band.band.toUpperCase(),M,y);setSpacing(x,'0px');y+=19;
+    x.fillStyle='#4a453b';x.font="13px 'Outfit',Arial,sans-serif";
+    wrapText(x,band.insight,R-M).forEach(l=>{x.fillText(l,M,y);y+=18;});y+=24;});
+  y+=6;x.textAlign='center';x.fillStyle=LT.mut;x.font="11px 'Outfit',Arial,sans-serif";
+  x.fillText('Generated from your 15 answers at humanometer.com · '+new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'}),W/2,y);
+  return c;
+}
+
+async function downloadCertPdf(){ if(!S.arch)return; savePdfBlob(await canvasToPdfBlob(await renderCertLightCanvas(2)),packFileBase()+'-certificate.pdf',()=>showToast('Saved your certificate as a PDF.')); }
+async function downloadCheatPdf(){ if(!S.arch)return; savePdfBlob(await canvasToPdfBlob(await renderCheatCanvas(2)),packFileBase()+'-cheat-sheet.pdf',()=>showToast('Saved your cheat sheet as a PDF.')); }
+async function downloadResultsPdf(){ if(!S.arch)return; savePdfBlob(await canvasToPdfBlob(await renderResultsCanvas(2)),packFileBase()+'-full-results.pdf',()=>showToast('Saved your full results as a PDF.')); }
 
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
 /* Render all panels, but only show tabs/panels for what the purchased tier includes.
    Activates the first allowed tab so the user lands on something visible. */
 function buildDeliverables(){
-  // LinkedIn (plain-text draft)
-  if(S.liText) document.getElementById('li-text').textContent=S.liText;
+  // LinkedIn (Markdown coaching — themes to emphasise, not a paste-ready draft)
+  if(S.liText) document.getElementById('li-text').innerHTML=mdLite(S.liText);
   // Coaching assets (Markdown → mdLite; .out-text preserves the newlines)
   const g=S.gen||{};
   ['edge','traps','stories','guide'].forEach(k=>{
@@ -1400,16 +1523,6 @@ function newRole(){
   const ta2=document.getElementById('role-jd');if(ta2)ta2.focus();
 }
 
-/* Print one deliverable cleanly. A body class scopes the print stylesheet so
-   only #cert-el or #full-results-sheet is visible in the printout. */
-function printDeliverable(kind){
-  const cls='printing-'+kind;
-  document.body.classList.add(cls);
-  const done=()=>document.body.classList.remove(cls);
-  window.addEventListener('afterprint',done,{once:true});
-  window.print();
-  setTimeout(done,1000);
-}
 
 /* ═══════════════════════════ SHARE ═══════════════════════════ */
 function getShareText(platform='linkedin'){
@@ -1484,10 +1597,10 @@ function shareLinkedIn(){
   S.sharedOnce=true;
   const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('linkedin');
-  // Mobile: the OS share sheet carries the full text straight into LinkedIn's
-  // composer — this is what fixes "the share had no text, only the image".
-  if(navigator.share){ navigator.share({title:'My Humanometer reading',text:txt}).catch(()=>{}); return; }
-  // Desktop: LinkedIn's share URL can't be pre-filled, so copy the text to paste.
+  // Open LinkedIn's share dialog for the permalink (the preview pulls our OG
+  // image + title) and copy the crafted post text so the user can paste it.
+  // We deliberately do NOT use navigator.share: on desktop Windows it opens the
+  // generic OS share sheet instead of LinkedIn.
   const openShare = () => window.open(
     `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=600'
@@ -1505,16 +1618,14 @@ function shareX(){
   // X's intent/tweet endpoint still accepts pre-filled text reliably; URL preview pulls OG meta.
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`,'_blank','noopener,width=600,height=480');
 }
-/* Facebook doesn't accept pre-filled text in the share URL (uses OG meta for
-   the link preview), so we copy the crafted post to the clipboard and prompt
-   the user to paste — same pattern as LinkedIn. */
+/* Facebook's sharer takes only a URL (it builds the preview from our OG meta),
+   so we open the sharer for the permalink and copy the crafted post text for the
+   user to paste. Same direct approach as X/LinkedIn — no navigator.share, which
+   on desktop Windows opens the generic OS share sheet instead of Facebook. */
 function shareFacebook(){
   S.sharedOnce=true;
   const sticky=document.getElementById('sticky-share');if(sticky)sticky.classList.remove('show');
   const txt=getShareText('facebook');
-  // Mobile: the OS share sheet carries the full text into Facebook's composer.
-  if(navigator.share){ navigator.share({title:'My Humanometer reading',text:txt}).catch(()=>{}); return; }
-  // Desktop: Facebook's sharer URL can't be pre-filled, so copy the text to paste.
   const openShare = () => window.open(
     `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentPermalink()||'https://humanometer.com')}`,
     '_blank','noopener,width=620,height=620'
@@ -1551,7 +1662,7 @@ function showToast(msg, ms=3200){
   t._tm=setTimeout(()=>t.classList.remove('show'),ms);
 }
 function copyLI(){navigator.clipboard.writeText(S.liText).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1800);});}
-async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').textContent=S.liText;}
+async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').innerHTML=mdLite(S.liText);}
 // Coaching assets share one copy/regenerate pair (keyed by kind).
 function copyAsset(kind){navigator.clipboard.writeText((S.gen&&S.gen[kind])||'');}
 async function regenAsset(kind){

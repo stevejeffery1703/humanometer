@@ -39,7 +39,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
 
 .eyebrow{display:inline-block;border:1px solid var(--gbdr);color:var(--gold);font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;padding:5px 14px;margin-bottom:32px;background:var(--gdim);}
 h1.hero{font-family:'Cormorant Garamond',serif;font-size:clamp(46px,8vw,88px);font-weight:700;line-height:.95;letter-spacing:-.02em;margin-bottom:12px;}
-h1.hero em{font-style:italic;color:var(--gold);}
+h1.hero em{font-style:normal;color:var(--gold);}
 .deck{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(16px,2.6vw,22px);color:var(--muted);margin-bottom:26px;}
 .hrule{width:44px;height:1px;background:var(--gold);opacity:.4;margin-bottom:26px;}
 .lede{font-size:15px;color:var(--muted);line-height:1.75;margin-bottom:32px;max-width:500px;}
@@ -52,8 +52,8 @@ h1.hero em{font-style:italic;color:var(--gold);}
 
 /* Hero explanatory paragraph — small but readable, between deck and CTA */
 .hero-explain{font-size:14.5px;line-height:1.7;color:var(--muted);max-width:640px;margin:18px 0 8px;}
-.hero-explain em{color:var(--gold2);font-style:italic;}
-.hero-explain .hl{font-style:normal;font-weight:600;color:#f7d774;background:rgba(240,201,106,.14);padding:.05em .28em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;}
+.hero-explain em{color:var(--gold2);font-style:normal;}
+.hero-explain .hl{font-style:normal;font-weight:600;color:#f7d774;}
 @media(max-width:600px){.hero-explain{font-size:14px;line-height:1.65;}}
 
 /* HERO actions — CTA block above the fold */
@@ -100,7 +100,7 @@ h1.hero em{font-style:italic;color:var(--gold);}
 .prequiz-num{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold);opacity:.6;line-height:1;flex-shrink:0;min-width:24px;}
 .prequiz-h{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:6px;}
 .prequiz-point p{font-size:13px;color:var(--muted);line-height:1.6;}
-.prequiz-point em{color:var(--gold2);font-style:italic;}
+.prequiz-point em{color:var(--gold2);font-style:normal;}
 
 .context-block{background:var(--bg2);border:1px solid var(--gbdr);border-left:3px solid var(--gold);padding:22px 26px;margin-bottom:30px;}
 .context-block h3{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:10px;}
@@ -693,10 +693,18 @@ h1.hero em{font-style:italic;color:var(--gold);}
 .dhero{text-align:center;margin-bottom:40px;}
 .dhero h2{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,5vw,46px);font-weight:700;margin-bottom:8px;}
 .dhero p{font-size:13.5px;color:var(--muted);line-height:1.65;}
-.dtabs{display:flex;border-bottom:1px solid var(--gbdr);margin-bottom:28px;overflow-x:auto;}
-.dtab{padding:10px 18px;font-size:11.5px;font-weight:500;letter-spacing:.06em;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;font-family:'Outfit',sans-serif;}
-.dtab:hover{color:var(--text);}
-.dtab.act{color:var(--gold);border-bottom-color:var(--gold);}
+/* Deliverables tab bar — wrapping pills (no horizontal scrollbar). Reflows into
+   as many rows as needed, so every asset is visible at a glance on any width. */
+.dtabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 30px;}
+.dtab{
+  padding:9px 15px;font-size:12px;font-weight:500;letter-spacing:.01em;line-height:1;
+  border:1px solid var(--gbdr);border-radius:999px;background:var(--bg2);
+  color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Outfit',sans-serif;
+  transition:background .18s,color .18s,border-color .18s;
+}
+.dtab:hover{color:var(--text);border-color:rgba(212,168,67,.5);}
+.dtab.act{color:#07090f;background:var(--gold);border-color:var(--gold);font-weight:600;}
+@media(max-width:520px){.dtabs{gap:7px;}.dtab{padding:9px 13px;font-size:11.5px;}}
 .dpanel{display:none;}
 .dpanel.act{display:block;animation:upIn .3s ease both;}
 .out-box{background:var(--bg2);border:1px solid var(--gbdr);padding:24px 28px;margin-bottom:16px;}
@@ -1073,16 +1081,3 @@ num,
   outline:none;transition:border-color .2s;}
 .role-jd:focus{border-color:var(--gold);}
 .role-jd::placeholder{color:var(--muted);}
-
-/* ── PRINT ISOLATION: only the targeted deliverable prints ── */
-@media print{
-  body.printing-cert *, body.printing-results *, body.printing-cheat *{visibility:hidden;}
-  body.printing-cert #cert-el, body.printing-cert #cert-el *,
-  body.printing-results #full-results-sheet, body.printing-results #full-results-sheet *,
-  body.printing-cheat #cheat-sheet, body.printing-cheat #cheat-sheet *{visibility:visible;}
-  body.printing-cert #cert-el{position:absolute;left:0;top:0;width:100%;}
-  body.printing-results #full-results-sheet{position:absolute;left:0;top:0;width:100%;max-width:100%;border:none;}
-  body.printing-cheat #cheat-sheet{position:absolute;left:0;top:0;width:100%;max-width:100%;border:none;padding:0;}
-  body.printing-cert .out-acts, body.printing-results .out-acts, body.printing-cheat .out-acts{display:none !important;}
-  @page{margin:14mm;}
-}
