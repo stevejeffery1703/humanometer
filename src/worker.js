@@ -153,7 +153,7 @@ function profileFacts(profile) {
 
 // Returns { prompt, max_tokens, needsJd? } for an asset kind, or null.
 // `extra` carries asset-specific input — currently just { jd } for the role brief.
-function buildPrompt(kind, product, profile, extra = {}) {
+function buildPrompt(kind, profile, extra = {}) {
   const f = profileFacts(profile);
   const head = `Archetype: ${profile.archetype} — "${profile.tag}"\nScores: ${f.tr}\nOverall: ${profile.overall}/100`;
 
@@ -340,7 +340,7 @@ async function handleFulfil(request, env) {
   // own output, so length is the only real guard needed.
   const jd = typeof body.jd === 'string' ? body.jd.slice(0, 6000) : '';
 
-  const built = buildPrompt(kind, paid.product, profile, { jd });
+  const built = buildPrompt(kind, profile, { jd });
   if (!built) return json({ error: 'Unknown asset' }, 400);
   if (built.needsJd && !jd.trim()) {
     return json({ error: 'Please paste the job description first' }, 400);

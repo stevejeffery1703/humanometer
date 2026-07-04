@@ -479,6 +479,9 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy text
         </button>
+        <button class="shr-sm shr-cp" onclick="downloadSharePng()" title="Save your score card as an image">
+          🖼 Save image
+        </button>
       </div>
     </div>
 
@@ -800,11 +803,12 @@
           </div>
         </div>
         <div class="out-acts">
-          <button class="btn-act pri" onclick="printDeliverable('cert')">🖨 Print / Save as PDF</button>
+          <button class="btn-act pri" onclick="downloadCertPdf()">📄 Save as PDF</button>
           <button class="btn-act" onclick="downloadCertPng()">🖼 Save as image</button>
+          <button class="btn-act" onclick="printDeliverable('cert')">🖨 Print</button>
           <button class="btn-act" onclick="copyCert()">Copy details</button>
         </div>
-        <div class="out-tip">Opens your device's print dialog — choose <strong>Save as PDF</strong> as the destination for a high-quality file.</div>
+        <div class="out-tip">One-tap <strong>PDF</strong> or <strong>image</strong> download — both high-resolution. Or <strong>Print</strong> for a physical copy.</div>
       </div>
     </div>
     <div class="dpanel" id="dp-share">

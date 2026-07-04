@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — Humanometer</title>
-<meta name="description" content="What data Humanometer collects, why, and your rights under GDPR.">
+<meta name="description" content="What data Humanometer collects, why, and your privacy rights.">
 <meta name="robots" content="index, follow">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090f'/%3E%3Cpath d='M 4 25 A 12 12 0 1 1 28 25' stroke='%23d4a843' stroke-width='2' fill='none'/%3E%3Ccircle cx='16' cy='19' r='2.4' fill='%23d4a843'/%3E%3Cline x1='16' y1='19' x2='23' y2='13' stroke='%23d4a843' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,7 +54,7 @@ hr{border:0;border-top:1px solid var(--gbdr);margin:40px 0;}
 
 <main>
   <h1>Privacy Policy</h1>
-  <p class="subtitle">Last updated: 28 June 2026</p>
+  <p class="subtitle">Last updated: 4 July 2026</p>
 
   <p>This is the plain-English version. Nothing hidden.</p>
 
@@ -64,7 +64,7 @@ hr{border:0;border-top:1px solid var(--gbdr);margin:40px 0;}
 
   <p><strong>If you tick the opt-in box and submit your email:</strong> we store your email address, an optional name, the date you opted in, your IP address, and the country your IP is in. These are kept alongside your opt-in record until you unsubscribe — the IP address and country for spam protection and to understand roughly where our users are. That's it.</p>
 
-  <p><strong>If you buy a paid pack:</strong> Stripe handles your payment — we never see your card details. Your email and name are passed to Stripe so they can issue a receipt.</p>
+  <p><strong>If you buy a paid pack:</strong> Stripe handles your payment — we never see your card details. Your email and name are passed to Stripe so they can issue a receipt. To create your materials, your scores (and, for the top-tier role brief, a job description you choose to paste in) are sent to our AI provider; your name is not. A copy of the generated pack is stored so you can reopen it later using the private link tied to your purchase, and — if you give us an email — a copy is sent to your inbox through our email provider. The job description you paste is used only to generate that brief and is not stored on its own.</p>
 
   <p><strong>Visitor counter:</strong> we keep an anonymous count of how many people have taken the assessment. No identifying information is recorded.</p>
 
@@ -78,28 +78,42 @@ hr{border:0;border-top:1px solid var(--gbdr);margin:40px 0;}
 
   <h2>Where it lives</h2>
 
-  <p>Email opt-ins are stored in <strong>Cloudflare KV</strong>, a key-value store on Cloudflare's infrastructure. We are the only party with access. We don't use Mailchimp, Constant Contact, or any other third-party email marketing service.</p>
+  <p>Email opt-ins and any generated paid pack are stored in <strong>Cloudflare KV</strong>, a key-value store on Cloudflare's infrastructure. We are the only party with access. We don't use Mailchimp, Constant Contact, or any other third-party email marketing service.</p>
 
   <p>The site itself is hosted on Cloudflare Workers, which means Cloudflare sees the same web requests any host would (IP, browser, URL). They process this on our behalf as a data processor under their DPA.</p>
+
+  <h2>Service providers we use</h2>
+  <p>We keep the stack small and use each provider only for what it says on the tin. None of them are given your data to use for their own marketing.</p>
+  <ul>
+    <li><strong>Cloudflare</strong> — hosting and storage (the site, email opt-ins, and your saved pack).</li>
+    <li><strong>Stripe</strong> — payment processing and receipts. Card details go straight to Stripe; we never see them.</li>
+    <li><strong>Anthropic</strong> — the AI provider that generates your paid materials from your scores (and any job description you paste). Your name and email are not sent to it.</li>
+    <li><strong>Resend</strong> — sends the copy of your pack to your inbox when you ask for one. It receives your email address and the pack contents for that delivery.</li>
+  </ul>
 
   <h2>How long we keep it</h2>
 
   <ul>
     <li><strong>Email opt-in:</strong> until you unsubscribe.</li>
+    <li><strong>Your saved paid pack:</strong> about 180 days, so you can reopen it from your purchase link, then it's automatically deleted.</li>
     <li><strong>Payment records (via Stripe):</strong> as required by tax law (typically 6+ years).</li>
     <li><strong>Visitor counter:</strong> indefinitely — it's a number, not personal data.</li>
   </ul>
 
-  <h2>Your rights under GDPR</h2>
+  <h2>Your privacy rights</h2>
 
-  <p>If you're in the EU/UK (or even if you're not), you have the right to:</p>
+  <p>Humanometer is a US-based service. Wherever you live, we give everyone the same rights over their data:</p>
   <ul>
-    <li><strong>Access</strong> the data we hold about you</li>
-    <li><strong>Delete</strong> your data (the "right to be forgotten")</li>
+    <li><strong>Know / access</strong> the data we hold about you</li>
+    <li><strong>Delete</strong> your data</li>
     <li><strong>Correct</strong> any inaccurate data</li>
     <li><strong>Export</strong> your data in a portable format</li>
     <li><strong>Withdraw consent</strong> at any time</li>
   </ul>
+
+  <p><strong>We do not sell or share your personal information</strong> — not for money, not for cross-context advertising, not at all. There is nothing to opt out of, because we never do it in the first place.</p>
+
+  <p class="muted"><strong>California residents:</strong> the rights above cover the CCPA/CPRA rights to know, delete, correct, and opt out of the sale or sharing of personal information, and we won't discriminate against you for exercising them. <strong>EU / UK visitors:</strong> as a courtesy we also honour the equivalent GDPR rights, including the right to lodge a complaint with your local data-protection authority.</p>
 
   <div class="callout">
     <strong>Unsubscribe / delete right now:</strong> visit <a href="/unsubscribe.html">/unsubscribe.html</a>, enter your email, and we'll delete your record immediately. No login, no friction. Or email <a href="mailto:hello@humanometer.com">hello@humanometer.com</a> with any of the above requests.

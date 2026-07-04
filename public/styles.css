@@ -367,53 +367,6 @@ h1.hero em{font-style:italic;color:var(--gold);}
 .ebtn:hover{background:var(--gold2);}
 .eok{color:var(--ok);font-size:14px;display:none;}
 
-/* INLINE SAVE — prominent block right after the first value moment.
-   Stronger gradient, gold left bar, larger heading. Feels like a reward
-   ("save this"), not a subscribe ask. */
-.inline-save{
-  background:linear-gradient(135deg,rgba(212,168,67,.14) 0%,rgba(212,168,67,.04) 60%,rgba(91,154,224,.04) 100%);
-  border:1px solid var(--gbdr);
-  border-left:3px solid var(--gold);
-  padding:24px 28px;margin:28px 0 40px;
-  animation:upIn .4s ease both;
-  position:relative;overflow:hidden;
-}
-.inline-save::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-}
-.inline-save-row{display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
-.inline-save-text{flex:1;min-width:240px;}
-.inline-save-h{
-  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
-  margin-bottom:6px;display:flex;align-items:center;gap:9px;
-}
-.inline-save-h::before{
-  content:'✦';color:var(--gold);font-size:18px;line-height:1;
-}
-.inline-save-text p{font-size:13px;color:var(--muted);line-height:1.6;margin:0;}
-.inline-save-form{display:flex;gap:8px;flex:1;min-width:280px;}
-.inline-save-form input{
-  flex:1;background:var(--bg);border:1px solid var(--gbdr);color:var(--text);
-  padding:13px 15px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:400;
-  outline:none;transition:border-color .2s;min-width:0;
-}
-.inline-save-form input:focus{border-color:var(--gold);}
-.inline-save-form input::placeholder{color:var(--muted);}
-.inline-save-form button{
-  background:var(--gold);color:#07090f;border:none;
-  padding:13px 26px;font-family:'Outfit',sans-serif;font-weight:700;
-  font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
-  white-space:nowrap;transition:all .2s;
-}
-.inline-save-form button:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,168,67,.3);}
-.inline-save-ok{display:none;color:var(--ok);font-size:14px;text-align:center;padding:10px 0;font-weight:500;}
-@media(max-width:520px){
-  .inline-save{padding:20px;}
-  .inline-save-row{flex-direction:column;align-items:stretch;gap:16px;}
-  .inline-save-h{font-size:19px;}
-}
-
 /* PERMALINK BLOCK — every reading has a permanent URL. Visible at the top
    of results so it's discoverable without any ask. No email required. */
 .permalink-block{

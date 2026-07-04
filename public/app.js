@@ -882,6 +882,7 @@ function updateDeliverStatus(d,to){
   if(!st)return;
   if(d&&d.emailed){
     st.textContent='✓ Sent to '+to; st.className='de-status ok';
+    S.emailedOnce=true;
     if(inp&&to)inp.value=to;
   }else if(d&&d.reason==='not-configured'){
     st.textContent='Saved to your re-access link. (Email delivery is being switched on.)'; st.className='de-status';
@@ -909,15 +910,19 @@ async function restoreFromServer(sid){
     S.uname=sanitizeName(d.name||'');
     if(PACKS[d.product])S.selectedPack=d.product;
     S.purchased=true;
-    S.delivered=true; // don't re-email on a re-access visit
     S.gen={};
     ['edge','traps','stories','guide','role'].forEach(k=>{ if(d.assets&&d.assets[k])S.gen[k]=d.assets[k]; });
     if(d.assets&&d.assets.linkedin)S.liText=d.assets.linkedin;
     buildResults();
     if(Object.keys(S.gen).length||S.liText){
+      // Already generated + stored on a previous visit — just render it.
+      S.delivered=true;
       buildDeliverables(); show('deliverables');
     }else{
-      // Paid but nothing stored (rare) — regenerate from the still-valid session.
+      // Paid but nothing stored (rare) — regenerate from the still-valid session
+      // and let deliverPackAuto persist it. savedEmail isn't set on a re-access
+      // load, so this stores the pack without re-emailing.
+      S.delivered=false;
       runFulfilment();
     }
   }catch(e){ show('landing'); }
@@ -1018,10 +1023,11 @@ function roundRectPath(x,rx,ry,w,h,r){
 function setSpacing(x,v){ if('letterSpacing' in x){ try{x.letterSpacing=v;}catch(e){} } }
 async function fontsReady(){ try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){} }
 
-async function renderCertCanvas(){
+async function renderCertCanvas(scale){
   await fontsReady();
-  const W=1000,H=680,c=document.createElement('canvas');c.width=W;c.height=H;
-  const x=c.getContext('2d');
+  scale=scale||1;
+  const W=1000,H=680,c=document.createElement('canvas');c.width=W*scale;c.height=H*scale;
+  const x=c.getContext('2d');x.scale(scale,scale);
   const g=x.createLinearGradient(0,0,W*0.4,H);
   g.addColorStop(0,'#0d1220');g.addColorStop(.55,'#141c2e');g.addColorStop(1,'#0d1220');
   x.fillStyle=g;x.fillRect(0,0,W,H);
@@ -1059,10 +1065,11 @@ async function renderCertCanvas(){
   return c;
 }
 
-async function renderShareCanvas(){
+async function renderShareCanvas(scale){
   await fontsReady();
-  const W=1200,H=630,c=document.createElement('canvas');c.width=W;c.height=H;
-  const x=c.getContext('2d');
+  scale=scale||1;
+  const W=1200,H=630,c=document.createElement('canvas');c.width=W*scale;c.height=H*scale;
+  const x=c.getContext('2d');x.scale(scale,scale);
   const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0c0f1a');g.addColorStop(1,'#111520');
   x.fillStyle=g;x.fillRect(0,0,W,H);
   x.strokeStyle='rgba(212,168,67,.22)';x.lineWidth=1;x.strokeRect(.5,.5,W-1,H-1);
@@ -1122,6 +1129,52 @@ async function downloadSharePng(){
   if(!S.arch)return;
   const c=await renderShareCanvas();
   saveCanvasPng(c,packFileBase()+'-share-card.png',()=>showToast('Saved your share card as an image.'));
+}
+
+/* One-tap PDF, dependency-free: embed the canvas as a JPEG image XObject in a
+   hand-written single-page PDF (JPEG is natively supported via /DCTDecode, so no
+   library is needed and CSP stays clean). Byte offsets are tracked exactly for
+   the xref table. */
+async function canvasToPdfBlob(canvas){
+  const jpegBlob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.92));
+  const jpeg=new Uint8Array(await jpegBlob.arrayBuffer());
+  const iw=canvas.width, ih=canvas.height;
+  const pw=522, ph=Math.round(pw*ih/iw); // points (72dpi); 522pt fits Letter margins
+  const enc=(s)=>new TextEncoder().encode(s);
+  const parts=[]; let len=0; const offsets=[];
+  const push=(bytes)=>{parts.push(bytes);len+=bytes.length;};
+  const pushStr=(s)=>push(enc(s));
+  const obj=(n,body)=>{offsets[n]=len;pushStr(n+' 0 obj\n'+body+'\nendobj\n');};
+  pushStr('%PDF-1.3\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pw+' '+ph+'] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>');
+  const content='q '+pw+' 0 0 '+ph+' 0 0 cm /Im0 Do Q';
+  obj(4,'<< /Length '+content.length+' >>\nstream\n'+content+'\nendstream');
+  offsets[5]=len;
+  pushStr('5 0 obj\n<< /Type /XObject /Subtype /Image /Width '+iw+' /Height '+ih+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpeg.length+' >>\nstream\n');
+  push(jpeg);
+  pushStr('\nendstream\nendobj\n');
+  const xrefStart=len;
+  let xref='xref\n0 6\n0000000000 65535 f \n';
+  for(let i=1;i<=5;i++){xref+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';}
+  pushStr(xref);
+  pushStr('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xrefStart+'\n%%EOF');
+  const out=new Uint8Array(len); let p=0; for(const b of parts){out.set(b,p);p+=b.length;}
+  return new Blob([out],{type:'application/pdf'});
+}
+function savePdfBlob(blob,filename,done){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  if(done)done();
+}
+async function downloadCertPdf(){
+  if(!S.arch)return;
+  const c=await renderCertCanvas(2); // 2× for crisp print
+  const blob=await canvasToPdfBlob(c);
+  savePdfBlob(blob,packFileBase()+'-certificate.pdf',()=>showToast('Saved your certificate as a PDF.'));
 }
 
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
@@ -1315,6 +1368,13 @@ async function genRole(){
     showRoleOutput();
     // Refresh the stored pack (now including the brief) for re-access — no re-email.
     deliverPack(S.savedEmail,{storeOnly:true});
+    showToast('Your role brief is ready.');
+    // The auto-email at purchase didn't include this brief. If they've had an
+    // email, nudge them to re-send so their inbox copy stays complete.
+    if(S.emailedOnce){
+      const st=document.getElementById('de-status');
+      if(st){st.textContent='📎 Role brief added — press Send to email yourself the updated pack.';st.className='de-status';}
+    }
   }catch(e){
     showToast((e&&e.message)||'Could not generate the brief. Please try again.');
   }
