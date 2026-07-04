@@ -470,8 +470,8 @@ h1.hero em{font-style:italic;color:var(--gold);}
   .shared-banner-text{font-size:13px;}
 }
 
-/* GDPR-COMPLIANT OPT-IN — explicit consent checkbox, privacy link.
-   Data stored in our own Cloudflare KV, not Mailchimp/Resend/etc. */
+/* OPT-IN — explicit consent checkbox, privacy link.
+   Opt-in data stored in our own Cloudflare KV, not a third-party marketing list. */
 .optin-block{
   background:rgba(255,255,255,.025);border:1px dashed var(--gbdr);
   padding:20px 22px;margin:24px 0 36px;
