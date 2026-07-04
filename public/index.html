@@ -556,6 +556,7 @@
         <div class="tier-item">✦ Everything in the Edge Report</div>
         <div class="tier-item">✦ Stories to Dig Up — coaching that finds your own best real examples</div>
         <div class="tier-item">✦ The Interview Prep Guide — the questions you'll face and how to answer them</div>
+        <div class="tier-item">✦ Fillable cheat sheet — your whole prep on one printable page</div>
         <div class="tier-item">✦ Full results PDF</div>
       </div>
       <button class="tier-btn" onclick="buyPack('career')">Get the Interview Kit · $14.99</button>
@@ -574,8 +575,9 @@
         <div class="tier-item">✦ Everything in the Interview Kit</div>
         <div class="tier-item">✦ Role-tailored interview brief — your prep tuned to a job description you paste in</div>
         <div class="tier-item">✦ Likely questions for that role, mapped to your own stories</div>
+        <div class="tier-item">✦ Reusable for every job you apply to</div>
       </div>
-      <button class="tier-btn tier-btn-sec" disabled style="opacity:.55;cursor:not-allowed;">Coming soon</button>
+      <button class="tier-btn" onclick="buyPack('pro')">Get the Interview Coach · $19.99</button>
     </div>
 
     <div class="pay-note" style="margin-top:10px;">Secure payment via Stripe · Instant delivery</div>
@@ -656,6 +658,25 @@
       <h2>Your career assets are <em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold)">ready</em></h2>
       <p>Everything below is built from your specific scores — coaching, not canned answers. Copy, save, or share directly.</p>
     </div>
+    <div class="deliver-email" id="deliver-email">
+      <div class="de-head">
+        <span class="de-ico" aria-hidden="true">✉️</span>
+        <div>
+          <strong>Email me a copy</strong>
+          <div class="de-status" id="de-status"></div>
+        </div>
+      </div>
+      <div class="de-form">
+        <input class="de-input" id="de-input" type="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')sendPackByEmail()">
+        <button class="de-send" id="de-send" type="button" onclick="sendPackByEmail()">Send</button>
+      </div>
+      <div class="pack-save">
+        <span class="ps-lbl">Or save it yourself:</span>
+        <button class="ps-btn" type="button" onclick="copyEverything(this)">⧉ Copy all</button>
+        <button class="ps-btn" type="button" onclick="downloadPackMd()">⭳ .md</button>
+        <button class="ps-btn" type="button" onclick="downloadPackHtml()">⭳ .html</button>
+      </div>
+    </div>
     <details class="permalink-accordion">
       <summary><span aria-hidden="true">🔗</span> Your permanent results link</summary>
       <div class="permalink-block">
@@ -683,6 +704,8 @@
       <button class="dtab"      id="dtab-traps"    onclick="tab('traps',this)">⚠️ Know Your Traps</button>
       <button class="dtab"      id="dtab-stories"  onclick="tab('stories',this)">💡 Stories to Dig Up</button>
       <button class="dtab"      id="dtab-guide"    onclick="tab('guide',this)">🎯 Interview Prep Guide</button>
+      <button class="dtab"      id="dtab-cheat"    onclick="tab('cheat',this)">📝 Cheat Sheet</button>
+      <button class="dtab"      id="dtab-role"     onclick="tab('role',this)">🎯 Role Brief</button>
       <button class="dtab"      id="dtab-linkedin" onclick="tab('linkedin',this)">✍️ LinkedIn About</button>
       <button class="dtab"      id="dtab-results"  onclick="tab('results',this)">📄 Full Results</button>
       <button class="dtab"      id="dtab-cert"     onclick="tab('cert',this)">🏅 Certificate</button>
@@ -720,6 +743,31 @@
       </div>
       <div class="out-tip">The questions you'll face and what they test, how to build answers, and what to ask them.</div>
     </div>
+    <div class="dpanel" id="dp-cheat">
+      <div class="cw">
+        <div id="cheat-sheet" class="cheat"></div>
+        <div class="out-acts">
+          <button class="btn-act pri" onclick="printDeliverable('cheat')">🖨 Print / Save as PDF</button>
+        </div>
+        <div class="out-tip">Print it and fill it in by hand — your whole interview prep on one page. Or choose <strong>Save as PDF</strong> to keep a digital copy.</div>
+      </div>
+    </div>
+    <div class="dpanel" id="dp-role">
+      <div class="role-input" id="role-input">
+        <div class="out-lbl">Your Role-Tailored Brief</div>
+        <p class="role-help">Paste the job description for a role you're interviewing for. You'll get prep tuned to that exact role — how it fits you, the questions it's likely to throw, the stories to bring, and what to research. Reuse it for every job you apply to.</p>
+        <textarea id="role-jd" class="role-jd" maxlength="6000" placeholder="Paste the full job description here…"></textarea>
+        <div class="out-acts">
+          <button class="btn-act pri" id="role-gen-btn" onclick="genRole()">Build my role brief</button>
+        </div>
+        <div class="out-tip">Only the job description you paste and your scores are used. Company facts (news, people, culture) stay a checklist for you to research — never invented.</div>
+      </div>
+      <div class="out-box" id="role-out-box" style="display:none;"><div class="out-lbl">Your Role-Tailored Brief</div><div class="out-text" id="role-text"></div></div>
+      <div class="out-acts" id="role-acts" style="display:none;">
+        <button class="btn-act pri" onclick="copyAsset('role')">Copy to clipboard</button>
+        <button class="btn-act" onclick="newRole()">↺ Tailor to another job</button>
+      </div>
+    </div>
     <div class="dpanel" id="dp-linkedin">
       <div class="out-box"><div class="out-lbl">Your LinkedIn 'About' section</div><div class="out-text" id="li-text">Generating…</div></div>
       <div class="out-acts">
@@ -753,6 +801,7 @@
         </div>
         <div class="out-acts">
           <button class="btn-act pri" onclick="printDeliverable('cert')">🖨 Print / Save as PDF</button>
+          <button class="btn-act" onclick="downloadCertPng()">🖼 Save as image</button>
           <button class="btn-act" onclick="copyCert()">Copy details</button>
         </div>
         <div class="out-tip">Opens your device's print dialog — choose <strong>Save as PDF</strong> as the destination for a high-quality file.</div>
@@ -780,6 +829,7 @@
           <button class="sbtn-x" onclick="shareFacebook()" style="background:#1877f2;color:#fff;border:none;">Facebook</button>
         </div>
         <div class="share-row-bot">
+          <button class="sbtn-cp" onclick="downloadSharePng()" style="flex:1;">🖼 Save image</button>
           <button class="sbtn-cp" onclick="copyShare()" style="flex:1;">Copy results text</button>
         </div>
       </div>

@@ -715,6 +715,8 @@ async function runFulfilment(){
   S.purchased=true;
   const ss=document.getElementById('sticky-share'); if(ss)ss.classList.remove('show');
   await delay(250);closePay();buildDeliverables();show('deliverables');
+  // Persist the pack for durable re-access and email a copy (fire-and-forget).
+  deliverPackAuto();
 }
 
 async function stepUI(id, ms, work){
@@ -730,6 +732,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // Post-Stripe-redirect fulfilment (highest priority — takes over the page)
   if(params.get('paid')==='true'){
+    const sid=params.get('session_id')||'';
     const saved=sessionStorage.getItem('hm_state');
     if(saved){
       try{
@@ -737,11 +740,18 @@ document.addEventListener('DOMContentLoaded',()=>{
         S.pcts=d.pcts;S.overall=d.overall;S.arch=d.arch;S.uname=d.uname;S.savedEmail=d.savedEmail;S.selectedPack=d.selectedPack;
         // Stripe returns ?session_id=cs_... — the Worker verifies it's paid
         // before generating any asset. Capture it before we strip the query.
-        S.sessionId=params.get('session_id')||'';
+        S.sessionId=sid;
         history.replaceState({},'',window.location.pathname);
         runFulfilment();
         return;
       }catch(e){}
+    }
+    // No local state (re-access on another device / cleared tab). Rebuild the
+    // reading + stored pack from the Worker rather than dumping them at home.
+    if(sid){
+      history.replaceState({},'',window.location.pathname+'?paid=true&session_id='+encodeURIComponent(sid));
+      restoreFromServer(sid);
+      return;
     }
   }
 
@@ -796,10 +806,10 @@ function buildProfile(){
     name:S.uname||''
   };
 }
-async function fulfil(kind){
+async function fulfil(kind,extra){
   const r=await fetch('/api/fulfil',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({session_id:S.sessionId||'',kind,profile:buildProfile()})
+    body:JSON.stringify({session_id:S.sessionId||'',kind,profile:buildProfile(),...(extra||{})})
   });
   const d=await r.json().catch(()=>({}));
   if(!r.ok||!d||typeof d.text!=='string'){throw new Error((d&&d.error)||'Generation failed');}
@@ -817,6 +827,303 @@ async function genAsset(kind){
   catch(e){ S.gen[kind]='[Could not generate — please retry]'; }
 }
 
+/* ═══════════════════════════ DELIVERY (email + re-access) ═══════════════════════════ */
+/* Send the finished pack to the Worker (/api/deliver): it stores the assets under
+   the paid session id (so ?paid=true&session_id=… reopens them on any device) and
+   emails a copy via Resend. The server re-verifies payment and ignores anything not
+   in the purchased tier, so it's safe to hand it whatever we generated. */
+function collectPackAssets(){
+  const assets={};
+  ['edge','traps','stories','guide','role'].forEach(k=>{ if(S.gen&&S.gen[k]) assets[k]=S.gen[k]; });
+  if(S.liText) assets.linkedin=S.liText;
+  return assets;
+}
+async function deliverPack(email,opts){
+  try{
+    const body={session_id:S.sessionId||'',email:(email||'').trim(),name:S.uname||'',assets:collectPackAssets()};
+    if(opts&&opts.storeOnly)body.storeOnly=true;
+    const r=await fetch('/api/deliver',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    return await r.json().catch(()=>({}));
+  }catch(e){ return {ok:false}; }
+}
+/* Fired once automatically after fulfilment. Stores the pack for re-access and, if
+   we have the buyer's email (we almost always do — checkout requires it), sends it. */
+async function deliverPackAuto(){
+  if(S.delivered)return;
+  S.delivered=true;
+  const to=(S.savedEmail||'').trim();
+  const d=await deliverPack(to);
+  updateDeliverStatus(d,to);
+}
+/* Manual "email me a copy" button on the deliverables page. */
+async function sendPackByEmail(){
+  const inp=document.getElementById('de-input');
+  const btn=document.getElementById('de-send');
+  if(!inp)return;
+  const to=(inp.value||'').trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){
+    inp.focus();inp.style.borderColor='var(--bad,#e05c5c)';
+    setTimeout(()=>{inp.style.borderColor='';},1500);
+    return;
+  }
+  S.savedEmail=to; saveSession();
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  const d=await deliverPack(to);
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+  updateDeliverStatus(d,to);
+}
+function updateDeliverStatus(d,to){
+  const st=document.getElementById('de-status');
+  const inp=document.getElementById('de-input');
+  if(!st)return;
+  if(d&&d.emailed){
+    st.textContent='✓ Sent to '+to; st.className='de-status ok';
+    if(inp&&to)inp.value=to;
+  }else if(d&&d.reason==='not-configured'){
+    st.textContent='Saved to your re-access link. (Email delivery is being switched on.)'; st.className='de-status';
+  }else if(d&&d.reason==='no-email'){
+    st.textContent='Enter your email and we’ll send the full pack.'; st.className='de-status';
+  }else{
+    st.textContent='Couldn’t email just now — your assets are safe on this page. Try again?'; st.className='de-status';
+  }
+}
+
+/* Durable re-access: returning to ?paid=true&session_id=… with no saved tab state
+   (another device, cleared storage). Rebuild the reading from the Worker, which
+   returns the scores captured at checkout plus any stored pack — no regeneration
+   needed if the pack was saved. */
+async function restoreFromServer(sid){
+  S.sessionId=sid;
+  try{
+    const r=await fetch('/api/assets?session_id='+encodeURIComponent(sid));
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d||!d.scores){ show('landing'); return; }
+    S.pcts={};
+    TRAITS.forEach(t=>{ let v=Math.round(Number(d.scores[t.id])); if(!isFinite(v))v=0; S.pcts[t.id]=Math.max(0,Math.min(100,v)); });
+    S.overall=Math.round(Object.values(S.pcts).reduce((a,b)=>a+b,0)/5);
+    S.arch=ARCHETYPES.find(a=>S.overall>=a.min)||ARCHETYPES[ARCHETYPES.length-1];
+    S.uname=sanitizeName(d.name||'');
+    if(PACKS[d.product])S.selectedPack=d.product;
+    S.purchased=true;
+    S.delivered=true; // don't re-email on a re-access visit
+    S.gen={};
+    ['edge','traps','stories','guide','role'].forEach(k=>{ if(d.assets&&d.assets[k])S.gen[k]=d.assets[k]; });
+    if(d.assets&&d.assets.linkedin)S.liText=d.assets.linkedin;
+    buildResults();
+    if(Object.keys(S.gen).length||S.liText){
+      buildDeliverables(); show('deliverables');
+    }else{
+      // Paid but nothing stored (rare) — regenerate from the still-valid session.
+      runFulfilment();
+    }
+  }catch(e){ show('landing'); }
+}
+
+/* ═══════════════════════════ PACK EXPORT (copy / .md / .html) ═══════════════════════════ */
+/* Client-side, no infra: let the buyer keep the whole pack as a file or clipboard
+   blob so losing the tab never loses the purchase. Whole-pack only — each asset
+   already has its own "Copy to clipboard". Includes the tier's AI assets plus a
+   small header (name, archetype, scores). */
+const PACK_ORDER=['edge','traps','stories','guide','role','linkedin'];
+const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to Dig Up',guide:'The Interview Prep Guide',role:'Your Role-Tailored Brief',linkedin:"Your LinkedIn 'About' draft"};
+function packAssetText(k){return k==='linkedin'?(S.liText||''):((S.gen&&S.gen[k])||'');}
+function packItems(){
+  const allowed=new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
+  return PACK_ORDER.filter(k=>allowed.has(k)&&packAssetText(k).trim())
+                   .map(k=>({title:PACK_LABELS[k],text:packAssetText(k).trim()}));
+}
+function packAsMarkdown(){
+  const L=['# Humanometer — Your Career Pack',''];
+  if(S.uname)L.push('**'+S.uname+'**');
+  if(S.arch)L.push(S.arch.name+' — '+S.arch.tag);
+  L.push('','Overall: '+S.overall+'/100');
+  L.push(TRAITS.map(t=>'- '+t.name+': '+S.pcts[t.id]+'/100').join('\n'));
+  packItems().forEach(it=>{L.push('','## '+it.title,'',it.text);});
+  L.push('','---','Generated at humanometer.com');
+  return L.join('\n');
+}
+function packAsHtml(){
+  const esc=escapeHtml;
+  const scoreRows=TRAITS.map(t=>`<tr><td>${esc(t.name)}</td><td class="v">${S.pcts[t.id]}/100</td></tr>`).join('');
+  const sections=packItems().map(it=>`<section><h2>${esc(it.title)}</h2><div class="body">${mdLite(it.text)}</div></section>`).join('');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Humanometer — ${esc(S.uname||'Your Career Pack')}</title>
+<style>
+:root{--gold:#c79a2e}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f1ea;color:#22201b;font:16px/1.65 Georgia,'Times New Roman',serif;padding:32px 16px}
+.wrap{max-width:720px;margin:0 auto;background:#fff;border:1px solid #e7e0d0;border-radius:14px;padding:34px 32px}
+.brand{font:700 22px/1 Georgia,serif}.brand span{color:var(--gold)}
+h1{font-size:26px;margin:18px 0 4px}
+.sub{color:#6a6456;font-style:italic;margin:0 0 18px}
+table{border-collapse:collapse;width:100%;margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px}
+td{padding:6px 0;border-bottom:1px solid #eee6d5}.v{text-align:right;font-weight:700;color:#8a6a1f}
+section{margin-top:26px}
+h2{font:600 13px/1 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a6791f;margin:0 0 10px;border-top:1px solid #eee6d5;padding-top:20px}
+.body{white-space:pre-wrap;background:#faf7f0;border:1px solid #ece3cf;border-radius:10px;padding:16px 18px}
+.foot{margin-top:28px;color:#9a9484;font:12px/1.6 Arial,sans-serif}
+a{color:#a6791f}
+</style></head><body><div class="wrap">
+<div class="brand">Human<span>ometer</span></div>
+<h1>${esc(S.uname||'Your Career Pack')}</h1>
+${S.arch?`<p class="sub">${esc(S.arch.name)} — ${esc(S.arch.tag)}</p>`:''}
+<table><tbody>${scoreRows}<tr><td><strong>Overall</strong></td><td class="v">${S.overall}/100</td></tr></tbody></table>
+${sections}
+<p class="foot">Your reading and coaching from <a href="https://humanometer.com">humanometer.com</a> — built from your specific scores.</p>
+</div></body></html>`;
+}
+function downloadFile(filename,text,mime){
+  try{
+    const blob=new Blob([text],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    return true;
+  }catch(e){return false;}
+}
+function packFileBase(){
+  const n=(S.uname||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return n?('humanometer-pack-'+n):'humanometer-pack';
+}
+function copyEverything(btn){
+  const txt=packAsMarkdown();
+  const done=()=>{
+    if(btn){const o=btn.innerHTML;btn.innerHTML='✓ Copied';setTimeout(()=>{btn.innerHTML=o;},1800);}
+    else showToast('Copied your whole pack to the clipboard.');
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,done);}
+  else done();
+}
+function downloadPackMd(){
+  if(downloadFile(packFileBase()+'.md',packAsMarkdown(),'text/markdown;charset=utf-8'))showToast('Downloaded your pack as a Markdown file.');
+}
+function downloadPackHtml(){
+  if(downloadFile(packFileBase()+'.html',packAsHtml(),'text/html;charset=utf-8'))showToast('Downloaded your pack as a web page you can keep.');
+}
+
+/* ═══════════════════════════ PNG EXPORT (certificate + share card) ═══════════════════════════ */
+/* Drawn on a <canvas> by hand — no html2canvas/jsPDF dependency, no CDN, works
+   offline and stays CSP-clean. Produces a crisp shareable image of the cert /
+   score card from the same profile the on-page versions use. */
+function roundRectPath(x,rx,ry,w,h,r){
+  x.beginPath();x.moveTo(rx+r,ry);
+  x.arcTo(rx+w,ry,rx+w,ry+h,r);x.arcTo(rx+w,ry+h,rx,ry+h,r);
+  x.arcTo(rx,ry+h,rx,ry,r);x.arcTo(rx,ry,rx+w,ry,r);x.closePath();
+}
+function setSpacing(x,v){ if('letterSpacing' in x){ try{x.letterSpacing=v;}catch(e){} } }
+async function fontsReady(){ try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){} }
+
+async function renderCertCanvas(){
+  await fontsReady();
+  const W=1000,H=680,c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,W*0.4,H);
+  g.addColorStop(0,'#0d1220');g.addColorStop(.55,'#141c2e');g.addColorStop(1,'#0d1220');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.strokeStyle='#d4a843';x.lineWidth=2;x.strokeRect(14,14,W-28,H-28);
+  x.textAlign='center';x.textBaseline='alphabetic';
+  setSpacing(x,'4px');x.fillStyle='#d4a843';x.font="600 15px 'Outfit',Arial,sans-serif";
+  x.fillText('HUMANOMETER · VERIFIED READING · 2026',W/2,86);
+  setSpacing(x,'3px');x.fillStyle='#7a7670';x.font="400 15px 'Cormorant Garamond',Georgia,serif";
+  x.fillText('THIS CERTIFIES THAT',W/2,152);
+  setSpacing(x,'0px');
+  x.fillStyle='#ece8de';x.font="700 48px 'Cormorant Garamond',Georgia,serif";
+  x.fillText(S.uname||'Your Name',W/2,214);
+  x.fillStyle='#d4a843';x.font="italic 700 24px 'Cormorant Garamond',Georgia,serif";
+  x.fillText(S.arch.name+' — '+S.arch.tag,W/2,256);
+  x.strokeStyle='rgba(212,168,67,.4)';x.lineWidth=1;
+  x.beginPath();x.moveTo(W/2-30,290);x.lineTo(W/2+30,290);x.stroke();
+  const n=TRAITS.length,spanW=780,startX=W/2-spanW/2,step=spanW/n;
+  TRAITS.forEach((t,i)=>{
+    const cx=startX+step*(i+0.5);
+    x.fillStyle=t.color;x.font="700 34px 'Cormorant Garamond',Georgia,serif";
+    x.fillText(String(S.pcts[t.id]),cx,374);
+    setSpacing(x,'2px');x.fillStyle='#7a7670';x.font="600 13px 'Outfit',Arial,sans-serif";
+    x.fillText(t.name.split(' ')[0].toUpperCase(),cx,400);setSpacing(x,'0px');
+  });
+  x.textAlign='left';x.fillStyle='#ece8de';x.font="600 15px 'Outfit',Arial,sans-serif";
+  x.fillText('humanometer.com',60,H-72);
+  x.fillStyle='#7a7670';x.font="400 13px 'Outfit',Arial,sans-serif";
+  x.fillText(new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'}),60,H-48);
+  setSpacing(x,'2px');x.font="600 14px 'Outfit',Arial,sans-serif";
+  const chipText='VERIFIED ✓',tw=x.measureText(chipText).width,chipW=tw+24,chipX=W-60-chipW,chipY=H-92,chipH=34;
+  x.fillStyle='rgba(212,168,67,.12)';x.strokeStyle='rgba(212,168,67,.22)';x.lineWidth=1;
+  roundRectPath(x,chipX,chipY,chipW,chipH,4);x.fill();x.stroke();
+  x.fillStyle='#d4a843';x.textBaseline='middle';x.fillText(chipText,chipX+12,chipY+chipH/2+1);
+  x.textBaseline='alphabetic';setSpacing(x,'0px');
+  return c;
+}
+
+async function renderShareCanvas(){
+  await fontsReady();
+  const W=1200,H=630,c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0c0f1a');g.addColorStop(1,'#111520');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(212,168,67,.22)';x.lineWidth=1;x.strokeRect(.5,.5,W-1,H-1);
+  const gb=x.createLinearGradient(0,0,W,0);
+  gb.addColorStop(0,'rgba(212,168,67,0)');gb.addColorStop(.5,'#d4a843');gb.addColorStop(1,'rgba(212,168,67,0)');
+  x.fillStyle=gb;x.fillRect(0,0,W,5);
+  const rcx=200,rcy=H/2-10,rr=95;
+  x.beginPath();x.arc(rcx,rcy,rr,0,Math.PI*2);x.closePath();
+  x.fillStyle='rgba(212,168,67,.10)';x.fill();x.strokeStyle='#d4a843';x.lineWidth=3;x.stroke();
+  x.textAlign='center';
+  x.fillStyle='#d4a843';x.font="700 72px 'Cormorant Garamond',Georgia,serif";x.fillText(String(S.overall),rcx,rcy+8);
+  x.fillStyle='#7a7670';x.font="400 20px 'Outfit',Arial,sans-serif";x.fillText('/ 100',rcx,rcy+44);
+  const bx=360;x.textAlign='left';
+  setSpacing(x,'4px');x.fillStyle='#d4a843';x.font="600 20px 'Outfit',Arial,sans-serif";
+  x.fillText('THE HUMAN EDGE · 2026',bx,rcy-92);setSpacing(x,'0px');
+  x.fillStyle='#ece8de';x.font="700 60px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name,bx,rcy-26);
+  x.fillStyle='#9a948a';x.font="italic 400 24px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.tag,bx,rcy+12);
+  let cxp=bx,cyp=rcy+42;const chipH=40,padX=14,gap=10;
+  x.font="600 16px 'Outfit',Arial,sans-serif";setSpacing(x,'1px');
+  TRAITS.forEach(t=>{
+    const label=t.name.split(' ')[0].toUpperCase()+' '+S.pcts[t.id];
+    const cw=x.measureText(label).width+padX*2;
+    if(cxp+cw>W-50){cxp=bx;cyp+=chipH+gap;}
+    x.fillStyle='rgba(212,168,67,.10)';x.strokeStyle='rgba(212,168,67,.22)';x.lineWidth=1;
+    roundRectPath(x,cxp,cyp,cw,chipH,6);x.fill();x.stroke();
+    x.fillStyle=t.color;x.textBaseline='middle';x.fillText(label,cxp+padX,cyp+chipH/2+1);x.textBaseline='alphabetic';
+    cxp+=cw+gap;
+  });
+  setSpacing(x,'0px');
+  x.textAlign='right';x.fillStyle='#7a7670';x.font="400 18px 'Outfit',Arial,sans-serif";
+  x.fillText('humanometer.com',W-40,H-34);
+  return c;
+}
+
+function saveCanvasPng(canvas,filename,done){
+  if(canvas.toBlob){
+    canvas.toBlob(function(blob){
+      if(!blob){return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      if(done)done();
+    },'image/png');
+  }else{
+    const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=filename;
+    document.body.appendChild(a);a.click();a.remove();
+    if(done)done();
+  }
+}
+async function downloadCertPng(){
+  if(!S.arch)return;
+  const c=await renderCertCanvas();
+  saveCanvasPng(c,packFileBase()+'-certificate.png',()=>showToast('Saved your certificate as an image.'));
+}
+async function downloadSharePng(){
+  if(!S.arch)return;
+  const c=await renderShareCanvas();
+  saveCanvasPng(c,packFileBase()+'-share-card.png',()=>showToast('Saved your share card as an image.'));
+}
+
 /* ═══════════════════════════ DELIVERABLES ═══════════════════════════ */
 /* Render all panels, but only show tabs/panels for what the purchased tier includes.
    Activates the first allowed tab so the user lands on something visible. */
@@ -827,10 +1134,13 @@ function buildDeliverables(){
   const g=S.gen||{};
   ['edge','traps','stories','guide'].forEach(k=>{
     const el=document.getElementById(k+'-text');
-    if(el && g[k]) el.innerHTML=mdLite(g[k]);
+    if(el && g[k]) el.innerHTML=renderAssetHtml(k,g[k]);
   });
-  // Full results sheet (printable)
+  // Full results sheet + fillable cheat sheet (both printable, client-rendered)
   buildFullResults();
+  buildCheatSheet();
+  // Role-tailored brief (pro): show a saved/generated brief, else the paste box.
+  if(S.gen && S.gen.role) showRoleOutput(); else showRoleInput();
   // Certificate
   document.getElementById('cert-name').textContent=S.uname||'Your Name';
   document.getElementById('cert-arch').textContent=S.arch.name+' — '+S.arch.tag;
@@ -845,9 +1155,16 @@ function buildDeliverables(){
   // Permalink accordion (deliverables) — reflects whether a link exists yet.
   renderPermalinkBlock();
 
+  // Email-a-copy card — prefill the buyer's address; status is filled in once
+  // deliverPackAuto()/sendPackByEmail() runs (or on re-access, where it's done).
+  const de=document.getElementById('de-input');
+  if(de&&S.savedEmail&&!de.value)de.value=S.savedEmail;
+  const dstat=document.getElementById('de-status');
+  if(dstat&&!dstat.textContent.trim())dstat.textContent=S.savedEmail?'Sending a copy to '+S.savedEmail+'…':'Enter your email and we’ll send the full pack.';
+
   // Tier-aware tab visibility
   const allowed = new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
-  ['edge','traps','stories','guide','linkedin','results','cert','share'].forEach(id=>{
+  ['edge','traps','stories','guide','cheat','role','linkedin','results','cert','share'].forEach(id=>{
     const t=document.getElementById('dtab-'+id);
     const p=document.getElementById('dp-'+id);
     const ok=allowed.has(id);
@@ -891,6 +1208,136 @@ function buildFullResults(){
     </div>
     <div class="fr-dims">${rows}</div>
     <div class="fr-foot">Generated from your 15 answers at humanometer.com · ${new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}</div>`;
+}
+
+/* Build the fillable, printable Interview Cheat Sheet. Client-rendered (no AI):
+   scores drive which dimension to flag; everything else is a worksheet the user
+   fills in by hand after printing. It operationalises the coaching — the guide
+   teaches, this is the one page they take into their prep. */
+function buildCheatSheet(){
+  const el=document.getElementById('cheat-sheet');
+  if(!el||!S.arch)return;
+  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  const strong=sorted[0], weak=sorted[sorted.length-1];
+  const esc=escapeHtml;
+  const line='<span class="cs-line"></span>';
+  const chips=TRAITS.map(t=>{
+    const isS=t.id===strong.id, isW=t.id===weak.id;
+    const cls='cs-chip'+(isS?' strong':(isW?' weak':''));
+    const flag=isS?' ★':(isW?' ⚠':'');
+    return `<div class="${cls}"><span class="cs-chip-v" style="color:${t.color}">${S.pcts[t.id]}</span><span class="cs-chip-l">${esc(t.name.split(' ')[0])}${flag}</span></div>`;
+  }).join('');
+  const story=(n,hint)=>`<div class="cs-story">
+      <div class="cs-story-hd"><span class="cs-num">${n}</span><span class="cs-line cs-title"></span></div>
+      ${hint?`<div class="cs-hint">${esc(hint)}</div>`:''}
+      <div class="cs-star">
+        <div><b>S</b>${line}</div><div><b>T</b>${line}</div>
+        <div><b>A</b>${line}</div><div><b>R</b>${line}</div>
+      </div>
+    </div>`;
+  const freeze=(q)=>`<div class="cs-fq"><div class="cs-fq-q">${esc(q)}</div><div class="cs-fq-a">Your angle: ${line}</div></div>`;
+  el.innerHTML=`
+    <div class="cheat-head">
+      <div class="cheat-brand">Humanometer · Interview Cheat Sheet · 2026</div>
+      <div class="cheat-name">${esc(S.uname||'Your Interview Prep')}</div>
+      <div class="cheat-arch">${esc(S.arch.name)} — ${esc(S.arch.tag)}</div>
+    </div>
+    <div class="cheat-scores">${chips}</div>
+    <div class="cheat-note">Interviewers are trained to probe your lowest dimension — <strong>${esc(weak.name)}</strong>. Prepare that story <strong>first</strong>. Lead with your <strong>${esc(strong.name)}</strong>.</div>
+
+    <section class="cheat-sec">
+      <h3>Your STAR stories <span>— 3–4 real ones you can tell cold</span></h3>
+      ${story(1, 'Make this the one that shows your '+weak.name+' — prepare it first.')}
+      ${story(2)}
+      ${story(3)}
+      ${story(4)}
+    </section>
+
+    <section class="cheat-sec cs-inline">
+      <h3>STAR in one line</h3>
+      <p><strong>S</strong>ituation → <strong>T</strong>ask → <strong>A</strong>ction → <strong>R</strong>esult. One sentence each; spend most of your words on Action and Result.</p>
+    </section>
+
+    <section class="cheat-sec">
+      <h3>Freeze questions <span>— decide your angle before the room</span></h3>
+      ${freeze('“What’s your greatest weakness?”')}
+      ${freeze('“Why are you leaving / did you leave?”')}
+      ${freeze('“Tell me about a time you failed.”')}
+    </section>
+
+    <section class="cheat-sec">
+      <h3>3 questions to ask them</h3>
+      <div class="cs-ask">${line}${line}${line}</div>
+    </section>
+
+    <section class="cheat-sec cs-inline">
+      <h3>Before you walk in</h3>
+      <ul class="cs-rem">
+        <li>Lead with your strongest dimension — <strong>${esc(strong.name)}</strong> (${S.pcts[strong.id]}/100).</li>
+        <li>Have your <strong>${esc(weak.name)}</strong> story ready — that’s where they’ll push.</li>
+        <li>One real, specific moment beats an impressive vague one, every time.</li>
+      </ul>
+    </section>
+
+    <div class="cheat-foot">humanometer.com · ${new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}</div>`;
+}
+
+/* Guide renderer: like mdLite, but turns dash bullets into checklist rows so the
+   Interview Prep Guide reads as tick-off sections. Guide-only — other assets keep
+   plain mdLite. Escapes first, so model output can never inject markup. */
+function mdGuide(s){
+  return escapeHtml(s||'')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|\n)[-•]\s+/g,'$1<span class="chk">☐</span> ');
+}
+function renderAssetHtml(kind,text){return (kind==='guide'||kind==='role'?mdGuide:mdLite)(text);}
+
+/* ═══════════════════════════ ROLE-TAILORED BRIEF (Interview Coach) ═══════════════════════════ */
+/* The one asset that takes user input: paste a job description, get prep tuned to
+   that role. Reusable — generate a fresh brief for every application. Company
+   facts stay a research checklist (the server prompt never asserts them). */
+async function genRole(){
+  const ta=document.getElementById('role-jd');
+  const btn=document.getElementById('role-gen-btn');
+  if(!ta)return;
+  const jd=(ta.value||'').trim();
+  if(jd.length<40){
+    ta.focus();ta.style.borderColor='var(--bad,#e05c5c)';
+    setTimeout(()=>{ta.style.borderColor='';},1600);
+    showToast('Paste the full job description first.');
+    return;
+  }
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Building your brief…';}
+  try{
+    S.gen=S.gen||{};
+    S.gen.role=await fulfil('role',{jd});
+    showRoleOutput();
+    // Refresh the stored pack (now including the brief) for re-access — no re-email.
+    deliverPack(S.savedEmail,{storeOnly:true});
+  }catch(e){
+    showToast((e&&e.message)||'Could not generate the brief. Please try again.');
+  }
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+}
+/* Toggle the role panel between the paste box and the generated brief. */
+function showRoleOutput(){
+  const el=document.getElementById('role-text');
+  if(el)el.innerHTML=renderAssetHtml('role',(S.gen&&S.gen.role)||'');
+  const inp=document.getElementById('role-input');if(inp)inp.style.display='none';
+  const box=document.getElementById('role-out-box');if(box)box.style.display='';
+  const acts=document.getElementById('role-acts');if(acts)acts.style.display='';
+}
+function showRoleInput(){
+  const inp=document.getElementById('role-input');if(inp)inp.style.display='';
+  const box=document.getElementById('role-out-box');if(box)box.style.display='none';
+  const acts=document.getElementById('role-acts');if(acts)acts.style.display='none';
+}
+/* "New role" — clear the box so they can tailor a brief to a different job. */
+function newRole(){
+  const ta=document.getElementById('role-jd');if(ta)ta.value='';
+  showRoleInput();
+  const ta2=document.getElementById('role-jd');if(ta2)ta2.focus();
 }
 
 /* Print one deliverable cleanly. A body class scopes the print stylesheet so
@@ -1050,7 +1497,7 @@ function copyAsset(kind){navigator.clipboard.writeText((S.gen&&S.gen[kind])||'')
 async function regenAsset(kind){
   const el=document.getElementById(kind+'-text'); if(el)el.textContent='Regenerating…';
   await genAsset(kind);
-  if(el)el.innerHTML=mdLite(S.gen[kind]);
+  if(el)el.innerHTML=renderAssetHtml(kind,S.gen[kind]);
 }
 function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
 
@@ -1065,11 +1512,11 @@ const PACKS = {
             includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots','LinkedIn About draft','Verified certificate','Permanent results page'],
             tabs:['edge','traps','linkedin','cert','share'] },
   career: { name:'Interview Kit',   price:14.99,
-            includes:['Everything in Edge Report','Stories to Dig Up — find your own best examples','The Interview Prep Guide','Full results PDF'],
-            tabs:['edge','traps','stories','guide','linkedin','results','cert','share'] },
+            includes:['Everything in Edge Report','Stories to Dig Up — find your own best examples','The Interview Prep Guide','Fillable interview cheat sheet','Full results PDF'],
+            tabs:['edge','traps','stories','guide','cheat','linkedin','results','cert','share'] },
   pro:    { name:'Interview Coach',  price:19.99,
-            includes:['Everything in Interview Kit','Role-tailored interview brief (coming soon)'],
-            tabs:['edge','traps','stories','guide','linkedin','results','cert','share'] }
+            includes:['Everything in Interview Kit','Role-tailored brief — prep for the specific job you paste in','Reusable for every role you apply to'],
+            tabs:['edge','traps','stories','guide','cheat','role','linkedin','results','cert','share'] }
 };
 
 function buyPack(type){
