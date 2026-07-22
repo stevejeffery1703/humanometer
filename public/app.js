@@ -347,8 +347,8 @@ function buildResults(){
   document.getElementById('arch-name').textContent=S.arch.name;
   document.getElementById('arch-tag').textContent=S.arch.tag;
   document.getElementById('ov-score').textContent=S.overall;
-  const pct=getPercentile(S.overall);
-  document.getElementById('ov-pct').innerHTML=`Top <strong>${pct}%</strong> of respondents`;
+  const band=overallBand(S.overall);
+  document.getElementById('ov-pct').innerHTML=`<strong>${band}</strong>`;
 
   // Shared-view mode: someone is looking at another person's reading
   const banner=document.getElementById('shared-banner');
@@ -378,9 +378,9 @@ function buildResults(){
   // Rarity line — makes sharing feel worthwhile
   const rarityEl=document.getElementById('rarity-line');
   if(rarityEl){
-    const rarity=S.overall>=85?`Only 5% of people score this high. Most people who share this are in the top percentile.`:
-      S.overall>=75?`Top 10% overall. A score worth posting.`:
-      S.overall>=65?`Top 20% — stronger than most professionals on this assessment.`:
+    const rarity=S.overall>=85?`An exceptional reading — strong judgment showing up across the board.`:
+      S.overall>=75?`A strong reading. Worth posting.`:
+      S.overall>=65?`A solid reading — the shape of your profile below is the interesting part.`:
       `Your profile is more distinctive than your overall score suggests — see your dimension breakdown below.`;
     rarityEl.textContent=rarity;
   }
@@ -388,7 +388,11 @@ function buildResults(){
   // Share block label — personalized to score
   const shareLblEl=document.getElementById('share-rarity-label');
   if(shareLblEl){
-    shareLblEl.textContent=`You scored ${S.overall}/100 — top ${pct}% of all respondents. Post it.`;
+    // Only nudge people to post once the score carries itself; below that, point
+    // them at their peaks instead of urging them to publish a weak number.
+    shareLblEl.textContent = S.overall>=65
+      ? `You scored ${S.overall}/100 — ${article(band)} ${band.toLowerCase()} reading. Post it.`
+      : `You scored ${S.overall}/100. Your strongest dimensions are the part worth sharing.`;
   }
 
   buildInsightCards();
@@ -1291,13 +1295,13 @@ async function renderCheatCanvas(scale){
 
 async function renderResultsCanvas(scale){
   await fontsReady();scale=scale||1;const W=1000,H=1380,M=64,R=W-M;const {c,x}=newLightCanvas(W,H,scale);
-  const pct=getPercentile(S.overall),sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  const band=overallBand(S.overall),sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   let y=84;
   x.textAlign='center';
   setSpacing(x,'3px');x.fillStyle=LT.gold;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · FULL READING · 2026',W/2,y);setSpacing(x,'0px');y+=44;
   x.fillStyle=LT.txt;x.font="700 40px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Reading',W/2,y);y+=30;
   x.fillStyle=LT.gold;x.font="700 18px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,y);y+=40;
-  x.fillStyle=LT.txt;x.font="600 20px 'Outfit',Arial,sans-serif";x.fillText(S.overall+' / 100  ·  top '+pct+'%',W/2,y);y+=30;
+  x.fillStyle=LT.txt;x.font="600 20px 'Outfit',Arial,sans-serif";x.fillText(S.overall+' / 100  ·  '+band,W/2,y);y+=30;
   x.strokeStyle=LT.bord;x.lineWidth=1;x.beginPath();x.moveTo(M,y);x.lineTo(R,y);x.stroke();y+=36;
   x.textAlign='left';
   sorted.forEach(t=>{const v=S.pcts[t.id],band=getBand(t.id,v);
@@ -1427,7 +1431,7 @@ function mdLite(s){return escapeHtml(s||'').replace(/\*\*(.+?)\*\*/g,'<strong>$1
 function buildFullResults(){
   const el=document.getElementById('full-results-sheet');
   if(!el||!S.arch)return;
-  const pct=getPercentile(S.overall);
+  const band=overallBand(S.overall);
   const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   const rows=sorted.map(t=>{
     const v=S.pcts[t.id];const band=getBand(t.id,v);
@@ -1443,7 +1447,7 @@ function buildFullResults(){
       <div class="fr-brand">Humanometer · Full Reading · 2026</div>
       <div class="fr-name">${escapeHtml(S.uname||'Your Reading')}</div>
       <div class="fr-arch">${escapeHtml(S.arch.name)} — ${escapeHtml(S.arch.tag)}</div>
-      <div class="fr-overall"><span class="fr-overall-n">${S.overall}</span><span class="fr-overall-d">/100 · top ${pct}%</span></div>
+      <div class="fr-overall"><span class="fr-overall-n">${S.overall}</span><span class="fr-overall-d">/100 · ${band}</span></div>
     </div>
     <div class="fr-dims">${rows}</div>
     <div class="fr-foot">Generated from your 15 answers at humanometer.com · ${new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}</div>`;
@@ -1589,7 +1593,6 @@ function newRole(){
 
 /* ═══════════════════════════ SHARE ═══════════════════════════ */
 function getShareText(platform='linkedin'){
-  const pct=getPercentile(S.overall);
   const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   const top2=sorted.slice(0,2);
   const peakLines=top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ');
@@ -1599,7 +1602,7 @@ function getShareText(platform='linkedin'){
   if(platform==='linkedin'){
     return `I just measured the five professional capabilities AI can't replicate — on the Humanometer.
 
-My profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+My profile: ${S.arch.name} · ${S.overall}/100
 Strongest: ${top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ')}
 
 It's a scored, five-dimension reading grounded in WEF and LinkedIn research on the human skills rising in value as AI spreads.
@@ -1611,7 +1614,7 @@ What's your profile?`;
   }
 
   if(platform==='x'){
-    return `I'm "${S.arch.name}" on the Humanometer — ${S.overall}/100, top ${pct}%.
+    return `I'm "${S.arch.name}" on the Humanometer — ${S.overall}/100.
 Top strengths: ${peakLines}
 
 The five professional capabilities AI can't replicate, scored in 5 minutes.
@@ -1622,7 +1625,7 @@ Take yours (free): https://humanometer.com`;
   if(platform==='whatsapp'){
     return `Just took the Humanometer — the five professional skills AI can't replicate, scored in 5 minutes.
 
-I'm "${S.arch.name}" — ${S.overall}/100 (top ${pct}%). Strongest: ${peakLines}
+I'm "${S.arch.name}" — ${S.overall}/100. Strongest: ${peakLines}
 
 My reading: ${link}
 Try it: https://humanometer.com`;
@@ -1631,7 +1634,7 @@ Try it: https://humanometer.com`;
   if(platform==='facebook'){
     return `I just took the Humanometer — a free 5-minute reading of the five professional capabilities AI can't replicate.
 
-I'm "${S.arch.name}" · ${S.overall}/100 (top ${pct}%). Strongest: ${peakLines}
+I'm "${S.arch.name}" · ${S.overall}/100. Strongest: ${peakLines}
 
 A scored, five-dimension breakdown grounded in research on the skills rising in value as AI spreads.
 
@@ -1642,7 +1645,7 @@ Take yours (free, 5 min): https://humanometer.com`;
   // clipboard / generic
   return `My Humanometer reading — the five professional capabilities AI can't replicate.
 
-Profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
+Profile: ${S.arch.name} · ${S.overall}/100
 Strongest: ${top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ')}
 
 Full reading: ${link}
@@ -1768,7 +1771,31 @@ async function regenAsset(kind){
 function copyCert(btn){copyToClipboard(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`,btn);}
 
 function retake(){clearSession();show('landing');}
-function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 20;if(s>=55)return 35;return 50;}
+/* The overall score's band — a descriptor of the score itself, on the same
+   threshold logic the five per-dimension bands already use.
+
+   It deliberately makes NO claim about how other people scored, because we have
+   no respondent distribution to draw one from. This replaces getPercentile(), a
+   hardcoded lookup (85→5, 75→10, 65→20…) that was rendered as "Top X% of
+   respondents" — on the results header, the share card, the full-results PDF,
+   and inside the share text users post publicly. Besides being unfounded it
+   skewed hard: answering all 15 questions at random averages 65/100, which that
+   table called "Top 20%", so essentially every genuine user was told they beat
+   80% of people. If we ever collect a real distribution, a true percentile can
+   go back in — sourced from data rather than asserted. */
+const OVERALL_BANDS=[
+  {min:85,label:'Exceptional'},
+  {min:75,label:'Strong'},
+  {min:65,label:'Solid'},
+  {min:55,label:'Developing'},
+  {min:0, label:'Emerging'}
+];
+function overallBand(s){
+  return (OVERALL_BANDS.find(b=>s>=b.min)||OVERALL_BANDS[OVERALL_BANDS.length-1]).label;
+}
+/* "an exceptional reading", not "a exceptional reading" — the band labels are
+   interpolated into prose in a few places. */
+function article(w){return /^[aeiou]/i.test(String(w||''))?'an':'a';}
 
 
 /* Single source of truth for tier definitions — used by buyPack, runFulfilment,
