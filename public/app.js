@@ -347,8 +347,14 @@ function buildResults(){
   document.getElementById('arch-name').textContent=S.arch.name;
   document.getElementById('arch-tag').textContent=S.arch.tag;
   document.getElementById('ov-score').textContent=S.overall;
-  const band=overallBand(S.overall);
-  document.getElementById('ov-pct').innerHTML=`<strong>${band}</strong>`;
+  // No verdict on the total — the archetype above already interprets it, and it
+  // does so kindly for every score. What goes here instead is a fact about THIS
+  // profile: which dimension leads it. Non-comparative, and it sets up the point
+  // the whole reading is built on — the shape matters more than the total.
+  const lead=leadSummary();
+  document.getElementById('ov-pct').innerHTML=lead.balanced
+    ? `<strong>Evenly balanced</strong>`
+    : `Led by <strong>${escapeHtml(lead.label)}</strong>`;
 
   // Shared-view mode: someone is looking at another person's reading
   const banner=document.getElementById('shared-banner');
@@ -375,24 +381,25 @@ function buildResults(){
   //  • Otherwise show the name input + "Generate link" button.
   renderPermalinkBlock();
 
-  // Rarity line — makes sharing feel worthwhile
+  // Was a rarity claim ("only 5% of people score this high"). Now it says the
+  // one thing nothing else on the page says: what their leading dimension means
+  // against AI — which is the actual proposition, rather than a ranking against
+  // other people.
   const rarityEl=document.getElementById('rarity-line');
   if(rarityEl){
-    const rarity=S.overall>=85?`An exceptional reading — strong judgment showing up across the board.`:
-      S.overall>=75?`A strong reading. Worth posting.`:
-      S.overall>=65?`A solid reading — the shape of your profile below is the interesting part.`:
-      `Your profile is more distinctive than your overall score suggests — see your dimension breakdown below.`;
-    rarityEl.textContent=rarity;
+    rarityEl.textContent=lead.balanced
+      ? `Your strongest dimensions sit level with each other — no single spike, which is its own kind of signal.`
+      : `${lead.label} ${lead.names.length>1?'are your strongest signals':'is your strongest signal'} — the kind of judgment that grows more valuable as AI takes on the routine work.`;
   }
 
-  // Share block label — personalized to score
+  // Share block label. With the ranking gone this no longer needs to branch on
+  // score: "led by X" reads well at any total, so nobody is either flattered
+  // with a fake percentile or told their number isn't worth posting.
   const shareLblEl=document.getElementById('share-rarity-label');
   if(shareLblEl){
-    // Only nudge people to post once the score carries itself; below that, point
-    // them at their peaks instead of urging them to publish a weak number.
-    shareLblEl.textContent = S.overall>=65
-      ? `You scored ${S.overall}/100 — ${article(band)} ${band.toLowerCase()} reading. Post it.`
-      : `You scored ${S.overall}/100. Your strongest dimensions are the part worth sharing.`;
+    shareLblEl.textContent=lead.balanced
+      ? `You scored ${S.overall}/100, evenly balanced across your top dimensions. Post it.`
+      : `You scored ${S.overall}/100, led by ${lead.label}. Post it.`;
   }
 
   buildInsightCards();
@@ -1295,13 +1302,13 @@ async function renderCheatCanvas(scale){
 
 async function renderResultsCanvas(scale){
   await fontsReady();scale=scale||1;const W=1000,H=1380,M=64,R=W-M;const {c,x}=newLightCanvas(W,H,scale);
-  const band=overallBand(S.overall),sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
+  const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   let y=84;
   x.textAlign='center';
   setSpacing(x,'3px');x.fillStyle=LT.gold;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · FULL READING · 2026',W/2,y);setSpacing(x,'0px');y+=44;
   x.fillStyle=LT.txt;x.font="700 40px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Reading',W/2,y);y+=30;
   x.fillStyle=LT.gold;x.font="700 18px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,y);y+=40;
-  x.fillStyle=LT.txt;x.font="600 20px 'Outfit',Arial,sans-serif";x.fillText(S.overall+' / 100  ·  '+band,W/2,y);y+=30;
+  x.fillStyle=LT.txt;x.font="600 20px 'Outfit',Arial,sans-serif";x.fillText(S.overall+' / 100',W/2,y);y+=30;
   x.strokeStyle=LT.bord;x.lineWidth=1;x.beginPath();x.moveTo(M,y);x.lineTo(R,y);x.stroke();y+=36;
   x.textAlign='left';
   sorted.forEach(t=>{const v=S.pcts[t.id],band=getBand(t.id,v);
@@ -1431,7 +1438,6 @@ function mdLite(s){return escapeHtml(s||'').replace(/\*\*(.+?)\*\*/g,'<strong>$1
 function buildFullResults(){
   const el=document.getElementById('full-results-sheet');
   if(!el||!S.arch)return;
-  const band=overallBand(S.overall);
   const sorted=[...TRAITS].sort((a,b)=>S.pcts[b.id]-S.pcts[a.id]);
   const rows=sorted.map(t=>{
     const v=S.pcts[t.id];const band=getBand(t.id,v);
@@ -1447,7 +1453,7 @@ function buildFullResults(){
       <div class="fr-brand">Humanometer · Full Reading · 2026</div>
       <div class="fr-name">${escapeHtml(S.uname||'Your Reading')}</div>
       <div class="fr-arch">${escapeHtml(S.arch.name)} — ${escapeHtml(S.arch.tag)}</div>
-      <div class="fr-overall"><span class="fr-overall-n">${S.overall}</span><span class="fr-overall-d">/100 · ${band}</span></div>
+      <div class="fr-overall"><span class="fr-overall-n">${S.overall}</span><span class="fr-overall-d">/100</span></div>
     </div>
     <div class="fr-dims">${rows}</div>
     <div class="fr-foot">Generated from your 15 answers at humanometer.com · ${new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}</div>`;
@@ -1771,31 +1777,40 @@ async function regenAsset(kind){
 function copyCert(btn){copyToClipboard(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`,btn);}
 
 function retake(){clearSession();show('landing');}
-/* The overall score's band — a descriptor of the score itself, on the same
-   threshold logic the five per-dimension bands already use.
+/* The dimension this profile leads with. Used wherever the overall score is
+   presented, in place of any verdict on the total.
 
-   It deliberately makes NO claim about how other people scored, because we have
-   no respondent distribution to draw one from. This replaces getPercentile(), a
-   hardcoded lookup (85→5, 75→10, 65→20…) that was rendered as "Top X% of
-   respondents" — on the results header, the share card, the full-results PDF,
-   and inside the share text users post publicly. Besides being unfounded it
-   skewed hard: answering all 15 questions at random averages 65/100, which that
-   table called "Top 20%", so essentially every genuine user was told they beat
-   80% of people. If we ever collect a real distribution, a true percentile can
-   go back in — sourced from data rather than asserted. */
-const OVERALL_BANDS=[
-  {min:85,label:'Exceptional'},
-  {min:75,label:'Strong'},
-  {min:65,label:'Solid'},
-  {min:55,label:'Developing'},
-  {min:0, label:'Emerging'}
-];
-function overallBand(s){
-  return (OVERALL_BANDS.find(b=>s>=b.min)||OVERALL_BANDS[OVERALL_BANDS.length-1]).label;
+   History: this slot used to hold getPercentile(), a hardcoded lookup rendered
+   as "Top X% of respondents" with no respondent distribution behind it — and
+   skewed, since answering at random averages 65/100, which it called "Top 20%".
+   That was replaced with an Exceptional/Strong/Solid/Developing/Emerging band,
+   but a band is still a verdict, and it contradicted the archetypes: those are
+   assigned from the same overall score and every one of them is written to be
+   flattering, so labelling someone "Emerging" directly under "The Connector —
+   you see the human picture others miss" undid that on purpose.
+   Ranking is also the wrong axis for this product. It measures capability
+   against what AI can't replicate, which is not zero-sum: a percentile forces
+   half the users below the middle to answer a question nobody asked. So the
+   overall score is now stated plainly and interpreted by the archetype, and
+   this is what accompanies it — a fact about them, not a placement.
+
+   Ties are not an edge case here: a dimension is three questions scored out of
+   four, so it has only thirteen possible values, and ~23% of profiles have two
+   or more dimensions level at the top. Picking the first of them would hand the
+   lead to Adaptive Thinking on declaration order alone, so we return the whole
+   tied set and let the caller phrase it. */
+function leadTraits(){
+  const max=Math.max(...TRAITS.map(t=>S.pcts[t.id]||0));
+  return TRAITS.filter(t=>(S.pcts[t.id]||0)===max);
 }
-/* "an exceptional reading", not "a exceptional reading" — the band labels are
-   interpolated into prose in a few places. */
-function article(w){return /^[aeiou]/i.test(String(w||''))?'an':'a';}
+/* → { names, label, balanced }. Three or more dimensions level at the top means
+   nothing distinguishes the profile, so we say that rather than list them. */
+function leadSummary(){
+  const leads=leadTraits();
+  const names=leads.map(t=>t.name);
+  const balanced=leads.length>=3;
+  return { names, balanced, label: balanced ? 'Evenly balanced' : names.join(' and ') };
+}
 
 
 /* Single source of truth for tier definitions — used by buyPack, runFulfilment,
