@@ -815,16 +815,30 @@ async function fulfil(kind,extra){
   if(!r.ok||!d||typeof d.text!=='string'){throw new Error((d&&d.error)||'Generation failed');}
   return d.text.trim();
 }
+/* A failed generation is tracked in S.genFailed, NOT just papered over with
+   placeholder text. Without this the placeholder gets stored in KV, emailed, and
+   exported as if it were the asset the buyer paid for — so a bad Anthropic key
+   or a transient 502 would send someone a receipt-worthy "pack" of error strings.
+   The placeholder still renders in the panel so the tab isn't blank; everything
+   that leaves the page filters on S.genFailed. */
+const GEN_FAILED_TEXT='[Could not generate — press Regenerate below]';
+function markGenFailed(kind,e){
+  S.genFailed=S.genFailed||{};
+  S.genFailed[kind]=(e&&e.message)||'Generation failed';
+}
+function clearGenFailed(kind){ if(S.genFailed) delete S.genFailed[kind]; }
+function genFailedKinds(){ return Object.keys(S.genFailed||{}); }
+
 async function genLinkedIn(){
-  try{ S.liText=await fulfil('linkedin'); }
-  catch(e){ S.liText='[Could not generate — please retry]'; }
+  try{ S.liText=await fulfil('linkedin'); clearGenFailed('linkedin'); }
+  catch(e){ S.liText=GEN_FAILED_TEXT; markGenFailed('linkedin',e); }
 }
 // Coaching assets (edge, traps, stories, guide) all return Markdown and render
 // identically, so one helper covers them. Text is kept in S.gen[kind].
 async function genAsset(kind){
   S.gen=S.gen||{};
-  try{ S.gen[kind]=await fulfil(kind); }
-  catch(e){ S.gen[kind]='[Could not generate — please retry]'; }
+  try{ S.gen[kind]=await fulfil(kind); clearGenFailed(kind); }
+  catch(e){ S.gen[kind]=GEN_FAILED_TEXT; markGenFailed(kind,e); }
 }
 
 /* ═══════════════════════════ DELIVERY (email + re-access) ═══════════════════════════ */
@@ -834,8 +848,9 @@ async function genAsset(kind){
    in the purchased tier, so it's safe to hand it whatever we generated. */
 function collectPackAssets(){
   const assets={};
-  ['edge','traps','stories','guide','role'].forEach(k=>{ if(S.gen&&S.gen[k]) assets[k]=S.gen[k]; });
-  if(S.liText) assets.linkedin=S.liText;
+  const failed=S.genFailed||{};
+  ['edge','traps','stories','guide','role'].forEach(k=>{ if(S.gen&&S.gen[k]&&!failed[k]) assets[k]=S.gen[k]; });
+  if(S.liText&&!failed.linkedin) assets.linkedin=S.liText;
   return assets;
 }
 async function deliverPack(email,opts){
@@ -888,6 +903,9 @@ function updateDeliverStatus(d,to){
     st.textContent='Saved to your re-access link. (Email delivery is being switched on.)'; st.className='de-status';
   }else if(d&&d.reason==='no-email'){
     st.textContent='Enter your email and we’ll send the full pack.'; st.className='de-status';
+  }else if(d&&d.reason==='nothing-to-send'){
+    // Every asset failed — don't imply a pack is sitting safely on the page.
+    st.textContent='Nothing to send yet — retry the assets above first.'; st.className='de-status';
   }else{
     st.textContent='Couldn’t email just now — your assets are safe on this page. Try again?'; st.className='de-status';
   }
@@ -902,7 +920,9 @@ async function restoreFromServer(sid){
   try{
     const r=await fetch('/api/assets?session_id='+encodeURIComponent(sid));
     const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d||!d.scores){ show('landing'); return; }
+    // Needs real scores to rebuild a reading — an empty {} would render a
+    // straight-zeros profile, which looks like a broken purchase.
+    if(!r.ok||!d||!d.scores||!Object.keys(d.scores).length){ show('landing'); return; }
     S.pcts={};
     TRAITS.forEach(t=>{ let v=Math.round(Number(d.scores[t.id])); if(!isFinite(v))v=0; S.pcts[t.id]=Math.max(0,Math.min(100,v)); });
     S.overall=Math.round(Object.values(S.pcts).reduce((a,b)=>a+b,0)/5);
@@ -938,7 +958,8 @@ const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to 
 function packAssetText(k){return k==='linkedin'?(S.liText||''):((S.gen&&S.gen[k])||'');}
 function packItems(){
   const allowed=new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
-  return PACK_ORDER.filter(k=>allowed.has(k)&&packAssetText(k).trim())
+  const failed=S.genFailed||{};
+  return PACK_ORDER.filter(k=>allowed.has(k)&&!failed[k]&&packAssetText(k).trim())
                    .map(k=>({title:PACK_LABELS[k],text:packAssetText(k).trim()}));
 }
 function packAsMarkdown(){
@@ -996,13 +1017,9 @@ function packFileBase(){
   return n?('humanometer-pack-'+n):'humanometer-pack';
 }
 function copyEverything(btn){
-  const txt=packAsMarkdown();
-  const done=()=>{
-    if(btn){const o=btn.innerHTML;btn.innerHTML='✓ Copied';setTimeout(()=>{btn.innerHTML=o;},1800);}
-    else showToast('Copied your whole pack to the clipboard.');
-  };
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,done);}
-  else done();
+  // Was reporting "✓ Copied" on rejection too (same handler for both branches);
+  // copyToClipboard distinguishes them and falls back to execCommand first.
+  copyToClipboard(packAsMarkdown(),btn);
 }
 function downloadPackMd(){
   if(downloadFile(packFileBase()+'.md',packAsMarkdown(),'text/markdown;charset=utf-8'))showToast('Downloaded your pack as a Markdown file.');
@@ -1338,6 +1355,9 @@ function buildDeliverables(){
   const dstat=document.getElementById('de-status');
   if(dstat&&!dstat.textContent.trim())dstat.textContent=S.savedEmail?'Sending a copy to '+S.savedEmail+'…':'Enter your email and we’ll send the full pack.';
 
+  // Honest banner if anything failed to generate (see renderGenAlert).
+  renderGenAlert();
+
   // Tier-aware tab visibility
   const allowed = new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
   ['edge','traps','stories','guide','cheat','role','linkedin','results','cert','share'].forEach(id=>{
@@ -1354,6 +1374,49 @@ function buildDeliverables(){
   if(ft)ft.classList.add('act'); if(fp)fp.classList.add('act');
 }
 function tab(id,btn){document.querySelectorAll('.dpanel').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('act'));document.getElementById('dp-'+id).classList.add('act');btn.classList.add('act');}
+
+/* If any asset failed to generate, say so plainly rather than leaving the buyer
+   to discover placeholder text tab by tab. They've paid — they get a one-tap
+   retry and a real address to write to. Silent partial failure is the worst
+   outcome here, so this is deliberately prominent. */
+function renderGenAlert(){
+  const el=document.getElementById('gen-alert');
+  if(!el)return;
+  const failed=genFailedKinds();
+  if(!failed.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const names=failed.map(k=>PACK_LABELS[k]||k);
+  const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+  const noun=names.length===1?'asset':'assets';
+  el.style.display='';
+  el.innerHTML=
+    `<div class="ga-head"><span class="ga-ico" aria-hidden="true">⚠️</span><strong>${escapeHtml(list)}</strong> didn’t generate.</div>`+
+    `<p class="ga-body">Your purchase is safe and nothing has been lost — this is on our side, not yours. Retry below, and if the ${noun} still won’t build, email <a href="mailto:hello@humanometer.com">hello@humanometer.com</a> and we’ll sort it out or refund you.</p>`+
+    `<button class="ga-btn" type="button" onclick="retryFailedAssets(this)">↺ Retry ${names.length>1?'them':'it'}</button>`;
+}
+
+/* Retry every failed asset, then re-render and re-store the pack. Deliberately
+   store-only: the buyer presses Send if they want a corrected email copy, so a
+   retry can't spam their inbox. */
+async function retryFailedAssets(btn){
+  const failed=genFailedKinds();
+  if(!failed.length)return;
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Retrying…';}
+  for(const k of failed){
+    if(k==='linkedin') await genLinkedIn(); else await genAsset(k);
+  }
+  buildDeliverables();
+  const still=genFailedKinds();
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+  if(still.length){
+    showToast('Still not generating. Email hello@humanometer.com and we’ll fix it or refund you.',6000);
+  }else{
+    showToast('All your assets are ready.');
+    deliverPack(S.savedEmail,{storeOnly:true});
+    const st=document.getElementById('de-status');
+    if(st&&S.emailedOnce){st.textContent='Assets rebuilt — press Send to email yourself the corrected pack.';st.className='de-status';}
+  }
+}
 
 /* Minimal markdown for AI text: **bold** → <strong>. Newlines are preserved by
    .out-text's white-space:pre-wrap, so we don't convert them here. Escapes
@@ -1637,15 +1700,12 @@ function shareFacebook(){
     },()=>openShare());
   } else { openShare(); }
 }
-function copyShare(){
+/* Pass `this` from text buttons for inline feedback; the sticky bar's icon-only
+   button calls it with no argument and gets a toast instead, so we never replace
+   an icon with a word. */
+function copyShare(btn){
   S.sharedOnce=true;
-  const txt=getShareText('clipboard');
-  navigator.clipboard.writeText(txt).then(()=>{
-    const btn=event.target.closest('button');
-    if(!btn)return;
-    const o=btn.innerHTML;btn.innerHTML='✓ Copied';btn.style.borderColor='var(--ok)';btn.style.color='var(--ok)';
-    setTimeout(()=>{btn.innerHTML=o;btn.style.borderColor='';btn.style.color='';},2000);
-  });
+  copyToClipboard(getShareText('clipboard'),btn);
 }
 
 /* Small bottom-right toast for transient confirmations. */
@@ -1661,16 +1721,51 @@ function showToast(msg, ms=3200){
   clearTimeout(t._tm);
   t._tm=setTimeout(()=>t.classList.remove('show'),ms);
 }
-function copyLI(){navigator.clipboard.writeText(S.liText).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1800);});}
+/* One clipboard path for every copy button.
+   Two things this fixes: (1) the button is passed in explicitly — the old code
+   read the global `event` inside the clipboard promise callback, and `event` is
+   already null by the time that resolves, so the "✓ Copied" feedback never fired
+   and threw an unhandled rejection; (2) a rejected write (permission denied,
+   non-secure context, unfocused document) now falls back to execCommand and, if
+   that fails too, says so instead of silently doing nothing. */
+function legacyCopy(text){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:-1000px;left:0;opacity:0;';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0,ta.value.length);
+    const ok=document.execCommand('copy');
+    ta.remove();
+    return ok;
+  }catch(e){ return false; }
+}
+function copyToClipboard(text,btn,okLabel){
+  const label=okLabel||'✓ Copied';
+  const flash=(msg,isError)=>{
+    if(!btn){ showToast(isError?'Couldn’t copy — select the text and press Ctrl+C.':'Copied to your clipboard.'); return; }
+    const orig=btn.innerHTML;
+    btn.innerHTML=msg;
+    setTimeout(()=>{btn.innerHTML=orig;},1800);
+  };
+  if(!String(text||'').trim()){ flash('Nothing to copy',true); return; }
+  const done=ok=>flash(ok?label:'Copy failed',!ok);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>done(true),()=>done(legacyCopy(text)));
+  }else{
+    done(legacyCopy(text));
+  }
+}
+function copyLI(btn){copyToClipboard(S.liText,btn);}
 async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').innerHTML=mdLite(S.liText);}
 // Coaching assets share one copy/regenerate pair (keyed by kind).
-function copyAsset(kind){navigator.clipboard.writeText((S.gen&&S.gen[kind])||'');}
+function copyAsset(kind,btn){copyToClipboard((S.gen&&S.gen[kind])||'',btn);}
 async function regenAsset(kind){
   const el=document.getElementById(kind+'-text'); if(el)el.textContent='Regenerating…';
   await genAsset(kind);
   if(el)el.innerHTML=renderAssetHtml(kind,S.gen[kind]);
 }
-function copyCert(){navigator.clipboard.writeText(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`);}
+function copyCert(btn){copyToClipboard(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`,btn);}
 
 function retake(){clearSession();show('landing');}
 function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 20;if(s>=55)return 35;return 50;}
@@ -1680,7 +1775,7 @@ function getPercentile(s){if(s>=85)return 5;if(s>=75)return 10;if(s>=65)return 2
    buildDeliverables. Keep aligned with PRODUCTS in src/worker.js. */
 const PACKS = {
   boost:  { name:'Edge Report',     price:6.99,
-            includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots','LinkedIn About draft','Verified certificate','Permanent results page'],
+            includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots',"LinkedIn 'About' themes to emphasise",'Verified certificate','Permanent results page'],
             tabs:['edge','traps','linkedin','cert','share'] },
   career: { name:'Interview Kit',   price:14.99,
             includes:['Everything in Edge Report','Stories to Dig Up — find your own best examples','The Interview Prep Guide','Fillable interview cheat sheet','Full results PDF'],

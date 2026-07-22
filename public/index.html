@@ -50,7 +50,7 @@
 
 <!-- ══ JSON-LD: FAQPage ══ -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the Humanometer?","acceptedAnswer":{"@type":"Answer","text":"A free 5-minute online assessment measuring five professional capabilities AI cannot replicate: Adaptive Thinking, Ethical Judgment, Creative Synthesis, Empathic Accuracy, and Critical Skepticism. You receive a scored reading across each dimension, not a single personality label."}},{"@type":"Question","name":"Is the Humanometer free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The full assessment, five dimension scores, development insights, and shareable results are completely free. Optional one-time paid packs turn your scores into interview coaching — the stories to prepare and the questions you'll face and how to answer them — plus a LinkedIn draft and certificate."}},{"@type":"Question","name":"How is this different from a personality test?","acceptedAnswer":{"@type":"Answer","text":"Unlike Myers-Briggs-style tests, the Humanometer is grounded in World Economic Forum and LinkedIn research on which human skills are growing in demand because of AI. It produces five independently scored dimensions rather than a fixed type, and focuses on professional capability rather than personality."}},{"@type":"Question","name":"How long does it take?","acceptedAnswer":{"@type":"Answer","text":"About 5 minutes. There are 15 scenario-based questions, each timed at 25-30 seconds to capture instinctive rather than deliberated answers — which research shows are more predictive."}},{"@type":"Question","name":"What skills does the Humanometer measure?","acceptedAnswer":{"@type":"Answer","text":"Five dimensions: Adaptive Thinking (navigating change and ambiguity), Ethical Judgment (acting on principle under pressure), Creative Synthesis (connecting ideas across domains), Empathic Accuracy (reading people and situations correctly), and Critical Skepticism (evaluating claims and evidence rigorously)."}}]}
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the Humanometer?","acceptedAnswer":{"@type":"Answer","text":"A free 5-minute online assessment measuring five professional capabilities AI cannot replicate: Adaptive Thinking, Ethical Judgment, Creative Synthesis, Empathic Accuracy, and Critical Skepticism. You receive a scored reading across each dimension, not a single personality label."}},{"@type":"Question","name":"Is the Humanometer free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The full assessment, five dimension scores, development insights, and shareable results are completely free. Optional one-time paid packs turn your scores into interview coaching — the stories to prepare and the questions you'll face and how to answer them — plus LinkedIn 'About' themes and a certificate."}},{"@type":"Question","name":"How is this different from a personality test?","acceptedAnswer":{"@type":"Answer","text":"Unlike Myers-Briggs-style tests, the Humanometer is grounded in World Economic Forum and LinkedIn research on which human skills are growing in demand because of AI. It produces five independently scored dimensions rather than a fixed type, and focuses on professional capability rather than personality."}},{"@type":"Question","name":"How long does it take?","acceptedAnswer":{"@type":"Answer","text":"About 5 minutes. There are 15 scenario-based questions, each timed at about 35 seconds to capture instinctive rather than deliberated answers — which research shows are more predictive."}},{"@type":"Question","name":"What skills does the Humanometer measure?","acceptedAnswer":{"@type":"Answer","text":"Five dimensions: Adaptive Thinking (navigating change and ambiguity), Ethical Judgment (acting on principle under pressure), Creative Synthesis (connecting ideas across domains), Empathic Accuracy (reading people and situations correctly), and Critical Skepticism (evaluating claims and evidence rigorously)."}}]}
 </script>
 
 <!-- ══ JSON-LD: Organization ══ -->
@@ -475,7 +475,7 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
           Facebook
         </button>
-<button class="shr-sm shr-cp" onclick="copyShare()" id="copy-btn">
+<button class="shr-sm shr-cp" onclick="copyShare(this)" id="copy-btn">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy text
         </button>
@@ -491,7 +491,7 @@
     <div class="share-upsell" role="region" aria-label="Get your career assets">
       <div class="share-upsell-text">
         <div class="share-upsell-h">Want more than a share?</div>
-        <p>Turn your reading into real interview coaching — the stories to prepare, the questions you'll face and how to answer them — plus a LinkedIn draft and certificate, all from your exact scores.</p>
+        <p>Turn your reading into real interview coaching — the stories to prepare, the questions you'll face and how to answer them — plus LinkedIn 'About' themes and a certificate, all from your exact scores.</p>
       </div>
       <button class="share-upsell-btn" type="button" onclick="document.getElementById('upsell-anchor').scrollIntoView({behavior:'smooth',block:'start'})">
         Get your career assets <span class="cta-arrow" aria-hidden="true">→</span>
@@ -539,7 +539,7 @@
       <div class="tier-items">
         <div class="tier-item">✦ Your Edge — how your five dimensions combine and where you do your best work</div>
         <div class="tier-item">✦ Know Your Traps — the interview blind spots specific to your profile</div>
-        <div class="tier-item">✦ LinkedIn 'About' themes — the strengths to make yours highlight</div>
+        <div class="tier-item">✦ LinkedIn 'About' themes — the strengths yours should highlight</div>
         <div class="tier-item">✦ Verified certificate + permanent results page</div>
       </div>
       <button class="tier-btn tier-btn-sec" onclick="buyPack('boost')">Get the Edge Report · $6.99</button>
@@ -661,6 +661,7 @@
       <h2>Your career assets are <em style="font-family:'Cormorant Garamond',serif;font-style:normal;color:var(--gold)">ready</em></h2>
       <p>Everything below is built from your specific scores — coaching, not canned answers. Copy, save, or share directly.</p>
     </div>
+    <div class="gen-alert" id="gen-alert" role="alert" style="display:none;"></div>
     <div class="deliver-email" id="deliver-email">
       <div class="de-head">
         <span class="de-ico" aria-hidden="true">✉️</span>
@@ -717,7 +718,7 @@
     <div class="dpanel act" id="dp-edge">
       <div class="out-box"><div class="out-lbl">Your Edge</div><div class="out-text" id="edge-text">Generating…</div></div>
       <div class="out-acts">
-        <button class="btn-act pri" onclick="copyAsset('edge')">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyAsset('edge',this)">Copy to clipboard</button>
         <button class="btn-act" onclick="regenAsset('edge')">↺ Regenerate</button>
       </div>
       <div class="out-tip">How your dimensions combine, where you'll do your best work, and where to be deliberate.</div>
@@ -725,7 +726,7 @@
     <div class="dpanel" id="dp-traps">
       <div class="out-box"><div class="out-lbl">Know Your Traps</div><div class="out-text" id="traps-text">Generating…</div></div>
       <div class="out-acts">
-        <button class="btn-act pri" onclick="copyAsset('traps')">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyAsset('traps',this)">Copy to clipboard</button>
         <button class="btn-act" onclick="regenAsset('traps')">↺ Regenerate</button>
       </div>
       <div class="out-tip">The interview and workplace tendencies your specific profile should watch for.</div>
@@ -733,7 +734,7 @@
     <div class="dpanel" id="dp-stories">
       <div class="out-box"><div class="out-lbl">Stories to Dig Up</div><div class="out-text" id="stories-text">Generating…</div></div>
       <div class="out-acts">
-        <button class="btn-act pri" onclick="copyAsset('stories')">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyAsset('stories',this)">Copy to clipboard</button>
         <button class="btn-act" onclick="regenAsset('stories')">↺ Regenerate</button>
       </div>
       <div class="out-tip">Memory-joggers that point you to your own real examples — nothing is invented for you.</div>
@@ -741,7 +742,7 @@
     <div class="dpanel" id="dp-guide">
       <div class="out-box"><div class="out-lbl">The Interview Prep Guide</div><div class="out-text" id="guide-text">Generating…</div></div>
       <div class="out-acts">
-        <button class="btn-act pri" onclick="copyAsset('guide')">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyAsset('guide',this)">Copy to clipboard</button>
         <button class="btn-act" onclick="regenAsset('guide')">↺ Regenerate</button>
       </div>
       <div class="out-tip">The questions you'll face and what they test, how to build answers, and what to ask them.</div>
@@ -767,14 +768,14 @@
       </div>
       <div class="out-box" id="role-out-box" style="display:none;"><div class="out-lbl">Your Role-Tailored Brief</div><div class="out-text" id="role-text"></div></div>
       <div class="out-acts" id="role-acts" style="display:none;">
-        <button class="btn-act pri" onclick="copyAsset('role')">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyAsset('role',this)">Copy to clipboard</button>
         <button class="btn-act" onclick="newRole()">↺ Tailor to another job</button>
       </div>
     </div>
     <div class="dpanel" id="dp-linkedin">
       <div class="out-box"><div class="out-lbl">Your LinkedIn 'About' — themes to emphasise</div><div class="out-text" id="li-text">Generating…</div></div>
       <div class="out-acts">
-        <button class="btn-act pri" onclick="copyLI()">Copy to clipboard</button>
+        <button class="btn-act pri" onclick="copyLI(this)">Copy to clipboard</button>
         <button class="btn-act" onclick="regenLI()">↺ Regenerate</button>
       </div>
       <div class="out-tip">Not a script to paste — these are the strengths to make sure your 'About' highlights. Write it in your own words, in your own voice.</div>
@@ -805,9 +806,9 @@
         <div class="out-acts">
           <button class="btn-act pri" onclick="downloadCertPdf()">📄 Save as PDF</button>
           <button class="btn-act" onclick="downloadCertPng()">🖼 Save as image</button>
-          <button class="btn-act" onclick="copyCert()">Copy details</button>
+          <button class="btn-act" onclick="copyCert(this)">Copy details</button>
         </div>
-        <div class="out-tip">One-tap <strong>PDF</strong> or <strong>image</strong> download — both high-resolution. Or <strong>Print</strong> for a physical copy.</div>
+        <div class="out-tip">One-tap <strong>PDF</strong> or <strong>image</strong> download — both high-resolution, both print cleanly.</div>
       </div>
     </div>
     <div class="dpanel" id="dp-share">
@@ -833,7 +834,7 @@
         </div>
         <div class="share-row-bot">
           <button class="sbtn-cp" onclick="downloadSharePng()" style="flex:1;">🖼 Save image</button>
-          <button class="sbtn-cp" onclick="copyShare()" style="flex:1;">Copy results text</button>
+          <button class="sbtn-cp" onclick="copyShare(this)" style="flex:1;">Copy results text</button>
         </div>
       </div>
     </div>
