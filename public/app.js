@@ -27,7 +27,7 @@ const BANDS={
     {min:0, band:'Methodical Thinker',insight:'You\'re stronger at developing and executing ideas than generating them from scratch. Most good outcomes require far more execution than invention, and your ability to turn a rough idea into something real is genuinely valuable.',what:'<strong>In practice:</strong> position yourself as the person who makes ideas work rather than the person who has them. That\'s often where the actual value lives.'}
   ],
   empathic:[
-    {min:80,band:'Highly Empathic',insight:'You read situations and people with unusual accuracy — not by projecting your own state, but by genuinely modelling theirs. You notice what isn\'t said as much as what is. In any context involving relationships or persuasion, this is your dominant advantage.',what:'<strong>In practice:</strong> be careful not to absorb others\' emotional states in a way that compromises your judgment. Your superpower is reading the room; your risk is feeling responsible for it.'},
+    {min:80,band:'Highly Empathic',insight:'You read situations and people with unusual accuracy — not by projecting your own state, but by genuinely modeling theirs. You notice what isn\'t said as much as what is. In any context involving relationships or persuasion, this is your dominant advantage.',what:'<strong>In practice:</strong> be careful not to absorb others\' emotional states in a way that compromises your judgment. Your superpower is reading the room; your risk is feeling responsible for it.'},
     {min:60,band:'Empathically Aware',insight:'You pick up on emotional undercurrents reliably and respond thoughtfully. You\'re not always certain what\'s happening beneath the surface, but you notice when something is — and you act on it rather than ploughing through.',what:'<strong>In practice:</strong> your awareness shows most clearly in 1-to-1 contexts. In groups you may miss individual threads. Make a habit of checking in with quieter people in group settings.'},
     {min:40,band:'Situationally Empathic',insight:'Your empathic response is reliable in clear emotional situations but less consistent in subtle ones. You respond well to obvious signals; you sometimes miss the middle ground — the person who says they\'re fine and isn\'t.',what:'<strong>In practice:</strong> the most valuable empathic skill is curiosity about ambiguous signals rather than certainty about clear ones. Practice asking one more question when something seems slightly off.'},
     {min:0, band:'Analytically Oriented',insight:'You engage with people primarily through ideas and information rather than emotional attunement. This isn\'t coldness — it\'s a different orientation. You tend to be less swayed by emotional pressure and more consistent in your responses.',what:'<strong>In practice:</strong> in roles involving team leadership or client relationships, build explicit prompts to check emotional signals. What you miss isn\'t usually dramatic — it\'s the early warning signs.'}
@@ -157,7 +157,7 @@ function decodeReading(code){
     pcts[PERM_TRAIT_ORDER[i]]=v;
     bits>>=7n;
   }
-  // Same defence for the archetype index — only 5 archetypes exist.
+  // Same defense for the archetype index — only 5 archetypes exist.
   if(archIdx>=ARCHETYPES.length)return null;
   return { pcts, archIdx };
 }
@@ -213,14 +213,11 @@ function startQuiz(){ show('prequiz'); }
 
 function actuallyStartQuiz(){
   clearSession(); // fresh attempt — drop any previously-persisted results
-  // A retake is a clean slate. This spreads the old state, so anything tied to a
-  // previous purchase has to be cleared explicitly — otherwise the new reading
-  // inherits the old paid session id, and reloading it would swap the fresh
-  // result for the previously bought pack. Name and email survive: they're
-  // conveniences (permalink, checkout prefill), not purchase state.
-  S={...S,qi:0,scores:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},maxes:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},susp:0,prods:new Set(['bundle']),sharedOnce:false,
-     sessionId:null,selectedPack:null,purchased:false,delivered:false,emailedOnce:false,
-     gen:{},genFailed:{},liText:''};
+  // Must run BEFORE the spread below: S={...S,…} carries every field forward,
+  // so anything tied to a previous attempt has to be cleared first or the new
+  // reading inherits it.
+  resetForFreshAttempt();
+  S={...S,qi:0,scores:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},maxes:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},susp:0,prods:new Set(['bundle']),sharedOnce:false};
   bumpCounter();
   show('quiz');
   document.getElementById('honesty-banner').style.display='flex';
@@ -682,7 +679,7 @@ function setupStickyShare(){
 /* Product keys map to PRODUCTS in the Cloudflare Worker (/api/checkout).
    buyPack() (further down) opens the modal; startCheckout() redirects to Stripe's
    hosted payment page. After payment Stripe returns to /?paid=true and
-   runFulfilment() restores the saved profile, generates the AI assets, and shows
+   runFulfillment() restores the saved profile, generates the AI assets, and shows
    the deliverables. No card details are ever handled by this site. */
 
 function closePay(){document.getElementById('modal-bg').classList.remove('open');}
@@ -712,9 +709,9 @@ async function startCheckout(){
 }
 
 /* Runs after returning from Stripe (?paid=true): rebuild results, animate the
-   fulfilment steps while the AI assets generate, then reveal the deliverables.
+   fulfillment steps while the AI assets generate, then reveal the deliverables.
    Only generates the assets the purchased tier actually includes. */
-async function runFulfilment(){
+async function runFulfillment(){
   buildResults();
   show('results');
   document.getElementById('pf-step').style.display='none';
@@ -723,7 +720,7 @@ async function runFulfilment(){
   const tier = PACKS[S.selectedPack] || PACKS.career;
   const tabs = tier.tabs;
   S.gen={};
-  // ps1 payment, ps2 analyse, ps3 edge/traps + LinkedIn, ps4 interview prep, ps5 certificate
+  // ps1 payment, ps2 analyze, ps3 edge/traps + LinkedIn, ps4 interview prep, ps5 certificate
   await stepUI('ps1', 800);
   await stepUI('ps2', 600);
   await stepUI('ps3', null, async()=>{
@@ -755,7 +752,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   initCounter();
   const params=new URLSearchParams(window.location.search);
 
-  // Post-Stripe-redirect fulfilment (highest priority — takes over the page)
+  // Post-Stripe-redirect fulfillment (highest priority — takes over the page)
   if(params.get('paid')==='true'){
     const sid=params.get('session_id')||'';
     const saved=sessionStorage.getItem('hm_state');
@@ -775,7 +772,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         saveSession();
         claimPurchase();
         history.replaceState({},'',window.location.pathname);
-        runFulfilment();
+        runFulfillment();
         return;
       }catch(e){}
     }
@@ -858,7 +855,7 @@ async function fulfil(kind,extra){
    or a transient 502 would send someone a receipt-worthy "pack" of error strings.
    The placeholder still renders in the panel so the tab isn't blank; everything
    that leaves the page filters on S.genFailed. */
-const GEN_FAILED_TEXT='[Could not generate — press Regenerate below]';
+const GEN_FAILED_TEXT='[Could not generate — use the Retry button at the top of this page]';
 function markGenFailed(kind,e){
   S.genFailed=S.genFailed||{};
   S.genFailed[kind]=(e&&e.message)||'Generation failed';
@@ -903,7 +900,7 @@ async function deliverPack(email,opts){
 }
 /* Register the purchase the instant we get back from Stripe, before generating
    anything. The server writes the order record and emails the permanent
-   re-access link. Fulfilment is driven entirely by this browser, so without
+   re-access link. Fulfillment is driven entirely by this browser, so without
    this a closed tab (or a crash) mid-generation left a paying customer with no
    assets, no email and no record — recoverable only by hand from the Stripe
    dashboard. Idempotent server-side, so revisits neither re-send nor overwrite. */
@@ -922,7 +919,7 @@ async function claimPurchase(){
   }catch(e){ /* non-fatal — the pack delivery at the end still stores + emails */ }
 }
 
-/* Fired once automatically after fulfilment. Stores the pack for re-access and, if
+/* Fired once automatically after fulfillment. Stores the pack for re-access and, if
    we have the buyer's email (we almost always do — checkout requires it), sends it. */
 async function deliverPackAuto(){
   if(S.delivered)return;
@@ -1013,7 +1010,7 @@ async function restoreFromServer(sid){
       // and let deliverPackAuto persist it. savedEmail isn't set on a re-access
       // load, so this stores the pack without re-emailing.
       S.delivered=false;
-      runFulfilment();
+      runFulfillment();
     }
   }catch(e){ bail(); }
 }
@@ -1024,7 +1021,7 @@ async function restoreFromServer(sid){
    already has its own "Copy to clipboard". Includes the tier's AI assets plus a
    small header (name, archetype, scores). */
 const PACK_ORDER=['edge','traps','stories','guide','role','linkedin'];
-const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to Dig Up',guide:'The Interview Prep Guide',role:'Your Role-Tailored Brief',linkedin:"Your LinkedIn 'About' — themes to emphasise"};
+const PACK_LABELS={edge:'Your Edge',traps:'Know Your Traps',stories:'Stories to Dig Up',guide:'The Interview Prep Guide',role:'Your Role-Tailored Brief',linkedin:"Your LinkedIn 'About' — themes to emphasize"};
 function packAssetText(k){return k==='linkedin'?(S.liText||''):((S.gen&&S.gen[k])||'');}
 function packItems(){
   const allowed=new Set((PACKS[S.selectedPack]||PACKS.career).tabs);
@@ -1122,11 +1119,9 @@ async function renderCertCanvas(scale){
   x.textAlign='center';x.textBaseline='alphabetic';
   setSpacing(x,'4px');x.fillStyle='#d4a843';x.font="600 15px 'Outfit',Arial,sans-serif";
   x.fillText('HUMANOMETER · VERIFIED READING · 2026',W/2,86);
-  setSpacing(x,'3px');x.fillStyle='#7a7670';x.font="400 15px 'Cormorant Garamond',Georgia,serif";
-  x.fillText('THIS CERTIFIES THAT',W/2,152);
   setSpacing(x,'0px');
   x.fillStyle='#ece8de';x.font="700 48px 'Cormorant Garamond',Georgia,serif";
-  x.fillText(S.uname||'Your Name',W/2,214);
+  x.fillText(S.uname||'Your Name',W/2,200);
   x.fillStyle='#d4a843';x.font="italic 700 24px 'Cormorant Garamond',Georgia,serif";
   x.fillText(S.arch.name+' — '+S.arch.tag,W/2,256);
   x.strokeStyle='rgba(212,168,67,.4)';x.lineWidth=1;
@@ -1282,8 +1277,8 @@ async function renderCertLightCanvas(scale){
   x.strokeStyle='rgba(199,154,46,.35)';x.lineWidth=1;x.strokeRect(24,24,W-48,H-48);
   x.textAlign='center';
   setSpacing(x,'4px');x.fillStyle=LT.gold;x.font="600 15px 'Outfit',Arial,sans-serif";x.fillText('HUMANOMETER · VERIFIED READING · 2026',W/2,88);
-  setSpacing(x,'3px');x.fillStyle=LT.mut;x.font="400 15px 'Cormorant Garamond',Georgia,serif";x.fillText('THIS CERTIFIES THAT',W/2,150);setSpacing(x,'0px');
-  x.fillStyle=LT.txt;x.font="700 48px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Name',W/2,214);
+  setSpacing(x,'0px');
+  x.fillStyle=LT.txt;x.font="700 48px 'Cormorant Garamond',Georgia,serif";x.fillText(S.uname||'Your Name',W/2,200);
   x.fillStyle=LT.gold;x.font="700 24px 'Cormorant Garamond',Georgia,serif";x.fillText(S.arch.name+' — '+S.arch.tag,W/2,256);
   x.strokeStyle='rgba(199,154,46,.5)';x.lineWidth=1;x.beginPath();x.moveTo(W/2-30,290);x.lineTo(W/2+30,290);x.stroke();
   const n=TRAITS.length,spanW=780,startX=W/2-spanW/2,step=spanW/n;
@@ -1340,7 +1335,7 @@ async function renderCheatCanvas(scale){
   wrapText(x,'Situation → Task → Action → Result. One sentence each; spend most of your words on Action and Result.',R-M).forEach(l=>{x.fillText(l,M,y);y+=19;});
   y+=18;
   heading('Freeze questions','— decide your angle before the room');
-  ['“What’s your greatest weakness?”','“Why are you leaving / did you leave?”','“Tell me about a time you failed.”'].forEach(q=>{
+  ['“What’s your greatest weakness?”','“Why are you leaving your current job?” (or why you left your last one)','“Tell me about a time you failed.”'].forEach(q=>{
     x.fillStyle=LT.txt;x.font="600 13px 'Outfit',Arial,sans-serif";x.fillText(q,M,y);y+=20;
     x.fillStyle=LT.mut;x.font="11px 'Outfit',Arial,sans-serif";x.fillText('Your angle:',M,y);rule(M+62,R,y+1,LT.rule);y+=26;});
   y+=6;
@@ -1391,7 +1386,7 @@ async function downloadResultsPdf(){ if(!S.arch)return; savePdfBlob(await canvas
 /* Render all panels, but only show tabs/panels for what the purchased tier includes.
    Activates the first allowed tab so the user lands on something visible. */
 function buildDeliverables(){
-  // LinkedIn (Markdown coaching — themes to emphasise, not a paste-ready draft)
+  // LinkedIn (Markdown coaching — themes to emphasize, not a paste-ready draft)
   if(S.liText) document.getElementById('li-text').innerHTML=mdLite(S.liText);
   // Coaching assets (Markdown → mdLite; .out-text preserves the newlines)
   const g=S.gen||{};
@@ -1569,7 +1564,7 @@ function buildCheatSheet(){
     <section class="cheat-sec">
       <h3>Freeze questions <span>— decide your angle before the room</span></h3>
       ${freeze('“What’s your greatest weakness?”')}
-      ${freeze('“Why are you leaving / did you leave?”')}
+      ${freeze('“Why are you leaving your current job?” (or why you left your last one)')}
       ${freeze('“Tell me about a time you failed.”')}
     </section>
 
@@ -1825,17 +1820,33 @@ function copyToClipboard(text,btn,okLabel){
   }
 }
 function copyLI(btn){copyToClipboard(S.liText,btn);}
-async function regenLI(){document.getElementById('li-text').textContent='Regenerating…';await genLinkedIn();document.getElementById('li-text').innerHTML=mdLite(S.liText);}
-// Coaching assets share one copy/regenerate pair (keyed by kind).
 function copyAsset(kind,btn){copyToClipboard((S.gen&&S.gen[kind])||'',btn);}
-async function regenAsset(kind){
-  const el=document.getElementById(kind+'-text'); if(el)el.textContent='Regenerating…';
-  await genAsset(kind);
-  if(el)el.innerHTML=renderAssetHtml(kind,S.gen[kind]);
-}
 function copyCert(btn){copyToClipboard(`Humanometer Certificate — ${S.uname}\n${S.arch.name}\n${TRAITS.map(t=>t.name+': '+S.pcts[t.id]).join('\n')}\nOverall: ${S.overall}/100\nVerified by humanometer.com`,btn);}
 
-function retake(){clearSession();show('landing');}
+/* Everything tied to a previous attempt or purchase. Shared by retake() and
+   actuallyStartQuiz() so a fresh run can never inherit an earlier reading's
+   name, email, or paid session — hand the laptop to a colleague and their
+   result was being pre-filled with the previous person's identity. */
+function resetForFreshAttempt(){
+  try{ sessionStorage.removeItem('hm_state'); }catch(e){}
+  S.sessionId=null;S.selectedPack=null;S.purchased=false;S.delivered=false;S.emailedOnce=false;
+  S.gen={};S.genFailed={};S.liText='';
+  S.uname='';S.savedEmail='';
+}
+function retake(){
+  clearSession();
+  resetForFreshAttempt();
+  // Scrub the query string. Arriving from a re-access link leaves
+  // ?paid=true&session_id=… in the address bar, and retake() used to leave it
+  // there. That URL is a bearer token for the buyer's paid pack — it must not
+  // survive into a fresh attempt where it could be copied out of the address
+  // bar by someone sharing "the test" — and reloading with it still present
+  // sent the app back into fulfillment, regenerating the whole pack.
+  if(window.location.search||window.location.hash){
+    try{ history.replaceState({},'',window.location.pathname); }catch(e){}
+  }
+  show('landing');
+}
 /* The dimension this profile leads with. Used wherever the overall score is
    presented, in place of any verdict on the total.
 
@@ -1872,11 +1883,11 @@ function leadSummary(){
 }
 
 
-/* Single source of truth for tier definitions — used by buyPack, runFulfilment,
+/* Single source of truth for tier definitions — used by buyPack, runFulfillment,
    buildDeliverables. Keep aligned with PRODUCTS in src/worker.js. */
 const PACKS = {
   boost:  { name:'Edge Report',     price:6.99,
-            includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots',"LinkedIn 'About' themes to emphasise",'Verified certificate','Permanent results page'],
+            includes:['Your Edge — how your dimensions combine','Know Your Traps — your interview blind spots',"LinkedIn 'About' themes to emphasize",'Verified certificate','Permanent results page'],
             tabs:['edge','traps','linkedin','cert','share'] },
   career: { name:'Interview Kit',   price:14.99,
             includes:['Everything in Edge Report','Stories to Dig Up — find your own best examples','The Interview Prep Guide','Fillable interview cheat sheet','Full results PDF'],

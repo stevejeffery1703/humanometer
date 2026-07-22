@@ -121,8 +121,8 @@ function cleanName(n) {
   return String(n || '').replace(/[^\p{L}\p{N}\s'\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 60);
 }
 
-// Validate + normalise the client-supplied profile. Returns null if malformed.
-function normaliseProfile(p) {
+// Validate + normalize the client-supplied profile. Returns null if malformed.
+function normalizeProfile(p) {
   if (!p || typeof p !== 'object') return null;
   const scores = p.scores || {};
   const out = {};
@@ -177,7 +177,7 @@ Hard rules — never break these:
 ${head}
 Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
 
-Open with one short line making clear this is what to emphasise, not text to copy.
+Open with one short line making clear this is what to emphasize, not text to copy.
 Then three or four themes, each a bold Markdown heading naming a strength this profile should lead with, then 2-3 sentences: why it lands with a reader or recruiter, and concretely how to show it in their own words — the kind of real example or angle to reach for, never a fabricated one. Tie each theme to a specific score.
 Then a bold "How to open" section: the shape of a strong first line for this profile as a pattern to adapt — illustrate it on an obviously generic example so they build their own rather than lift it — plus one thing to avoid.
 End with one line reminding them to write it themselves and drop in their own real specifics.
@@ -222,7 +222,7 @@ Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.
 
 Structure:
 - One short framing paragraph naming the specific tension in their profile — what their strongest dimension makes easy and what their weakest leaves exposed — and what that means for how they should prepare.
-- Then 3-4 story prompts, each a bold name plus 2-3 sentences: what kind of real moment to search their memory for, and what an interviewer reads from it. Across the set, span a range of moment-types (a change-or-ambiguity moment, a people moment, a judgement moment, a moment they're proud of) so the resulting stories answer many different questions.
+- Then 3-4 story prompts, each a bold name plus 2-3 sentences: what kind of real moment to search their memory for, and what an interviewer reads from it. Across the set, span a range of moment-types (a change-or-ambiguity moment, a people moment, a judgment moment, a moment they're proud of) so the resulting stories answer many different questions.
 - Flag the prompt tied to their WEAKEST dimension plainly: interviewers are trained to probe there, and people with this profile most often walk in without that story — so prepare it first. A small real moment beats an impressive invented one.
 - One closing line: pick ONE real moment per prompt where they remember the details and it ended well — three or four stories they can tell cold and reuse across many questions.
 
@@ -231,18 +231,20 @@ ${guard}` };
   }
 
   if (kind === 'guide') {
-    return { max_tokens: 1400, prompt:
+    // Budget raised with the expanded STAR section — the last section (questions
+    // to ask them) must not get truncated away.
+    return { max_tokens: 1700, prompt:
 `Write "The Interview Prep Guide" for someone with this Humanometer profile. This TEACHES them to build their own answers — it never writes a finished answer for them.
 ${head}
 Strongest: ${f.strongName} (${f.strongVal}/100). Developing: ${f.weakName} (${f.weakVal}/100).
 
 Four sections, each a bold Markdown heading:
-**The questions you'll get — and what they're really testing** — five commonly-asked interview questions as dash bullets. For each: the question in quotes, one line on what the interviewer is actually measuring, and one tip tailored to this person's scores. At least one must be the kind of question designed to probe their WEAKEST dimension — flag that one as the one to rehearse hardest.
-**How to build an answer (STAR)** — the four parts (Situation, Task, Action, Result) in one line each, then ONE short worked example labelled exactly "Example — imitate the shape, don't copy it:" built on an obviously generic situation so they adapt it rather than lift it.
-**Your freeze-question playbook** — how to approach the three questions people stall on: "What's your greatest weakness?", "Why are you leaving?", and a failure-or-gap question. For each, the strategy and the trap to avoid — never a script.
+**Questions you may face — and what they're really testing** — five commonly-asked interview questions as dash bullets. For each: the question in quotes, one line on what the interviewer is actually measuring, and one tip tailored to this person's scores. At least one must be the kind of question designed to probe their WEAKEST dimension — flag that one as the one to rehearse hardest.
+**How to build an answer (STAR)** — open by spelling the acronym out in full: Situation, Task, Action, Result. Then a short paragraph (3-4 sentences) on why the method is worth the effort: interviewers are listening for evidence rather than opinion, so a claim about yourself lands only when it's carried by a real example; a structure stops you rambling or drying up under pressure; and because most questions are probing a handful of underlying competencies, four or five prepared STAR stories can be recut to answer far more questions than you have stories. Then the four parts, one line each on what belongs in it — noting that Action and Result deserve most of the words, and that the Result should be concrete. Then ONE short worked example labeled exactly "Example — imitate the shape, don't copy it:" built on an obviously generic situation so they adapt it rather than lift it.
+**Your freeze-question playbook** — how to approach the three questions people stall on: "What's your greatest weakness?", "Why are you leaving your current job?" (or why they left their last one), and a failure-or-gap question. For each, the strategy and the trap to avoid — never a script.
 **Questions to ask them** — three sharp questions this person could ask an interviewer that fit their profile and also help them judge whether the role suits how they work.
 
-Second person. Practical, specific, no fluff. Around 550 words.
+Second person. Practical, specific, no fluff. Around 650 words.
 ${guard}` };
   }
 
@@ -299,8 +301,8 @@ async function verifyPaidSession(session_id, env) {
   }
 }
 
-async function handleFulfil(request, env) {
-  // Defence-in-depth: reject obvious cross-origin callers. The payment
+async function handleFulfill(request, env) {
+  // Defense-in-depth: reject obvious cross-origin callers. The payment
   // verification below is the real gate; this just trims casual noise.
   const origin = request.headers.get('Origin');
   if (origin &&
@@ -322,7 +324,7 @@ async function handleFulfil(request, env) {
     return json({ error: 'This asset is not included in your purchase' }, 403);
   }
 
-  const profile = normaliseProfile(body.profile);
+  const profile = normalizeProfile(body.profile);
   if (!profile) return json({ error: 'Invalid profile' }, 400);
 
   // Per-session generation cap (replay / abuse guard).
@@ -371,7 +373,7 @@ const ASSET_TITLES = {
   stories:  'Stories to Dig Up',
   guide:    'The Interview Prep Guide',
   role:     'Your Role-Tailored Brief',
-  linkedin: "Your LinkedIn 'About' — themes to emphasise",
+  linkedin: "Your LinkedIn 'About' — themes to emphasize",
 };
 const ASSET_ORDER = ['edge', 'traps', 'stories', 'guide', 'role', 'linkedin'];
 const ASSETS_TTL = 60 * 60 * 24 * 180; // 180 days
@@ -443,7 +445,7 @@ function reaccessUrlFor(session_id) {
 }
 
 // The permanent re-access link, emailed the moment a purchase is claimed —
-// before a single asset has been generated. Fulfilment is driven by the buyer's
+// before a single asset has been generated. Fulfillment is driven by the buyer's
 // browser, so until this existed a tab closed mid-generation left a paying
 // customer with nothing: no assets, no email, no way back. This email is the
 // safety net, and it does not depend on generation succeeding.
@@ -822,7 +824,7 @@ async function handleCheckout(request, env) {
 
 const ROUTES = {
   '/api/counter':       handleCounter,
-  '/api/fulfil':        handleFulfil,
+  '/api/fulfil':        handleFulfill,
   '/api/deliver':       handleDeliver,
   '/api/assets':        handleAssets,
   '/api/optin':         handleOptin,

@@ -408,7 +408,7 @@ h1.hero em{font-style:normal;color:var(--gold);}
 @media(max-width:480px){.deliver-email .de-form{flex-direction:column;}}
 
 /* Generation-failure notice on the deliverables page. Same card language as
-   .deliver-email but in the warning colour, so a paying buyer can't miss it. */
+   .deliver-email but in the warning color, so a paying buyer can't miss it. */
 .gen-alert{max-width:600px;margin:4px auto 14px;border:1px solid rgba(224,92,92,.34);border-left:3px solid #e05c5c;background:var(--bg2);padding:14px 16px;}
 .gen-alert .ga-head{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text);}
 .gen-alert .ga-ico{font-size:15px;line-height:1.4;}
@@ -746,7 +746,6 @@ h1.hero em{font-style:normal;color:var(--gold);}
 .cert::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),var(--gold),transparent);}
 .cert::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),var(--gold),transparent);}
 .cert-brand{font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:20px;}
-.cert-hd{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:4px;}
 .cert-name{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,5vw,38px);font-weight:700;text-align:center;margin-bottom:4px;}
 .cert-arch{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(14px,2.2vw,18px);color:var(--gold);text-align:center;margin-bottom:22px;}
 .cert-rule{width:44px;height:1px;background:var(--gold);opacity:.4;margin:0 auto 22px;}
