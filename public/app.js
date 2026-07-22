@@ -1602,7 +1602,7 @@ function getShareText(platform='linkedin'){
 My profile: ${S.arch.name} · ${S.overall}/100 (top ${pct}%)
 Strongest: ${top2.map(t=>`${t.name} ${S.pcts[t.id]}`).join(' · ')}
 
-It's a scored, five-dimension reading grounded in WEF and LinkedIn research on the human skills rising in value as AI spreads — not a personality type.
+It's a scored, five-dimension reading grounded in WEF and LinkedIn research on the human skills rising in value as AI spreads.
 
 My full reading: ${link}
 Take yours (free, 5 min): https://humanometer.com
@@ -1633,7 +1633,7 @@ Try it: https://humanometer.com`;
 
 I'm "${S.arch.name}" · ${S.overall}/100 (top ${pct}%). Strongest: ${peakLines}
 
-A scored, five-dimension breakdown grounded in research on the skills rising in value as AI spreads — not a personality type.
+A scored, five-dimension breakdown grounded in research on the skills rising in value as AI spreads.
 
 My full reading: ${link}
 Take yours (free, 5 min): https://humanometer.com`;
