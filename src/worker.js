@@ -438,18 +438,69 @@ function packEmailText({ name, product, assets, reaccessUrl }) {
   return parts.join('\n');
 }
 
-// Send the pack via Resend (https://resend.com). One authenticated POST — no SDK.
-// Requires env.RESEND_API_KEY; the from-address must be on a Resend-verified
-// domain (set env.EMAIL_FROM once humanometer.com is verified).
-async function sendPackEmail(env, { to, name, product, assets, session_id }) {
-  const reaccessUrl = 'https://humanometer.com/?paid=true&session_id=' + encodeURIComponent(session_id);
+function reaccessUrlFor(session_id) {
+  return 'https://humanometer.com/?paid=true&session_id=' + encodeURIComponent(session_id);
+}
+
+// The permanent re-access link, emailed the moment a purchase is claimed —
+// before a single asset has been generated. Fulfilment is driven by the buyer's
+// browser, so until this existed a tab closed mid-generation left a paying
+// customer with nothing: no assets, no email, no way back. This email is the
+// safety net, and it does not depend on generation succeeding.
+function accessEmailHtml({ name, product, reaccessUrl }) {
   const tierName = (PRODUCTS[product] || {}).name || 'Humanometer pack';
+  const hi = name ? `Hi ${emailEscape(name.split(' ')[0])},` : 'Hi,';
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f1ea;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ea;padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e7e0d0;">
+        <tr><td style="padding:26px 28px 18px;border-bottom:1px solid #eee6d5;">
+          <div style="font:700 20px/1 Georgia,serif;color:#1c1c1c;">Human<span style="color:#c79a2e;">ometer</span></div>
+          <div style="font:600 12px/1 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a6791f;margin-top:8px;">${emailEscape(tierName)}</div>
+        </td></tr>
+        <tr><td style="padding:22px 28px 0;">
+          <p style="font:15px/1.6 Georgia,serif;color:#2b2b2b;margin:0 0 10px;">${hi}</p>
+          <p style="font:15px/1.6 Georgia,serif;color:#2b2b2b;margin:0 0 10px;">Your payment went through — thank you. Your ${emailEscape(tierName)} is being built right now on the page you came from.</p>
+          <p style="font:15px/1.6 Georgia,serif;color:#2b2b2b;margin:0;">This email is just so you can never lose it. The link below reopens your assets on any device for the next 180 days.</p>
+        </td></tr>
+        <tr><td style="padding:22px 28px 4px;">
+          <a href="${emailEscape(reaccessUrl)}" style="display:inline-block;background:#c79a2e;color:#fff;font:600 14px/1 Arial,sans-serif;text-decoration:none;padding:13px 22px;border-radius:9px;">Open my assets →</a>
+        </td></tr>
+        <tr><td style="padding:22px 28px 26px;border-top:1px solid #eee6d5;">
+          <p style="font:12px/1.6 Arial,sans-serif;color:#9a9484;margin:0;">A second email with the full pack follows once it has finished generating. If anything looks wrong, reply to this message or write to <a href="mailto:hello@humanometer.com" style="color:#a6791f;">hello@humanometer.com</a>.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body></html>`;
+}
+
+function accessEmailText({ name, product, reaccessUrl }) {
+  const tierName = (PRODUCTS[product] || {}).name || 'Humanometer pack';
+  return [
+    name ? `Hi ${name.split(' ')[0]},` : 'Hi,',
+    '',
+    `Your payment went through — thank you. Your ${tierName} is being built right now on the page you came from.`,
+    '',
+    'This email is just so you can never lose it. The link below reopens your assets on any device for the next 180 days:',
+    reaccessUrl,
+    '',
+    'A second email with the full pack follows once it has finished generating.',
+    'Anything wrong? Reply here or write to hello@humanometer.com.',
+    '',
+    '— humanometer.com',
+  ].join('\n');
+}
+
+// One authenticated POST to Resend (https://resend.com) — no SDK. Requires
+// env.RESEND_API_KEY; the from-address must be on a Resend-verified domain
+// (set env.EMAIL_FROM once humanometer.com is verified).
+async function resendSend(env, { to, subject, html, text }) {
   const payload = {
     from: env.EMAIL_FROM || 'Humanometer <hello@humanometer.com>',
     to: [to],
-    subject: `Your ${tierName} is ready`,
-    html: packEmailHtml({ name, product, assets, reaccessUrl }),
-    text: packEmailText({ name, product, assets, reaccessUrl }),
+    subject,
+    html,
+    text,
   };
   if (env.EMAIL_REPLY_TO) payload.reply_to = env.EMAIL_REPLY_TO;
 
@@ -465,6 +516,28 @@ async function sendPackEmail(env, { to, name, product, assets, session_id }) {
     const d = await r.json().catch(() => ({}));
     throw new Error((d && (d.message || d.name)) || `Resend error ${r.status}`);
   }
+}
+
+async function sendPackEmail(env, { to, name, product, assets, session_id }) {
+  const reaccessUrl = reaccessUrlFor(session_id);
+  const tierName = (PRODUCTS[product] || {}).name || 'Humanometer pack';
+  return resendSend(env, {
+    to,
+    subject: `Your ${tierName} is ready`,
+    html: packEmailHtml({ name, product, assets, reaccessUrl }),
+    text: packEmailText({ name, product, assets, reaccessUrl }),
+  });
+}
+
+async function sendAccessEmail(env, { to, name, product, session_id }) {
+  const reaccessUrl = reaccessUrlFor(session_id);
+  const tierName = (PRODUCTS[product] || {}).name || 'Humanometer pack';
+  return resendSend(env, {
+    to,
+    subject: `Your ${tierName} — your permanent access link`,
+    html: accessEmailHtml({ name, product, reaccessUrl }),
+    text: accessEmailText({ name, product, reaccessUrl }),
+  });
 }
 
 // Keep only the assets the tier entitles, each a trimmed, size-capped string.
@@ -497,15 +570,49 @@ async function handleDeliver(request, env) {
 
   const email = String(body.email || paid.email || '').trim().toLowerCase();
   const name = cleanName(body.name);
+  const key = 'assets:' + session_id;
+
+  // ── claim ──────────────────────────────────────────────────────────────
+  // Fired by the browser the instant it returns from Stripe, BEFORE any asset
+  // is generated. Records the order and emails the permanent re-access link, so
+  // a tab closed mid-generation can no longer cost someone what they paid for.
+  // Idempotent: a repeat visit must not clobber a stored pack or re-send.
+  if (body.mode === 'claim') {
+    let existing = null;
+    try { existing = await env.HUMANOMETER_KV.get(key); } catch (e) { /* treat as absent */ }
+    if (existing) return json({ ok: true, claimed: false, reason: 'already-claimed' });
+
+    try {
+      await env.HUMANOMETER_KV.put(key,
+        JSON.stringify({ product: paid.product, name, assets: {}, savedAt: new Date().toISOString() }),
+        { expirationTtl: ASSETS_TTL });
+    } catch (e) { /* non-fatal: the email below is the more important half */ }
+
+    let emailed = false, reason = null;
+    if (!isPlausibleEmail(email)) reason = 'no-email';
+    else if (!env.RESEND_API_KEY) reason = 'not-configured';
+    else {
+      try {
+        await sendAccessEmail(env, { to: email, name, product: paid.product, session_id });
+        emailed = true;
+      } catch (e) { reason = 'send-failed'; }
+    }
+    return json({ ok: true, claimed: true, emailed, reason });
+  }
+
   const assets = collectDeliverAssets(paid.product, body.assets);
 
   // Store for durable re-access — one write, even if we can't email — so the
   // ?session_id bookmark always resolves. TTL keeps KV from growing forever.
-  try {
-    await env.HUMANOMETER_KV.put('assets:' + session_id,
-      JSON.stringify({ product: paid.product, name, assets, savedAt: new Date().toISOString() }),
-      { expirationTtl: ASSETS_TTL });
-  } catch (e) { /* non-fatal: emailing can still succeed */ }
+  // An empty set is never written: it would have no value and could overwrite a
+  // pack stored earlier (e.g. if every asset failed to regenerate on a revisit).
+  if (Object.keys(assets).length) {
+    try {
+      await env.HUMANOMETER_KV.put(key,
+        JSON.stringify({ product: paid.product, name, assets, savedAt: new Date().toISOString() }),
+        { expirationTtl: ASSETS_TTL });
+    } catch (e) { /* non-fatal: emailing can still succeed */ }
+  }
 
   let emailed = false;
   let reason = null;

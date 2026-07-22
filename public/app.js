@@ -90,7 +90,12 @@ const HM_SESSION_KEY='hm_completed_session';
 function saveSession(){
   try{
     sessionStorage.setItem(HM_SESSION_KEY,JSON.stringify({
-      pcts:S.pcts,overall:S.overall,arch:S.arch,uname:S.uname,savedEmail:S.savedEmail
+      pcts:S.pcts,overall:S.overall,arch:S.arch,uname:S.uname,savedEmail:S.savedEmail,
+      // The paid session id is the only key to a purchase. It used to live in
+      // memory alone — and the URL carrying it is stripped right after Stripe
+      // redirects back — so a reload dropped the buyer onto the free results
+      // screen with no route back to what they'd bought.
+      sessionId:S.sessionId,selectedPack:S.selectedPack
     }));
   }catch(e){}
 }
@@ -103,6 +108,8 @@ function loadSession(){
     S.pcts=d.pcts;S.overall=d.overall;S.arch=d.arch;
     if(d.uname)S.uname=d.uname;
     if(d.savedEmail)S.savedEmail=d.savedEmail;
+    if(d.sessionId)S.sessionId=d.sessionId;
+    if(d.selectedPack)S.selectedPack=d.selectedPack;
     return true;
   }catch(e){return false;}
 }
@@ -206,7 +213,14 @@ function startQuiz(){ show('prequiz'); }
 
 function actuallyStartQuiz(){
   clearSession(); // fresh attempt — drop any previously-persisted results
-  S={...S,qi:0,scores:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},maxes:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},susp:0,prods:new Set(['bundle']),sharedOnce:false};
+  // A retake is a clean slate. This spreads the old state, so anything tied to a
+  // previous purchase has to be cleared explicitly — otherwise the new reading
+  // inherits the old paid session id, and reloading it would swap the fresh
+  // result for the previously bought pack. Name and email survive: they're
+  // conveniences (permalink, checkout prefill), not purchase state.
+  S={...S,qi:0,scores:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},maxes:{adaptive:0,ethical:0,creative:0,empathic:0,critical:0},susp:0,prods:new Set(['bundle']),sharedOnce:false,
+     sessionId:null,selectedPack:null,purchased:false,delivered:false,emailedOnce:false,
+     gen:{},genFailed:{},liText:''};
   bumpCounter();
   show('quiz');
   document.getElementById('honesty-banner').style.display='flex';
@@ -752,6 +766,14 @@ document.addEventListener('DOMContentLoaded',()=>{
         // Stripe returns ?session_id=cs_... — the Worker verifies it's paid
         // before generating any asset. Capture it before we strip the query.
         S.sessionId=sid;
+        // Make the purchase durable before doing anything that can fail:
+        //  (1) persist the session id, so a reload reopens the pack;
+        //  (2) claim it server-side — records the order and emails the
+        //      permanent access link — so closing the tab during the ~30s of
+        //      generation can't leave a paying customer with nothing.
+        // Both run before generation; claimPurchase is fire-and-forget.
+        saveSession();
+        claimPurchase();
         history.replaceState({},'',window.location.pathname);
         runFulfilment();
         return;
@@ -799,6 +821,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(loadSession()){
     buildResults();
     show('results');
+    // If this tab had a purchase, reopen it rather than stranding the buyer on
+    // the free results screen. restoreFromServer re-verifies the payment with
+    // Stripe and renders the stored pack without regenerating it.
+    if(S.sessionId) restoreFromServer(S.sessionId);
   }
 });
 
@@ -875,6 +901,27 @@ async function deliverPack(email,opts){
     return await r.json().catch(()=>({}));
   }catch(e){ return {ok:false}; }
 }
+/* Register the purchase the instant we get back from Stripe, before generating
+   anything. The server writes the order record and emails the permanent
+   re-access link. Fulfilment is driven entirely by this browser, so without
+   this a closed tab (or a crash) mid-generation left a paying customer with no
+   assets, no email and no record — recoverable only by hand from the Stripe
+   dashboard. Idempotent server-side, so revisits neither re-send nor overwrite. */
+async function claimPurchase(){
+  try{
+    await fetch('/api/deliver',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        session_id:S.sessionId||'',
+        email:(S.savedEmail||'').trim(),
+        name:S.uname||'',
+        assets:{},
+        mode:'claim'
+      })
+    });
+  }catch(e){ /* non-fatal — the pack delivery at the end still stores + emails */ }
+}
+
 /* Fired once automatically after fulfilment. Stores the pack for re-access and, if
    we have the buyer's email (we almost always do — checkout requires it), sends it. */
 async function deliverPackAuto(){
@@ -928,23 +975,35 @@ function updateDeliverStatus(d,to){
    needed if the pack was saved. */
 async function restoreFromServer(sid){
   S.sessionId=sid;
+  // This now also runs on a plain reload, where the tab already has a perfectly
+  // good reading in memory. Falling back to the home page there would throw away
+  // a reading the user can see — so bail to their results instead, and only drop
+  // to the landing screen when there's genuinely nothing to show.
+  const bail=()=>{
+    if(S.arch&&S.pcts&&Object.keys(S.pcts).length){ buildResults(); show('results'); }
+    else show('landing');
+  };
   try{
     const r=await fetch('/api/assets?session_id='+encodeURIComponent(sid));
     const d=await r.json().catch(()=>({}));
     // Needs real scores to rebuild a reading — an empty {} would render a
     // straight-zeros profile, which looks like a broken purchase.
-    if(!r.ok||!d||!d.scores||!Object.keys(d.scores).length){ show('landing'); return; }
+    if(!r.ok||!d||!d.scores||!Object.keys(d.scores).length){ bail(); return; }
     S.pcts={};
     TRAITS.forEach(t=>{ let v=Math.round(Number(d.scores[t.id])); if(!isFinite(v))v=0; S.pcts[t.id]=Math.max(0,Math.min(100,v)); });
     S.overall=Math.round(Object.values(S.pcts).reduce((a,b)=>a+b,0)/5);
     S.arch=ARCHETYPES.find(a=>S.overall>=a.min)||ARCHETYPES[ARCHETYPES.length-1];
-    S.uname=sanitizeName(d.name||'');
+    // Keep a locally-known name if the server has none: a claim made before the
+    // buyer's name reached KV would otherwise blank the certificate.
+    const srvName=sanitizeName(d.name||'');
+    if(srvName)S.uname=srvName;
     if(PACKS[d.product])S.selectedPack=d.product;
     S.purchased=true;
     S.gen={};
     ['edge','traps','stories','guide','role'].forEach(k=>{ if(d.assets&&d.assets[k])S.gen[k]=d.assets[k]; });
     if(d.assets&&d.assets.linkedin)S.liText=d.assets.linkedin;
     buildResults();
+    saveSession(); // keep the session id fresh so further reloads still resolve
     if(Object.keys(S.gen).length||S.liText){
       // Already generated + stored on a previous visit — just render it.
       S.delivered=true;
@@ -956,7 +1015,7 @@ async function restoreFromServer(sid){
       S.delivered=false;
       runFulfilment();
     }
-  }catch(e){ show('landing'); }
+  }catch(e){ bail(); }
 }
 
 /* ═══════════════════════════ PACK EXPORT (copy / .md / .html) ═══════════════════════════ */
