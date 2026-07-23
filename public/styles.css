@@ -1,7 +1,7 @@
 :root{
   --bg:#07090f;--bg2:#0c0f1a;--bg3:#111520;
   --gold:#d4a843;--gold2:#f0c96a;--gdim:rgba(212,168,67,.12);--gbdr:rgba(212,168,67,.22);
-  --text:#ece8de;--muted:#7a7670;--faint:rgba(236,232,222,.05);
+  --text:#ece8de;--muted:#8a857c;--faint:rgba(236,232,222,.05);
   --ok:#5bbf9a;--bad:#e05c5c;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -642,7 +642,7 @@ h1.hero em{font-style:normal;color:var(--gold);}
 .ss-icon:hover{transform:translateY(-2px);filter:brightness(1.1);}
 .ss-icon-li{background:#0077b5;}
 .ss-icon-x{background:#000;}
-.ss-icon-fb{background:#1877f2;}
+.ss-icon-fb{background:#166fe0;}
 .ss-icon-cp{background:var(--bg3);border:1px solid var(--gbdr);color:var(--text);}
 .ss-icon-cp:hover{border-color:var(--gold);color:var(--gold);}
 .ss-buy{
@@ -892,7 +892,7 @@ h1.hero em{font-style:normal;color:var(--gold);}
 .shr-sm:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.32);}
 .shr-x{background:#000;color:#fff;border-color:rgba(255,255,255,.18);}
 .shr-x:hover{background:#1a1a1a;}
-.shr-fb{background:#1877f2;color:#fff;border:none;}
+.shr-fb{background:#166fe0;color:#fff;border:none;}
 .shr-fb:hover{background:#0e62d6;box-shadow:0 8px 20px rgba(24,119,242,.4);}
 .shr-wa{background:#25d366;color:#000;border:none;}
 .shr-wa:hover{background:#1ebe5d;}

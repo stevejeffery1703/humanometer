@@ -469,7 +469,7 @@ function buildInsightCards(){
           <div class="dc-bar"><div class="dc-fill" style="background:${t.color}88"></div></div>
         </div>
         <div class="dcard-body">
-          <div class="dc-trait" style="color:${t.color}99">${t.name}</div>
+          <div class="dc-trait" style="color:${t.color}">${t.name}</div>
           <div class="dc-band">${band.band}</div>
           <div class="dc-insight">${band.insight}</div>
         </div>
@@ -682,7 +682,40 @@ function setupStickyShare(){
    runFulfillment() restores the saved profile, generates the AI assets, and shows
    the deliverables. No card details are ever handled by this site. */
 
-function closePay(){document.getElementById('modal-bg').classList.remove('open');}
+/* Checkout-modal accessibility. The modal is a plain div, so keyboard support
+   is wired by hand: Escape closes it, Tab is trapped inside it (a keyboard user
+   can't wander onto the covered page behind), focus moves in on open and returns
+   to the trigger on close. Applied only to the purchase step via openModal() —
+   the processing step (runFulfilment) opens the same element WITHOUT this, so a
+   buyer can't Escape out mid-generation. */
+let _modalPrevFocus=null;
+function modalFocusables(){
+  const modal=document.querySelector('#modal-bg .modal'); if(!modal) return [];
+  return [...modal.querySelectorAll('button,[href],input,textarea,select,[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.offsetParent!==null && !el.disabled);
+}
+function trapModalKey(e){
+  if(e.key==='Escape'){ e.preventDefault(); closePay(); return; }
+  if(e.key!=='Tab') return;
+  const f=modalFocusables(); if(!f.length) return;
+  const first=f[0], last=f[f.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+}
+function openModal(){
+  const bg=document.getElementById('modal-bg');
+  _modalPrevFocus=document.activeElement;
+  bg.classList.add('open');
+  document.addEventListener('keydown',trapModalKey);
+  const first=bg.querySelector('#pf-step input')||bg.querySelector('.mclose');
+  if(first) setTimeout(()=>{ try{first.focus();}catch(e){} },50);
+}
+function closePay(){
+  document.getElementById('modal-bg').classList.remove('open');
+  document.removeEventListener('keydown',trapModalKey);
+  if(_modalPrevFocus && _modalPrevFocus.focus){ try{_modalPrevFocus.focus();}catch(e){} }
+  _modalPrevFocus=null;
+}
 
 async function startCheckout(){
   const em=document.getElementById('pe').value.trim();
@@ -1917,7 +1950,7 @@ function buyPack(type){
   // Pre-fill the certificate name from the permalink name (S.uname),
   // so users who already entered it don't have to type it twice.
   if(S.uname){const pn=document.getElementById('pn');if(pn)pn.value=S.uname;}
-  document.getElementById('modal-bg').classList.add('open');
+  openModal();
 }
 
 
