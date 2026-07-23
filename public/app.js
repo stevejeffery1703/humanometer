@@ -847,7 +847,14 @@ async function fulfil(kind,extra){
   });
   const d=await r.json().catch(()=>({}));
   if(!r.ok||!d||typeof d.text!=='string'){throw new Error((d&&d.error)||'Generation failed');}
-  return d.text.trim();
+  const text=d.text.trim();
+  // A 200 with blank content (a content filter, an empty completion) is a
+  // failure, not a result. Without this it slips past every caller's catch:
+  // the asset stays '' (falsy), its panel never leaves "Generating…", and it's
+  // never marked failed — so no retry banner ever appears. Throwing routes it
+  // through the same failure path as a 502, so the buyer gets the retry option.
+  if(!text){ throw new Error('The model returned an empty response'); }
+  return text;
 }
 /* A failed generation is tracked in S.genFailed, NOT just papered over with
    placeholder text. Without this the placeholder gets stored in KV, emailed, and
