@@ -686,7 +686,7 @@ function setupStickyShare(){
    is wired by hand: Escape closes it, Tab is trapped inside it (a keyboard user
    can't wander onto the covered page behind), focus moves in on open and returns
    to the trigger on close. Applied only to the purchase step via openModal() —
-   the processing step (runFulfilment) opens the same element WITHOUT this, so a
+   the processing step (runFulfillment) opens the same element WITHOUT this, so a
    buyer can't Escape out mid-generation. */
 let _modalPrevFocus=null;
 function modalFocusables(){
