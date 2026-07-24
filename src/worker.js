@@ -787,6 +787,17 @@ async function handleCheckout(request, env) {
   const p = PRODUCTS[product];
   if (!p) return json({ error: 'Invalid product' }, 400);
 
+  // Managed Payments = Stripe as merchant of record: Stripe takes on sales-tax
+  // calculation, collection AND remittance, plus fraud/disputes/buyer support —
+  // the tax liability moves off us. It needs a product tax code, and Checkout
+  // then collects the buyer's name + billing address to compute tax. Gated
+  // behind the MANAGED_PAYMENTS Cloudflare var so it can be switched on (test
+  // mode first) once the account's Managed Payments is enabled + approved, and
+  // switched off instantly if needed. With the flag off this endpoint behaves
+  // exactly as before. None of our other params are on Managed Payments'
+  // unsupported list, so nothing has to be removed.
+  const mpEnabled = env.MANAGED_PAYMENTS === 'true';
+
   // Build Stripe form-encoded body using URLSearchParams
   const params = new URLSearchParams();
   params.set('mode', p.mode);
@@ -794,6 +805,13 @@ async function handleCheckout(request, env) {
   params.set('line_items[0][price_data][currency]', p.currency);
   params.set('line_items[0][price_data][unit_amount]', String(p.amount));
   params.set('line_items[0][price_data][product_data][name]', p.name);
+  if (mpEnabled) {
+    // txcd_10105003 = "AIaaS – Cloud Based & Downloaded – Personal Use" — the fit
+    // for AI-generated digital career docs shown on-page and downloadable. The
+    // code sets taxability per jurisdiction; confirm it with a tax advisor.
+    // Overridable via the TAX_CODE var without a code change.
+    params.set('line_items[0][price_data][product_data][tax_code]', env.TAX_CODE || 'txcd_10105003');
+  }
   if (p.mode === 'subscription') {
     params.set('line_items[0][price_data][recurring][interval]', 'year');
   }
@@ -802,6 +820,7 @@ async function handleCheckout(request, env) {
   params.set('metadata[product]', product);
   params.set('metadata[scores]', JSON.stringify(scores || {}));
   if (email) params.set('customer_email', email);
+  if (mpEnabled) params.set('managed_payments[enabled]', 'true');
 
   try {
     const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
