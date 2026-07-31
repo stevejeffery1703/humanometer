@@ -1828,6 +1828,21 @@ function copyShare(btn){
   copyToClipboard(getShareText('clipboard'),btn);
 }
 
+/* Front-page share — spreads the SITE, not a personal reading, so it just opens
+   the platform's share dialog for humanometer.com and lets the OG tags supply the
+   preview. Separate from shareLinkedIn/shareX/shareFacebook, which share the
+   user's own reading via their permalink. */
+function shareSite(platform){
+  const url='https://humanometer.com';
+  const text="The Humanometer — a free 5-minute reading of the five professional capabilities AI can't replace.";
+  let shareUrl;
+  if(platform==='linkedin') shareUrl='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(url);
+  else if(platform==='x') shareUrl='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url);
+  else if(platform==='facebook') shareUrl='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(url);
+  else return;
+  window.open(shareUrl,'_blank','noopener,width=620,height=600');
+}
+
 /* Small bottom-right toast for transient confirmations. */
 function showToast(msg, ms=3200){
   let t=document.getElementById('hm-toast');

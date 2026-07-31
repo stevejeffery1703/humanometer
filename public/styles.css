@@ -59,6 +59,13 @@ h1.hero em{font-style:normal;color:var(--gold);}
 /* HERO actions — CTA block above the fold */
 .hero-actions{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin:36px 0 32px;}
 .hero-actions-bottom{margin:24px 0 0;align-items:center;}
+/* Discrete front-page share — muted by default, gold on hover, matches the dark theme. */
+.site-share{display:flex;flex-direction:column;align-items:center;gap:11px;margin:52px auto 4px;}
+.site-share-label{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);}
+.site-share-btns{display:flex;gap:12px;}
+.site-share-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:1px solid var(--gbdr);border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s,background .2s;}
+.site-share-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(212,168,67,.08);}
+.site-share-btn svg{width:15px;height:15px;}
 @media(max-width:600px){.hero-actions{align-items:center;margin:28px 0 24px;}}
 .cta-meta{display:flex;gap:14px;align-items:center;font-size:12.5px;color:var(--muted);letter-spacing:.02em;}
 .cta-meta strong{color:var(--gold2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px;}
