@@ -29,12 +29,12 @@ body{
 .topbar-logo svg{width:30px;height:30px;flex-shrink:0;}
 .wm{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;letter-spacing:.04em;line-height:1;}
 .wm b{color:var(--gold);}
-.topbar-cta{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.07em;text-transform:uppercase;transition:color .2s;white-space:nowrap;}
-.topbar-cta:hover{color:var(--gold);}
-.topbar-cta.strong{color:var(--gold);border:1px solid var(--gbdr);padding:8px 16px;border-radius:999px;}
-.topbar-cta.strong:hover{background:rgba(212,168,67,.08);color:var(--gold-bright);}
-.topbar-nav{display:flex;align-items:center;gap:16px;}
-@media(max-width:600px){.topbar-nav{gap:11px;}.topbar-cta.strong{padding:6px 13px;}}
+.topbar-cta{color:var(--gold);text-decoration:none;font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--gbdr);border-radius:999px;padding:7px 16px;transition:background .2s,border-color .2s,color .2s;}
+.topbar-cta:hover{background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold-bright);}
+.topbar-cta.strong{color:#0a0a0a;background:var(--gold);border-color:var(--gold);}
+.topbar-cta.strong:hover{background:var(--gold-bright);border-color:var(--gold-bright);color:#0a0a0a;}
+.topbar-nav{display:flex;align-items:center;gap:12px;}
+@media(max-width:600px){.topbar-nav{gap:10px;}.topbar-cta{padding:6px 13px;}}
 @media(max-width:480px){.topbar .wm{display:none;}}
 
 /* ── Layout ── */
