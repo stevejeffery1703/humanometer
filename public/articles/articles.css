@@ -33,6 +33,9 @@ body{
 .topbar-cta:hover{color:var(--gold);}
 .topbar-cta.strong{color:var(--gold);border:1px solid var(--gbdr);padding:8px 16px;border-radius:999px;}
 .topbar-cta.strong:hover{background:rgba(212,168,67,.08);color:var(--gold-bright);}
+.topbar-nav{display:flex;align-items:center;gap:16px;}
+@media(max-width:600px){.topbar-nav{gap:11px;}.topbar-cta.strong{padding:6px 13px;}}
+@media(max-width:480px){.topbar .wm{display:none;}}
 
 /* ── Layout ── */
 main{max-width:var(--maxw);margin:0 auto;padding:56px 28px 40px;}
@@ -73,6 +76,12 @@ h1{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,6vw,52px);font-we
 .stat-src a{color:var(--muted);}
 .stat-src a:hover{color:var(--gold);}
 @media(max-width:520px){.stat{grid-template-columns:1fr;}.stat-num{grid-row:auto;}}
+
+/* ── Short-answer box (profession explainers; snippet-friendly) ── */
+.answer{background:linear-gradient(160deg,var(--bg2),var(--bg3));border:1px solid var(--gbdr);border-left:3px solid var(--gold);border-radius:8px;padding:20px 24px;margin:28px 0;}
+.answer .q{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.answer p{font-size:17px;color:var(--text);margin:0;}
+.answer strong{color:var(--gold);font-weight:600;}
 
 /* ── Pull quote / key idea ── */
 .pull{border-left:3px solid var(--gold);padding:4px 0 4px 24px;margin:34px 0;font-family:'Cormorant Garamond',serif;font-size:clamp(23px,3.6vw,29px);line-height:1.35;color:var(--text);font-style:italic;}
