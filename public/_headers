@@ -18,10 +18,9 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
-# Articles: the shared stylesheet can cache for a while; article HTML revalidates
-# (cheap 304 via ETag) so copy fixes reach readers without an hour of staleness.
-/articles/articles.css
-  Cache-Control: public, max-age=3600
+# Articles: HTML and the shared stylesheet both revalidate on each load
+# (cheap 304 via ETag) so edits reach readers immediately, with no stale cache
+# window — important while the section is still being iterated on.
 /articles/*
   Cache-Control: public, max-age=0, must-revalidate
 
