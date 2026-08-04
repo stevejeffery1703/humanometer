@@ -25,6 +25,42 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://humanometer.com/articles/skills-rising-and-fading.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://humanometer.com/articles/adaptive-thinking.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://humanometer.com/articles/ethical-judgment.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://humanometer.com/articles/creative-synthesis.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://humanometer.com/articles/empathic-accuracy.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://humanometer.com/articles/critical-skepticism.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://humanometer.com/privacy.html</loc>
     <lastmod>2026-07-22</lastmod>
     <changefreq>yearly</changefreq>

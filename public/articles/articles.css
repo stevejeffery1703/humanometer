@@ -108,6 +108,25 @@ hr.sec{border:0;border-top:1px solid var(--hr);margin:48px 0;}
 .readnext{margin-top:40px;}
 .readnext h2{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;margin-bottom:18px;}
 
+/* ── Capability nav (cross-links the five capability pages) ── */
+.cap-nav{margin-top:44px;padding:24px 26px;background:var(--bg2);border:1px solid var(--hr);border-radius:12px;}
+.cap-nav h4{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+.cap-nav ul{list-style:none;margin:0;display:flex;flex-wrap:wrap;gap:10px 14px;}
+.cap-nav li{margin:0;font-size:15px;}
+.cap-nav a{color:var(--muted);text-decoration:none;}
+.cap-nav a:hover{color:var(--gold);}
+.cap-nav .here{color:var(--text);font-weight:500;}
+
+/* ── Hub: the five capabilities strip ── */
+.cap-hub{max-width:960px;margin:0 auto;padding:0 24px 50px;}
+.cap-hub h2{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;text-align:center;margin-bottom:6px;}
+.cap-hub .sub{text-align:center;color:var(--muted);font-size:15px;margin-bottom:26px;}
+.cap-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+.cap-item{display:block;background:var(--bg2);border:1px solid var(--hr);border-radius:10px;padding:16px 18px;text-decoration:none;color:var(--text);transition:border-color .2s,background .2s;}
+.cap-item:hover{border-color:var(--gbdr);background:var(--bg3);color:var(--gold);}
+.cap-item b{display:block;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:3px;}
+.cap-item span{font-size:13px;color:var(--muted);}
+
 /* ══ Hub / index page ══ */
 .hub-hero{max-width:var(--maxw);margin:0 auto;padding:60px 28px 20px;text-align:center;}
 .hub-hero h1{margin-bottom:16px;}
